@@ -37,3 +37,119 @@ document.getElementById('retry-capture-btn').addEventListener('click', restartFa
 document.getElementById('manual-login-btn').addEventListener('click', attemptManualLogin);
 document.getElementById('clear-records-btn').addEventListener('click', clearRecords);
 document.getElementById('reset-users-btn').addEventListener('click', resetUsers);
+
+// Funciones de API
+async function fetchUsers() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/users`);
+        if (!response.ok) throw new Error('Error al cargar usuarios');
+        return await response.json();
+    } catch (error) {
+        console.error('Error al cargar usuarios:', error);
+        return [];
+    }
+}
+
+async function fetchAccessRecords() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/access`);
+        if (!response.ok) throw new Error('Error al cargar registros de acceso');
+        return await response.json();
+    } catch (error) {
+        console.error('Error al cargar registros de acceso:', error);
+        return [];
+    }
+}
+
+async function clearAccessRecords() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/access`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) throw new Error('Error al limpiar registros');
+        return await response.json();
+    } catch (error) {
+        console.error('Error al limpiar registros:', error);
+        throw error;
+    }
+}
+
+async function clearUsers() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/users`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) throw new Error('Error al reiniciar usuarios');
+        return await response.json();
+    } catch (error) {
+        console.error('Error al reiniciar usuarios:', error);
+        throw error;
+    }
+}
+
+async function registerUser(userData) {
+    try {
+        // Crear FormData para enviar la imagen
+        const formData = new FormData();
+        formData.append('codigo_operario', userData.codigo_operario);
+        formData.append('nombre', userData.nombre);
+        formData.append('dni', userData.dni);
+        formData.append('descriptor', JSON.stringify(userData.descriptor));
+        
+        // Convertir base64 a blob para la imagen
+        if (userData.foto) {
+            const response = await fetch(userData.foto);
+            const blob = await response.blob();
+            formData.append('foto', blob, 'foto.png');
+        }
+
+        const response = await fetch(`${API_BASE_URL}/register`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al registrar usuario');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error al registrar usuario:', error);
+        throw error;
+    }
+}
+
+async function registerAccess(codigoOperario, tipo) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/access`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                codigo_operario: codigoOperario,
+                tipo: tipo
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al registrar acceso');
+        }
+
+        const result = await response.json();
+        
+        // Agregar el nuevo registro a la lista local
+        accessRecords.push({
+            codigo_operario: codigoOperario,
+            tipo: tipo,
+            fecha_hora: new Date().toISOString()
+        });
+        
+        return result;
+    } catch (error) {
+        console.error('Error al registrar acceso:', error);
+        throw error;
+    }
+}
