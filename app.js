@@ -153,3 +153,32 @@ async function registerAccess(codigoOperario, tipo) {
         throw error;
     }
 }
+
+// Inicializar la aplicación
+async function init() {
+    try {
+        // Cargar modelos de face-api.js desde el backend
+        const MODEL_BASE_URL = 'http://localhost:3000/models';
+
+        await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(`${MODEL_BASE_URL}/tiny_face_detector`),
+            faceapi.nets.faceLandmark68Net.loadFromUri(`${MODEL_BASE_URL}/face_landmark_68`),
+            faceapi.nets.faceRecognitionNet.loadFromUri(`${MODEL_BASE_URL}/face_recognition`),
+            faceapi.nets.faceExpressionNet.loadFromUri(`${MODEL_BASE_URL}/face_expression`)
+        ]);
+        
+        console.log('Modelos de reconocimiento facial cargados correctamente');
+        
+        // Cargar usuarios desde el backend
+        userDatabase = await fetchUsers();
+        
+        // Cargar registros de acceso desde el backend
+        accessRecords = await fetchAccessRecords();
+        
+        // Actualizar faceMatcher con los usuarios existentes
+        updateFaceMatcher();
+    } catch (error) {
+        console.error('Error al inicializar la aplicación:', error);
+        alert('Error al inicializar la aplicación. Asegúrese de que el backend esté ejecutándose en http://localhost:3000');
+    }
+}
