@@ -336,3 +336,111 @@ async function confirmCapture() {
         alert(`Error al guardar el usuario: ${error.message}. Por favor, intente nuevamente.`);
     }
 }
+
+// Reiniciar la captura facial
+function restartFaceCapture() {
+    document.getElementById('confirm-capture-btn').disabled = true;
+    captureStatus.textContent = 'Esperando detección facial...';
+    captureStatus.className = 'status info';
+    faceDescriptor = null;
+    
+    // Limpiar el canvas
+    const ctx = overlay.getContext('2d');
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+}
+
+// Iniciar el proceso de login facial
+async function startFacialLogin(tipo) {
+    currentLoginType = tipo;
+    
+    // Actualizar título y descripción según el tipo
+    const titleElement = document.getElementById('login-title');
+    const descriptionElement = document.getElementById('login-description');
+    
+    if (tipo === 'ingreso') {
+        titleElement.textContent = 'Registro de Ingreso';
+        descriptionElement.textContent = 'Por favor, colóquese frente a la cámara para registrar su ingreso.';
+    } else {
+        titleElement.textContent = 'Registro de Egreso';
+        descriptionElement.textContent = 'Por favor, colóquese frente a la cámara para registrar su egreso.';
+    }
+    
+    showScreen('login-screen');
+    
+    // Ocultar login manual inicialmente
+    document.getElementById('manual-login').style.display = 'none';
+    
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { width: 600, height: 450 } 
+        });
+        loginVideo.srcObject = stream;
+        
+        // Esperar a que el video esté listo
+        loginVideo.onloadedmetadata = () => {
+            // Configurar canvas overlay
+            loginOverlay.width = loginVideo.videoWidth;
+            loginOverlay.height = loginVideo.videoHeight;
+            
+            // Iniciar reconocimiento facial
+            startFacialRecognition();
+        };
+    } catch (error) {
+        console.error('Error al acceder a la cámara:', error);
+        loginStatus.textContent = 'Error: No se pudo acceder a la cámara. Asegúrese de permitir el acceso.';
+        loginStatus.className = 'status error';
+        showManualLoginOption();
+    }
+}
+
+// Iniciar el reconocimiento facial para login
+function startFacialRecognition() {
+    const displaySize = { width: loginVideo.videoWidth, height: loginVideo.videoHeight };
+    let countdown = 5;
+    
+    // Actualizar contador
+    countdownElement.textContent = countdown;
+    
+    // Iniciar cuenta regresiva
+    countdownInterval = setInterval(() => {
+        countdown--;
+        countdownElement.textContent = countdown;
+        
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            stopFacialRecognition();
+            showManualLoginOption();
+        }
+    }, 1000);
+    
+    // Iniciar detección facial
+    detectionInterval = setInterval(async () => {
+        const detections = await faceapi
+            .detectAllFaces(loginVideo, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks()
+            .withFaceDescriptors();
+        
+        const ctx = loginOverlay.getContext('2d');
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        
+        // Dibujar detecciones
+        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+        faceapi.draw.drawDetections(loginOverlay, resizedDetections);
+        faceapi.draw.drawFaceLandmarks(loginOverlay, resizedDetections);
+        
+        // Verificar si se detectó al menos un rostro
+        if (detections.length > 0 && faceMatcher) {
+            const bestMatch = faceMatcher.findBestMatch(detections[0].descriptor);
+            
+            if (bestMatch && bestMatch.distance < 0.6) {
+                // Usuario reconocido
+                const user = userDatabase.find(u => u.codigo_operario === bestMatch.label);
+                if (user) {
+                    stopFacialRecognition();
+                    grantAccess(user);
+                    return;
+                }
+            }
+        }
+    }, 100);
+}
