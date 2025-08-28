@@ -251,3 +251,88 @@ async function startFaceCapture() {
         captureStatus.className = 'status error';
     }
 }
+
+// Detectar rostros para registro
+function detectFaceForRegistration() {
+    const displaySize = { width: video.videoWidth, height: video.videoHeight };
+    
+    // Limpiar cualquier intervalo previo
+    if (detectionInterval) clearInterval(detectionInterval);
+    
+    detectionInterval = setInterval(async () => {
+        const detections = await faceapi
+            .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 }))
+            .withFaceLandmarks()
+            .withFaceDescriptors();
+        
+        const ctx = overlay.getContext('2d');
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        
+        // Dibujar detecciones
+        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+        faceapi.draw.drawDetections(overlay, resizedDetections);
+        faceapi.draw.drawFaceLandmarks(overlay, resizedDetections);
+        
+        // Verificar si se detectó exactamente un rostro
+        if (detections.length === 1) {
+            captureStatus.textContent = 'Rostro detectado correctamente. Por favor, confirme la captura.';
+            captureStatus.className = 'status success';
+            document.getElementById('confirm-capture-btn').disabled = false;
+            faceDescriptor = detections[0].descriptor;
+        } else if (detections.length > 1) {
+            captureStatus.textContent = 'Se detectó más de un rostro. Por favor, asegúrese de que solo aparezca una persona en cámara.';
+            captureStatus.className = 'status error';
+            document.getElementById('confirm-capture-btn').disabled = true;
+            faceDescriptor = null;
+        } else {
+            captureStatus.textContent = 'No se detectó ningún rostro. Por favor, colóquese frente a la cámara.';
+            captureStatus.className = 'status info';
+            document.getElementById('confirm-capture-btn').disabled = true;
+            faceDescriptor = null;
+        }
+    }, 100);
+}
+
+// Confirmar la captura facial y guardar el usuario
+async function confirmCapture() {
+    if (!faceDescriptor) {
+        alert('No se ha detectado un rostro válido. Por favor, intente nuevamente.');
+        return;
+    }
+    
+    try {
+        // Convertir el descriptor a array simple (faceapi usa Float32Array)
+        currentUser.descriptor = Array.from(faceDescriptor);
+        
+        // Capturar imagen del video para guardar como foto
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        currentUser.foto = canvas.toDataURL('image/png');
+        
+        // Guardar usuario en el backend
+        const result = await registerUser(currentUser);
+        // Actualizar la base de datos local
+        userDatabase.push(result.user);
+        // Actualizar el faceMatcher con el nuevo usuario
+        updateFaceMatcher();
+        // Detener la cámara
+        stopVideoStream();
+        
+        // Mostrar mensaje de éxito
+        alert(`Usuario ${currentUser.nombre} registrado correctamente.`);
+        
+        // Limpiar los campos del formulario
+        document.getElementById('operator-code').value = '';
+        document.getElementById('operator-name').value = '';
+        document.getElementById('operator-dni').value = '';
+        
+        // Volver a la pantalla de inicio
+        showScreen('home-screen');
+    } catch (error) {
+        console.error('Error al guardar el usuario:', error);
+        alert(`Error al guardar el usuario: ${error.message}. Por favor, intente nuevamente.`);
+    }
+}
