@@ -182,3 +182,19 @@ async function init() {
         alert('Error al inicializar la aplicación. Asegúrese de que el backend esté ejecutándose en http://localhost:3000');
     }
 }
+
+// Mostrar una pantalla específica y ocultar las demás
+function showScreen(screenId) {
+    screens.forEach(screen => {
+        screen.classList.remove('active');
+    });
+    document.getElementById(screenId).classList.add('active');
+    
+    // Detener cualquier proceso en curso al cambiar de pantalla
+    if (screenId !== 'login-screen') {
+        stopFacialRecognition();
+    }
+    if (screenId !== 'capture-screen') {
+        stopVideoStream();
+    }
+}
