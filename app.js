@@ -198,3 +198,56 @@ function showScreen(screenId) {
         stopVideoStream();
     }
 }
+
+// Iniciar la captura facial para registro
+async function startFaceCapture() {
+    const operatorCode = document.getElementById('operator-code').value;
+    const operatorName = document.getElementById('operator-name').value;
+    const operatorDni = document.getElementById('operator-dni').value;
+    
+    // Validar campos
+    if (!operatorCode || !operatorName || !operatorDni) {
+        alert('Por favor, complete todos los campos antes de continuar.');
+        return;
+    }
+    // Verificar si el código de operario ya existe
+    if (userDatabase.find(user => user.codigo_operario === operatorCode)) {
+        alert('Este código de operario ya está registrado. Por favor, use otro.');
+        return;
+    }
+    // Verificar si el DNI ya existe
+    if(userDatabase.find(user => user.dni === operatorDni)) {
+        alert('Este DNI ya está registrado. Por favor, use otro.');
+        return;
+    }
+    // Guardar datos del usuario temporalmente
+    currentUser = {
+        codigo_operario: operatorCode,
+        nombre: operatorName,
+        dni: operatorDni,
+        foto: '',
+        descriptor: null
+    };
+    // Mostrar pantalla de captura
+    showScreen('capture-screen');
+    
+    // Iniciar la cámara
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { width: 600, height: 450 } 
+        });
+        video.srcObject = stream;    
+        // Esperar a que el video esté listo
+        video.onloadedmetadata = () => {
+            // Configurar canvas overlay
+            overlay.width = video.videoWidth;
+            overlay.height = video.videoHeight;           
+            // Iniciar detección facial
+            detectFaceForRegistration();
+        };
+    } catch (error) {
+        console.error('Error al acceder a la cámara:', error);
+        captureStatus.textContent = 'Error: No se pudo acceder a la cámara. Asegúrese de permitir el acceso.';
+        captureStatus.className = 'status error';
+    }
+}
