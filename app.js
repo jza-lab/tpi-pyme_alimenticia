@@ -444,3 +444,28 @@ function startFacialRecognition() {
         }
     }, 100);
 }
+
+// Detener el reconocimiento facial
+function stopFacialRecognition() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    if (detectionInterval) clearInterval(detectionInterval);
+    stopVideoStream();
+}
+
+// Detener la transmisión de video
+function stopVideoStream() {
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+    if (loginVideo.srcObject) {
+        loginVideo.srcObject.getTracks().forEach(track => track.stop());
+        loginVideo.srcObject = null;
+    }
+    // Limpiar canvases
+    const ctx = overlay.getContext('2d');
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+    
+    const loginCtx = loginOverlay.getContext('2d');
+    loginCtx.clearRect(0, 0, loginOverlay.width, loginOverlay.height);
+}
