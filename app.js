@@ -40,11 +40,9 @@ document.getElementById('capture-btn').addEventListener('click', startFaceCaptur
 document.getElementById('confirm-capture-btn').addEventListener('click', confirmCapture);
 document.getElementById('retry-capture-btn').addEventListener('click', restartFaceCapture);
 document.getElementById('manual-login-btn').addEventListener('click', attemptManualLogin);
+document.getElementById('retry-facial-login-btn').addEventListener('click', () => startFacialLogin(currentLoginType));
 document.getElementById('clear-records-btn').addEventListener('click', clearRecords);
 document.getElementById('reset-users-btn').addEventListener('click', resetUsers);
-
-document.getElementById('menu-supervisor-btn').addEventListener('click', () => showScreen('record-screen'));
-
 
 
 // Funciones de API
@@ -95,7 +93,7 @@ async function clearUsers() {
 async function registerUser(userData) {
     try {
         const formData = new FormData();
-        formData.append('codigo_operario', userData.codigo_operario);
+        formData.append('codigo_empleado', userData.codigo_empleado);
         formData.append('nombre', userData.nombre);
         formData.append('dni', userData.dni);
         formData.append('descriptor', JSON.stringify(userData.descriptor));
@@ -123,14 +121,14 @@ async function registerAccess(codigoOperario, tipo) {
     try {
         const { data, error } = await supabaseClient.functions.invoke('access', {
             body: {
-                codigo_operario: codigoOperario,
+                codigo_empleado: codigoOperario,
                 tipo: tipo
             }
         });
         if (error) throw new Error(error.message || 'Error al registrar acceso');
 
         accessRecords.push({
-            codigo_operario: codigoOperario,
+            codigo_empleado: codigoOperario,
             tipo: tipo,
             fecha_hora: new Date().toISOString()
         });
@@ -146,7 +144,7 @@ async function registerAccess(codigoOperario, tipo) {
 async function init() {
     try {
         // Cargar modelos de face-api.js desde el frontend
-        const MODEL_BASE_URL = '/pyme-alimenticia-frontend/models';
+        const MODEL_BASE_URL = '/tpi-pyme_alimenticia/models';
 
         await Promise.all([
             faceapi.nets.tinyFaceDetector.loadFromUri(`${MODEL_BASE_URL}/tiny_face_detector`),
@@ -200,14 +198,14 @@ async function startFaceCapture() {
     }
 
     // Verificar si el código de operario ya existe
-    if (userDatabase.find(user => user.codigo_operario === operatorCode)) {
+    if (userDatabase.find(user => user.codigo_empleado === operatorCode)) {
         alert('Este código de operario ya está registrado. Por favor, use otro.');
         return;
     }
 
     // Guardar datos del usuario temporalmente
     currentUser = {
-        codigo_operario: operatorCode,
+        codigo_empleado: operatorCode,
         nombre: operatorName,
         dni: operatorDni,
         foto: '',
@@ -412,7 +410,7 @@ function startFacialRecognition() {
             .withFaceDescriptors();
 
         const ctx = loginOverlay.getContext('2d');
-        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        ctx.clearRect(0, 0, loginOverlay.width, loginOverlay.height);
 
         // Dibujar detecciones
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
@@ -425,7 +423,7 @@ function startFacialRecognition() {
 
             if (bestMatch && bestMatch.distance < 0.6) {
                 // Usuario reconocido
-                const user = userDatabase.find(u => u.codigo_operario === bestMatch.label);
+                const user = userDatabase.find(u => u.codigo_empleado === bestMatch.label);
                 if (user) {
                     stopFacialRecognition();
                     grantAccess(user);
@@ -467,16 +465,15 @@ function stopVideoStream() {
 function showManualLoginOption() {
     loginStatus.textContent = 'No se pudo reconocer su rostro. Por favor, use el inicio de sesión manual.';
     loginStatus.className = 'status error';
-    document.getElementById('manual-login').style.display = 'block';
+    const manualLoginElement = document.getElementById('manual-login');
+    manualLoginElement.style.display = 'block';
+    manualLoginElement.scrollIntoView({ behavior: 'smooth' });
 }
 
 // Intentar login manual
 async function attemptManualLogin() {
-    //const operatorCode = document.getElementById('manual-operator-code').value;
-    //const operatorDni = document.getElementById('manual-operator-dni').value;
-
-    const operatorCode = 'manual';
-    const operatorDni = 'code';
+    const operatorCode = document.getElementById('manual-operator-code').value;
+    const operatorDni = document.getElementById('manual-operator-dni').value;
 
     if (!operatorCode || !operatorDni) {
         alert('Por favor, complete todos los campos.');
@@ -484,7 +481,7 @@ async function attemptManualLogin() {
     }
 
     const user = userDatabase.find(u =>
-        u.codigo_operario === operatorCode && u.dni === operatorDni
+        u.codigo_empleado === operatorCode && u.dni === operatorDni
     );
 
     if (user) {
@@ -498,7 +495,7 @@ async function attemptManualLogin() {
 async function grantAccess(user) {
     try {
         // Verificar si el usuario puede hacer este tipo de acceso
-        const allUserRecords = accessRecords.filter(record => record.codigo_operario === user.codigo_operario);
+        const allUserRecords = accessRecords.filter(record => record.codigo_empleado === user.codigo_empleado);
 
         // Ordenar los registros por fecha para obtener el último correctamente
         allUserRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
@@ -526,7 +523,7 @@ async function grantAccess(user) {
         }
 
         // Registrar el acceso en el backend
-        await registerAccess(user.codigo_operario, currentLoginType);
+        await registerAccess(user.codigo_empleado, currentLoginType);
 
         const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
         document.getElementById('welcome-message').textContent =
@@ -580,7 +577,7 @@ function updateFaceMatcher() {
     const labeledDescriptors = userDatabase.map(user => {
         if (user.descriptor && user.descriptor.length > 0) {
             return new faceapi.LabeledFaceDescriptors(
-                user.codigo_operario,
+                user.codigo_empleado,
                 [new Float32Array(user.descriptor)]
             );
         }
@@ -611,7 +608,7 @@ async function loadRecords() {
         // Crear un mapa de usuarios para acceso rápido
         const userMap = {};
         users.forEach(user => {
-            userMap[user.codigo_operario] = user;
+            userMap[user.codigo_empleado] = user;
         });
 
         // --- Lógica de Contadores Mejorada ---
@@ -621,19 +618,19 @@ async function loadRecords() {
         // 1. Determinar el estado de cada usuario basado en su último registro
         users.forEach(user => {
             const userRecords = accessRecords
-                .filter(record => record.codigo_operario === user.codigo_operario)
+                .filter(record => record.codigo_empleado === user.codigo_empleado)
                 .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
             if (userRecords.length > 0) {
-                userStatusMap[user.codigo_operario] = userRecords[0].tipo; // 'ingreso' o 'egreso'
+                userStatusMap[user.codigo_empleado] = userRecords[0].tipo; // 'ingreso' o 'egreso'
             } else {
-                userStatusMap[user.codigo_operario] = 'egreso'; // Por defecto, están fuera
+                userStatusMap[user.codigo_empleado] = 'egreso'; // Por defecto, están fuera
             }
         });
 
         // 2. Contar personas dentro y fuera
         users.forEach(user => {
-            if (userStatusMap[user.codigo_operario] === 'ingreso') {
+            if (userStatusMap[user.codigo_empleado] === 'ingreso') {
                 peopleInside++;
             }
         });
@@ -653,19 +650,19 @@ async function loadRecords() {
         const sortedRecords = accessRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
         sortedRecords.forEach(record => {
-            const user = userMap[record.codigo_operario];
+            const user = userMap[record.codigo_empleado];
             const userName = user ? user.nombre : 'Usuario Desconocido';
             const fecha = new Date(record.fecha_hora).toLocaleString('es-ES');
             const tipo = record.tipo === 'ingreso' ? 'Ingreso' : 'Egreso';
             // Usar el userStatusMap que ya calculamos para la tabla
-            const estado = userStatusMap[record.codigo_operario] === 'ingreso' ? 'Dentro' : 'Fuera';
-            const estadoClass = userStatusMap[record.codigo_operario] === 'ingreso' ? 'status-inside' : 'status-outside';
+            const estado = userStatusMap[record.codigo_empleado] === 'ingreso' ? 'Dentro' : 'Fuera';
+            const estadoClass = userStatusMap[record.codigo_empleado] === 'ingreso' ? 'status-inside' : 'status-outside';
 
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${fecha}</td>
                 <td>${userName}</td>
-                <td>${record.codigo_operario}</td>
+                <td>${record.codigo_empleado}</td>
                 <td>${tipo}</td>
                 <td class="${estadoClass}">${estado}</td>
             `;
@@ -681,7 +678,7 @@ async function loadRecords() {
 // Función para verificar si un usuario puede hacer ingreso o egreso
 function canUserAccess(userId, accessType) {
     // Obtener el último registro del usuario
-    const userRecords = accessRecords.filter(record => record.codigo_operario === userId);
+    const userRecords = accessRecords.filter(record => record.codigo_empleado === userId);
 
     if (userRecords.length === 0) {
         // Si no hay registros, puede hacer cualquier cosa
@@ -752,41 +749,3 @@ async function resetUsers() {
         }
     }
 }
-
-
-
-
-// funciones de SIDEBAR //
-
-
-const allSideMenu = document.querySelectorAll('#sidebar .side-menu.top li a');
-
-allSideMenu.forEach(item => {
-    const li = item.parentElement;
-
-    item.addEventListener('click', function () {
-        allSideMenu.forEach(i => {
-            i.parentElement.classList.remove('active');
-        })
-        li.classList.add('active');
-    })
-});
-
-// TOGGLE SIDEBAR
-// Seleccionamos el botón y la barra lateral
-const menuButton = document.querySelector('.btn-menu');
-const sidebar = document.getElementById('sidebar');
-
-// Añadimos un escuchador de eventos
-menuButton.addEventListener('click', function() {
-    // Si la barra lateral está visible...
-    if (sidebar.style.display === 'block') {
-        // ...la ocultamos
-
-        sidebar.style.display = 'none';
-    } else {
-        // ...si está oculta, la mostramos
-        sidebar.style.display = 'block';
-    }
-});
-// fin funciones de SIDEBAR //
