@@ -1,652 +1,251 @@
+/* styles.css - versión completa y consolidada
+   - Logo centrado, video/overlay seguros para face-api
+   - Contenedor para login manual, botones y responsive
+   - Reglas pensadas para evitar forzar heights que rompan detección facial
+*/
+
+/* ---------- Reset / base ---------- */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: "Lexend Deca", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: weight;
-    font-style: inherit;
-}
-
-body {
-    background: linear-gradient(45deg, #eaf0ec, #eaf0ec);
-    min-height: 100vh;
-    position: relative;
-    animation: slideIn 0.8s ease-out;
-    margin: 0;
-    padding: 0;
-}
-
-/* Wrapper principal para centrar todo el contenido */
-.main-wrapper {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 15px;
-}
-
-.container {
-    border-radius: 30px;
-    border: 1px solid rgb(84 90 106);
-    max-width: 700px; /* Aumentado para acomodar mejor el video */
-    min-height: 600px;
-    width: 100%;
-    text-align: center;
-    background: -webkit-linear-gradient(to top right, rgb(180, 181, 185), rgb(17, 48, 47));
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-}
-
-/* Animación de entrada */
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.titulo {
-    font-family: "Lexend Deca", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: normal;
-    font-style: normal;
-    font-size: 50px;
-    margin-bottom: 15px;
-}
-
-.img_usuario {
-    width: 200px;
-    max-width: 100%;
-    height: auto;
-    border-radius: 10px;
-}
-
-.logo {
-    background-size: auto;
-    height: 150px;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    display: flex;
-    margin: 15px 0;
-}
-
-.content {
-    padding: 25px;
-}
-
-.screen {
-    display: none;
-}
-
-.screen.active {
-    display: block;
-}
-
-blockquote {
-    position: relative;
-    width: 100%;
-    margin: 20px 0;
-}
-
-/* Estilos de botones mejorados */
-button {
-    display: inline-block;
-    border-radius: 4px;
-    background-color: #3d405b;
-    border: none;
-    color: #FFFFFF;
-    text-align: center;
-    font-size: 17px;
-    padding: 16px;
-    transition: all 0.5s;
-    cursor: pointer;
-    margin: 5px;
-}
-
-button span {
-    cursor: pointer;
-    display: inline-block;
-    position: relative;
-    transition: 0.5s;
-}
-
-button span:after {
-    content: '»';
-    position: absolute;
-    opacity: 0;
-    top: 0;
-    right: -15px;
-    transition: 0.5s;
-}
-
-button:hover span {
-    padding-right: 15px;
-}
-
-button:hover span:after {
-    opacity: 1;
-    right: 0;
-}
-
-.btn {
-    border-radius: 30px;
-    color: white;
-    padding: 12px 20px;
-    cursor: pointer;
-    font-size: large;
-    background: linear-gradient(45deg, #043a21, #4b6358);
-    width: 100%;
-    margin: 8px 0;
-    transition: all 0.3s ease;
-}
-
-.btn:hover {
-    background: linear-gradient(45deg, #032d1a, #3d4f46);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.btn-secondary {
-    background: linear-gradient(45deg, #043a21, #4b6358);
-}
-
-.btn-secondary:hover {
-    background: linear-gradient(45deg, #032d1a, #3d4f46);
-}
-
-.btn-success {
-    background: linear-gradient(45deg, #043a21, #4b6358);
-}
-
-.btn-success:hover {
-    background: linear-gradient(45deg, #032d1a, #3d4f46);
-}
-
-.btn-danger {
-    background: linear-gradient(45deg, #dc3545, #c82333);
-}
-
-.btn-danger:hover {
-    background: linear-gradient(45deg, #c82333, #a71e2a);
-}
-
-.btn-info {
-    background: linear-gradient(45deg, #17a2b8, #138496);
-    color: white;
-}
-
-.btn-info:hover {
-    background: linear-gradient(45deg, #138496, #0f6674);
-}
-
-.btn-warning {
-    background: linear-gradient(45deg, #ffc107, #e0a800);
-    color: #212529;
-}
-
-.btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.form-group {
-    margin-bottom: 25px;
-    text-align: left;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #333;
-}
-
-.form-group input, .form-group select {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: border-color 0.3s ease;
-}
-
-.form-group input:focus, .form-group select:focus {
-    outline: none;
-    border-color: #043a21;
-    box-shadow: 0 0 0 2px rgba(4, 58, 33, 0.2);
-}
-
-.form-control {
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 16px 12px;
-}
-
-/* ARREGLOS IMPORTANTES PARA EL VIDEO Y CANVAS */
-.video-container {
-    position: relative;
-    width: 100%;
-    max-width: 600px;
-    margin: 20px auto;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #000; /* Fondo negro para el video */
-}
-
-#video,
-#login-video {
-    width: 100%;
-    height: 450px; /* Altura fija para consistencia */
-    object-fit: cover; /* Mantener proporción sin deformar */
-    display: block;
-    background: #000;
-    z-index: 1;
-}
-
-#overlay,
-#login-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
+    font-family: "Lexend Deca", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  
+  html, body {
     height: 100%;
-    pointer-events: none;
-    z-index: 2;
-}
-
-.status {
+    background: linear-gradient(45deg, #eef4ef, #eef4ef);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* ---------- Layout principal ---------- */
+  .main-wrapper {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 18px;
+  }
+  
+  .container {
+    width: 100%;
+    max-width: 980px;
+    background: linear-gradient(180deg,#f6f8f7,#eef4ef);
+    border-radius: 24px;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  
+  /* contenido interior */
+  .content {
+    padding: 36px 44px;
     text-align: center;
-    padding: 15px;
-    margin: 15px 0;
-    border-radius: 8px;
-    font-weight: 600;
-    /* Agregar separación para evitar que se peguen */
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
-
-.status.success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.status.error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-.status.info {
-    background: #cce5ff;
-    color: #004085;
-    border: 1px solid #b8daff;
-}
-
-.countdown {
-    font-size: 24px;
-    text-align: center;
-    margin: 20px 0; /* Separación arriba y abajo */
-    font-weight: bold;
-    color: #1a2a6c;
-    padding: 10px;
-}
-
-.manual-login {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #ddd;
-    /* Separación adicional */
-    margin-bottom: 20px;
-}
-
-.action-buttons {
+  }
+  
+  /* ---------- Tipografías y encabezados ---------- */
+  .titulo {
+    font-size: 52px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    color: #071118;
+    line-height: 1.05;
+  }
+  
+  .intro {
+    color: #1d2b2a;
+    margin-bottom: 18px;
+    font-size: 18px;
+  }
+  
+  .subtitle {
+    color: #111;
+    margin: 18px 0 12px;
+    font-size: 16px;
+  }
+  
+  /* ---------- Logo (centrado y controlado) ---------- */
+  .logo { display:flex; justify-content:center; align-items:center; margin: 18px 0; }
+  .logo img {
+    display: block;
+    width: 140px;      /* tamaño base; ajustar si querés */
+    max-width: 30%;
+    height: auto;
+    object-fit: contain;
+  }
+  
+  /* Selector extra por si la imagen se nombra exactamente 'icono.png' (anula reglas conflictivas) */
+  img[src$="icono.png"] {
+    width: 140px;
+    max-width: 30%;
+    height: auto;
+    display:block;
+    margin: 0 auto;
+  }
+  
+  /* ---------- Botones ---------- */
+  .action-buttons,
+  .action-buttons-small {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-top: 20px;
-    /* Separación adicional */
-    margin-bottom: 20px;
-}
-
-.egress-info {
-    padding: 20px;
-    margin: 20px 0;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-}
-
-.employee-info {
-    margin-bottom: 15px;
-}
-
-#employee-name {
-    font-size: 1.2em;
-    color: #333;
-    font-weight: bold;
-}
-
-.egress-time {
-    margin-bottom: 20px;
-}
-
-#current-time {
-    font-size: 1.1em;
-    font-weight: bold;
-    color: #007bff;
-}
-
-/* Pantalla de registros */
-#records-screen {
-    padding: 20px;
-}
-
-.records-container h2 {
-    text-align: center;
-    margin-bottom: 2rem;
-    color: #333;
-}
-
-.records-controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-    gap: 10px;
-}
-
-.records-controls .btn {
-    flex: 1;
-    min-width: 120px;
-}
-
-.records-summary {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.summary-card {
-    background: rgba(248, 249, 250, 0.9);
-    padding: 1.5rem;
-    border-radius: 8px;
-    text-align: center;
-    min-width: 120px;
-    flex: 1;
-    border: 2px solid #e9ecef;
-}
-
-.summary-card h3 {
-    margin: 0 0 1rem 0;
-    color: #495057;
-    font-size: 0.9rem;
-}
-
-.summary-card span {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #007bff;
-}
-
-.records-list h3 {
-    margin-bottom: 1rem;
-    color: #333;
-}
-
-#records-table-container {
-    overflow-x: auto;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-#records-table {
+    gap: 16px;
+    margin-top: 10px;
     width: 100%;
-    border-collapse: collapse;
-    min-width: 600px;
-}
-
-#records-table th,
-#records-table td {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .btn {
+    background: linear-gradient(45deg,#063b24,#425a50);
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    padding: 16px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    width: 100%;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    margin-block: 10px;
+  }
+  .btn:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,0.10); }
+  
+  .btn-secondary { background: linear-gradient(45deg,#0b4730,#4c6659); }
+  .btn-success   { background: linear-gradient(45deg,#0b4730,#2f5b49); }
+  .btn-info      { background: linear-gradient(45deg,#1fa6b3,#0f6674); }
+  .btn-danger    { background: linear-gradient(45deg,#c83b3b,#9e2f2f); }
+  
+  /* botones pequeños (dos juntos) */
+  .action-buttons-small { flex-direction: row; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .action-buttons-small .btn { width: auto; min-width: 150px; padding-left: 28px; padding-right: 28px; }
+  
+  /* ---------- Pantallas (show/hide) ---------- */
+  .screen { display: none; }
+  .screen.active { display: block; }
+  
+  /* ---------- Video / overlay (reglas seguras para face-api) ---------- */
+  /* El contenedor mantiene proporción y NO forzamos heights en el video directamente */
+  .video-container {
+    position: relative;
+    width: 100%;
+    max-width: 760px;
+    margin: 18px auto;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    aspect-ratio: 16 / 9; /* mantiene proporción visual sin forzar el elemento <video> */
+  }
+  
+  /* Importante: usar height:100% dentro del contenedor con object-fit para evitar lecturas erróneas */
+  #video, #login-video {
+    display: block;
+    width: 100%;
+    height: 100%;          /* hace que clientHeight represente la altura visual */
+    object-fit: contain;   /* recomendable: evita recortes y facilita mapeo 1:1 */
+    background: #000;
+  }
+  
+  /* overlay se superpone exactamente */
+  #overlay, #login-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  
+  /* ---------- Estados / mensajes ---------- */
+  .status {
+    margin: 18px auto;
     padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    max-width: 760px;
+    box-sizing: border-box;
+  }
+  
+  .status.info    { background:#e6f2ff; color:#073763; border:1px solid #bcd6ff; }
+  .status.success { background:#e6f5ea; color:#11421a; border:1px solid #cde7cc; }
+  .status.error   { background:#fdecea; color:#6a151c; border:1px solid #f5c6cb; }
+  
+  /* countdown (visible) */
+  .countdown { font-size: 22px; font-weight:700; color:#1a2a6c; margin-top: 10px; }
+  
+  /* ---------- Formulario manual (contenedor atractivo) ---------- */
+  #manual-login {
+    display: none;                /* lo muestra el JS cuando corresponde */
+    width: 100%;
+    max-width: 760px;
+    margin: 18px auto 36px auto;
+    padding: 18px 20px;
+    background: rgba(255,255,255,0.98);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
     text-align: left;
-    border-bottom: 1px solid #dee2e6;
-}
-
-#records-table th {
-    background: #f8f9fa;
-    font-weight: 600;
-    color: #495057;
-}
-
-#records-table tbody tr:hover {
-    background: #f8f9fa;
-}
-
-.status-inside {
-    color: #28a745;
-    font-weight: 600;
-}
-
-.status-outside {
-    color: #dc3545;
-    font-weight: 600;
-}
-
-/* Media Queries para Responsividad */
-
-/* Tablets en modo vertical */
-@media (max-width: 768px) {
-    .main-wrapper {
-        padding: 10px;
-    }
-    
-    .container {
-        border-radius: 20px;
-        min-height: 550px;
-        max-width: 95%;
-    }
-    
-    .content {
-        padding: 20px;
-    }
-    
-    .titulo {
-        font-size: 35px;
-    }
-    
-    .img_usuario {
-        width: 160px;
-    }
-    
-    .logo {
-        height: 120px;
-    }
-    
-    .video-container {
-        max-width: 100%;
-        margin: 15px auto;
-    }
-    
-    #video,
-    #login-video {
-        height: 350px;
-    }
-    
-    .records-controls {
-        flex-direction: column;
-    }
-    
-    .records-controls .btn {
-        width: 100%;
-    }
-    
-    .summary-card span {
-        font-size: 1.5rem;
-    }
-}
-
-/* Smartphones */
-@media (max-width: 480px) {
-    .main-wrapper {
-        padding: 8px;
-    }
-    
-    .container {
-        border-radius: 15px;
-        min-height: 450px;
-    }
-    
-    .content {
-        padding: 15px;
-    }
-    
-    .titulo {
-        font-size: 28px;
-        margin-bottom: 10px;
-    }
-    
-    .img_usuario {
-        width: 130px;
-    }
-    
-    .logo {
-        height: 100px;
-        margin: 10px 0;
-    }
-    
-    .btn {
-        padding: 10px 15px;
-        font-size: 16px;
-    }
-    
-    .form-group {
-        margin-bottom: 20px;
-    }
-    
-    .form-group input {
-        padding: 10px;
-        font-size: 16px;
-    }
-    
-    .video-container {
-        margin: 15px auto;
-    }
-    
-    #video,
-    #login-video {
-        height: 280px;
-    }
-    
-    .countdown {
-        font-size: 20px;
-    }
-    
-    .records-summary {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .summary-card {
-        padding: 1rem;
-        min-width: auto;
-    }
-    
-    .summary-card h3 {
-        font-size: 0.8rem;
-    }
-    
-    .summary-card span {
-        font-size: 1.3rem;
-    }
-    
-    #records-table th,
-    #records-table td {
-        padding: 8px;
-        font-size: 14px;
-    }
-}
-
-/* Pantallas muy pequeñas */
-@media (max-width: 320px) {
-    .main-wrapper {
-        padding: 5px;
-    }
-    
-    .content {
-        padding: 10px;
-    }
-    
-    .titulo {
-        font-size: 22px;
-    }
-    
-    .img_usuario {
-        width: 110px;
-    }
-    
-    .logo {
-        height: 80px;
-    }
-    
-    .btn {
-        padding: 8px 12px;
-        font-size: 14px;
-    }
-    
-    button {
-        font-size: 14px;
-        padding: 12px;
-    }
-    
-    #video,
-    #login-video {
-        height: 240px;
-    }
-}
-
-/* Landscape mode para smartphones */
-@media (max-height: 500px) and (orientation: landscape) {
-    .main-wrapper {
-        align-items: flex-start;
-        padding-top: 20px;
-    }
-    
-    .container {
-        min-height: auto;
-    }
-    
-    .logo {
-        height: 80px;
-        margin: 10px 0;
-    }
-    
-    .img_usuario {
-        width: 100px;
-    }
-    
-    .titulo {
-        font-size: 24px;
-        margin-bottom: 10px;
-    }
-    
-    #video,
-    #login-video {
-        height: 200px;
-    }
-}
+  }
+  
+  #manual-login h3 {
+    margin: 0 0 12px 0;
+    text-align: center;
+    font-size: 22px;
+    color: #0c2b28;
+  }
+  
+  /* Inputs y labels */
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display:block; margin-bottom:8px; font-weight:700; color:#163232; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 16px;
+    border-radius: 10px;
+    border: 1px solid #e6e6e6;
+    background: #fff;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    outline: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: rgba(4,58,33,0.2);
+    box-shadow: 0 0 0 4px rgba(4,58,33,0.06);
+  }
+  
+  /* ---------- Registros / tabla (si existe) ---------- */
+  #records-screen { padding: 20px; }
+  #records-table-container { overflow-x:auto; background: rgba(255,255,255,0.96); border-radius: 8px; padding: 12px; }
+  
+  /* ---------- Pequeños ajustes visuales ---------- */
+  blockquote { width:100%; margin: 20px 0; position: relative; }
+  .img_usuario { width: 200px; max-width: 100%; height: auto; border-radius: 10px; }
+  
+  /* Estado de persona */
+  .status-inside  { color: #28a745; font-weight:600; }
+  .status-outside { color: #dc3545;  font-weight:600; }
+  
+  /* ---------- Responsive ---------- */
+  @media (max-width: 900px) {
+    .content { padding: 28px; }
+    .titulo { font-size: 44px; }
+    .logo img { width: 120px; }
+    #video, #login-video { object-fit: contain; }
+    .action-buttons-small .btn { min-width: 120px; }
+  }
+  
+  @media (max-width: 480px) {
+    .content { padding: 18px; }
+    .titulo { font-size: 30px; }
+    .logo img { width: 110px; max-width: 40%; }
+    .btn { font-size: 16px; padding: 12px; border-radius: 20px; }
+    .video-container { aspect-ratio: 4 / 3; max-width: 100%; }
+    #manual-login { padding: 14px; max-width: 94%; }
+    #manual-login h3 { font-size: 20px; }
+    .form-group input { padding: 12px; font-size: 15px; }
+  }
+  
+  /* utility: en caso de herencias conflictivas, selector específico para icono */
+  #home-screen .logo img { width: 140px; max-width: 30%; height: auto; }
+  
+  /* extra safety: si por alguna razón una regla global fuerza heights, las anulamos aquí
+     (evita que #video se quede con height fijo y confunda face-api) */
+  #video[style], #login-video[style] { height: auto !important; max-height: 520px !important; }
+  

@@ -1,30 +1,22 @@
-// menu.js corregido
-
-// Configuración de la API
-const API_BASE_URL = 'https://xtruedkvobfabctfmyys.supabase.co/functions/v1';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+const SUPABASE_URL = 'https://xtruedkvobfabctfmyys.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0cnVlZGt2b2JmYWJjdGZteXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NzkzOTUsImV4cCI6MjA3MjA1NTM5NX0.ViqW5ii4uOpvO48iG3FD6S4eg085GvXr-xKUC4TLrqo';
 const { createClient } = supabase;
-const supabaseClient = createClient('https://xtruedkvobfabctfmyys.supabase.co', SUPABASE_ANON_KEY);
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let userDatabase = [];
 let accessRecords = [];
 
+// ------------------- EVENTOS INICIALES ------------------- //
 document.addEventListener('DOMContentLoaded', () => {
-  // Route protection
   const isSupervisor = sessionStorage.getItem('isSupervisor');
-  console.log('Menu page loaded. isSupervisor flag is:', isSupervisor);
+  console.log('Menu page loaded. isSupervisor flag:', isSupervisor);
+
   if (isSupervisor !== 'true') {
-    console.log('Redirecting to index.html due to missing supervisor flag.');
     window.location.href = 'index.html';
     return;
   }
 
-  document.getElementById('back-to-home-from-records').addEventListener('click', () => {
-    sessionStorage.removeItem('isSupervisor');
-    window.location.href = 'index.html';
-  });
-  document.getElementById('refresh-records').addEventListener('click', loadRecords);
-
+  // Botón menú (hamburger)
   document.querySelector('.btn-menu').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('hide');
   });
@@ -38,190 +30,132 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Botón para refrescar registros
+  document.getElementById('refresh-records').addEventListener('click', loadRecords);
+
+  // Botón para registrar nuevo empleado
+  document.getElementById('capture-btn').addEventListener('click', () => {
+    const operatorCode = document.getElementById('operator-code').value;
+    const operatorName = document.getElementById('operator-name').value;
+    const operatorDni = document.getElementById('operator-dni').value;
+    const operatorLevel = document.getElementById('operator-level').value;
+
+    if (!operatorCode || !operatorName || !operatorDni || !operatorLevel) {
+      alert('Por favor complete todos los campos');
+      return;
+    }
+
+    // Guardamos en sessionStorage para usarlo en la captura
+    sessionStorage.setItem('nuevoEmpleado', JSON.stringify({
+      codigo_empleado: operatorCode,
+      nombre: operatorName,
+      dni: operatorDni,
+      nivel_acceso: parseInt(operatorLevel),
+    }));
+
+    // Redirigir a index en la pantalla de captura
+    window.location.href = 'index.html#capture-screen';
+  });
+
   init();
 });
 
-// Funciones de API
+// ------------------- API ------------------- //
 async function fetchUsers() {
-    try {
-        const { data, error } = await supabaseClient.from('users').select('*');
-        if (error) throw new Error(error.message);
-        return data;
-    } catch (error) {
-        console.error('Error al cargar usuarios:', error);
-        return [];
-    }
+  try {
+    const { data, error } = await supabaseClient.from('users').select('*');
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error('Error al cargar usuarios:', err);
+    return [];
+  }
 }
 
 async function fetchAccessRecords() {
-    try {
-        const { data, error } = await supabaseClient.from('access').select('*');
-        if (error) throw new Error(error.message);
-        return data;
-    } catch (error) {
-        console.error('Error al cargar registros de acceso:', error);
-        return [];
-    }
+  try {
+    const { data, error } = await supabaseClient.from('access').select('*');
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error('Error al cargar registros de acceso:', err);
+    return [];
+  }
 }
 
-async function clearAccessRecords() {
-    try {
-        const { data, error } = await supabaseClient.functions.invoke('access', { method: 'DELETE' });
-        if (error) throw new Error(error.message);
-        return data;
-    } catch (error) {
-        console.error('Error al limpiar registros de acceso:', error);
-        throw error;
-    }
-}
-
-async function clearUsers() {
-    try {
-        const { data, error } = await supabaseClient.functions.invoke('users', { method: 'DELETE' });
-        if (error) throw new Error(error.message);
-        return data;
-    } catch (error) {
-        console.error('Error al limpiar registros:', error);
-        throw error;
-    }
-}
-
-// Inicializar la aplicación
+// ------------------- INIT ------------------- //
 async function init() {
-    try {
-        // Cargar usuarios y registros de acceso
-        userDatabase = await fetchUsers();
-        accessRecords = await fetchAccessRecords();
-        loadRecords();
-    } catch (error) {
-        console.error('Error al inicializar la página de menú:', error);
-        alert('Error al inicializar la página de menú.');
-    }
+  try {
+    userDatabase = await fetchUsers();
+    accessRecords = await fetchAccessRecords();
+    loadRecords();
+  } catch (err) {
+    console.error('Error al inicializar menú:', err);
+    alert('Error al inicializar la página de menú.');
+  }
 }
 
+// ------------------- REGISTROS ------------------- //
 async function loadRecords() {
-    try {
-        // Usar la variable global si está disponible, sino cargar desde el backend
-        if (accessRecords.length === 0) {
-            accessRecords = await fetchAccessRecords();
-        }
-        if (userDatabase.length === 0) {
-            userDatabase = await fetchUsers();
-        }
+  try {
+    if (accessRecords.length === 0) accessRecords = await fetchAccessRecords();
+    if (userDatabase.length === 0) userDatabase = await fetchUsers();
 
-        // Crear un mapa de usuarios para acceso rápido
-        const userMap = {};
-        userDatabase.forEach(user => {
-            userMap[user.codigo_empleado] = user;
-        });
+    // Mapear usuarios
+    const userMap = {};
+    userDatabase.forEach(u => userMap[u.codigo_empleado] = u);
 
-        // --- Lógica de Contadores Mejorada ---
-        let peopleInside = 0;
-        const userStatusMap = {};
+    // Estado actual de cada usuario
+    const userStatusMap = {};
+    let peopleInside = 0;
 
-        // 1. Determinar el estado de cada usuario basado en su último registro
-        userDatabase.forEach(user => {
-            const userRecords = accessRecords
-                .filter(record => record.codigo_empleado === user.codigo_empleado)
-                .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+    userDatabase.forEach(user => {
+      const records = accessRecords
+        .filter(r => r.codigo_empleado === user.codigo_empleado)
+        .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
-            if (userRecords.length > 0) {
-                userStatusMap[user.codigo_empleado] = userRecords[0].tipo; // 'ingreso' o 'egreso'
-            } else {
-                userStatusMap[user.codigo_empleado] = 'egreso'; // Por defecto, están fuera
-            }
-        });
+      if (records.length > 0) {
+        userStatusMap[user.codigo_empleado] = records[0].tipo;
+      } else {
+        userStatusMap[user.codigo_empleado] = 'egreso';
+      }
+    });
 
-        // 2. Contar personas dentro y fuera
-        userDatabase.forEach(user => {
-            if (userStatusMap[user.codigo_empleado] === 'ingreso') {
-                peopleInside++;
-            }
-        });
+    userDatabase.forEach(user => {
+      if (userStatusMap[user.codigo_empleado] === 'ingreso') peopleInside++;
+    });
 
-        const peopleOutside = userDatabase.length - peopleInside;
+    const peopleOutside = userDatabase.length - peopleInside;
 
-        // Actualizar contadores en la UI
-        document.getElementById('people-inside-count').textContent = peopleInside;
-        document.getElementById('people-outside-count').textContent = peopleOutside;
+    document.getElementById('people-inside-count').textContent = peopleInside;
+    document.getElementById('people-outside-count').textContent = peopleOutside;
 
+    // Tabla de registros
+    const tbody = document.getElementById('records-tbody');
+    tbody.innerHTML = '';
 
-        // --- Lógica de Tabla ---
-        const tbody = document.getElementById('records-tbody');
-        tbody.innerHTML = '';
+    const sortedRecords = accessRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
-        // Ordenar registros por fecha (más reciente primero)
-        const sortedRecords = accessRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+    sortedRecords.forEach(record => {
+      const user = userMap[record.codigo_empleado];
+      const userName = user ? user.nombre : 'Desconocido';
+      const fecha = new Date(record.fecha_hora).toLocaleString('es-ES');
+      const tipo = record.tipo === 'ingreso' ? 'Ingreso' : 'Egreso';
+      const estado = userStatusMap[record.codigo_empleado] === 'ingreso' ? 'Dentro' : 'Fuera';
+      const estadoClass = estado === 'Dentro' ? 'status-inside' : 'status-outside';
 
-        sortedRecords.forEach(record => {
-            const user = userMap[record.codigo_empleado];
-            const userName = user ? user.nombre : 'Usuario Desconocido';
-            const fecha = new Date(record.fecha_hora).toLocaleString('es-ES');
-            const tipo = record.tipo === 'ingreso' ? 'Ingreso' : 'Egreso';
-            // Usar el userStatusMap que ya calculamos para la tabla
-            const estado = userStatusMap[record.codigo_empleado] === 'ingreso' ? 'Dentro' : 'Fuera';
-            const estadoClass = userStatusMap[record.codigo_empleado] === 'ingreso' ? 'status-inside' : 'status-outside';
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${fecha}</td>
-                <td>${userName}</td>
-                <td>${record.codigo_empleado}</td>
-                <td>${tipo}</td>
-                <td class="${estadoClass}">${estado}</td>
-            `;
-            tbody.appendChild(row);
-        });
-
-    } catch (error) {
-        console.error('Error al cargar registros:', error);
-        alert('Error al cargar los registros. Por favor, intente nuevamente.');
-    }
-}
-
-// Función para limpiar todos los registros
-async function clearRecords() {
-    const confirmation = confirm('¿Está seguro de que desea eliminar todos los registros de acceso? Esta acción no se puede deshacer.');
-
-    if (confirmation) {
-        try {
-            await clearAccessRecords();
-
-            // Limpiar la lista local
-            accessRecords = [];
-
-            // Volver a cargar la vista de registros (que ahora estará vacía)
-            loadRecords();
-
-            alert('Todos los registros de acceso han sido eliminados.');
-        } catch (error) {
-            console.error('Error al limpiar los registros:', error);
-            alert('Hubo un error al intentar limpiar los registros. Por favor, intente nuevamente.');
-        }
-    }
-}
-
-// Función para reiniciar la base de datos de usuarios
-async function resetUsers() {
-    const confirmation = confirm('¿ESTÁ SEGURO DE QUE DESEA ELIMINAR A TODOS LOS USUARIOS? Esta acción es irreversible y también limpiará todos los registros de acceso.');
-
-    if (confirmation) {
-        try {
-            // Primero limpiar registros, luego usuarios, para evitar registros huérfanos si algo falla
-            await clearAccessRecords();
-            await clearUsers();
-
-            // Limpiar las listas locales
-            accessRecords = [];
-            userDatabase = [];
-
-            // Volver a cargar la vista de registros (que ahora estará vacía)
-            loadRecords();
-
-            alert('Todos los usuarios y registros de acceso han sido eliminados.');
-        } catch (error) {
-            console.error('Error al reiniciar la base de datos:', error);
-            alert('Hubo un error al intentar reiniciar la base de datos. Por favor, intente nuevamente.');
-        }
-    }
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${fecha}</td>
+        <td>${userName}</td>
+        <td>${record.codigo_empleado}</td>
+        <td>${tipo}</td>
+        <td class="${estadoClass}">${estado}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (err) {
+    console.error('Error al cargar registros:', err);
+    alert('Error al cargar registros.');
+  }
 }

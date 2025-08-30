@@ -1,223 +1,121 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Acceso por Reconocimiento Facial</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&family=Montserrat:ital,wght@0,200;1,200&family=Raleway:ital,wght@0,200;1,200&family=Rubik:ital,wght@0,300;1,300&display=swap"
-        rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Control de Acceso por Reconocimiento Facial</title>
 
-    <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-    <script defer src="app.js"></script>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap"
+    rel="stylesheet">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script defer src="app.js"></script>
 </head>
-
 <body>
-    <div class="main-wrapper">
-        <div class="container">
-            <div class="content">
-                <!-- Pantalla de inicio -->
-                <div id="home-screen" class="screen active">
-                    <h2 class="titulo">Bienvenido</h2>
-                    <br>
-                    <p>Sistema de reconocimiento facial para registro y autenticación de usuarios</p>
+  <div class="main-wrapper">
+    <div class="container">
+      <div class="content">
 
-                    <div class="logo">
-                        <img class="img_usuario" src="icono.png" alt="">
-                    </div>
+        <!-- HOME -->
+        <section id="home-screen" class="screen active">
+          <h1 class="titulo">Bienvenido</h1>
+          <p class="intro">Sistema de reconocimiento facial para registro y autenticación de usuarios</p>
 
-                    <p>Seleccione una opción para continuar:</p>
-                    <div class="action-buttons">
-                        <blockquote>
-                            <button id="ingreso-btn" class="btn btn-success"><span>Registrar Ingreso</span></button>
-                            <br>
-                            <button id="egreso-btn" class="btn btn-secondary"><span>Registrar Egreso</span></button>
-                        </blockquote>
-                    </div>
-                </div>
+          <!-- LOGO: centered, controlled size -->
+          <div class="logo">
+            <img src="icono.png" alt="Logo de la empresa">
+          </div>
 
-                <!-- Pantalla de registro -->
-                <div id="register-screen" class="screen">
-                    <h2>Registro de Nuevo Usuario</h2>
-                    <div class="form-group">
-                        <label for="operator-code">Código de Operario:</label>
-                        <input type="text" id="operator-code" placeholder="Ej: OP-001">
-                    </div>
-                    <div class="form-group">
-                        <label for="operator-name">Nombre Completo:</label>
-                        <input type="text" id="operator-name" placeholder="Ej: Ana Gomez">
-                    </div>
-                    <div class="form-group">
-                        <label for="operator-dni">DNI:</label>
-                        <input type="text" id="operator-dni" placeholder="Ej: 12345678">
-                    </div>
+          <p class="subtitle">Seleccione una opción para continuar:</p>
 
-                    <div class="form-group">
-                        <label for="operator-level">Nivel de Acceso:</label>
-                        <select id="operator-level" class="form-control">
-                            <option value="1">1 - Empleado</option>
-                            <option value="2">2 - Empleado Senior</option>
-                            <option value="3">3 - Supervisor</option>
-                            <option value="4">4 - Gerente</option>
-                            <option value="5">5 - Administrador</option>
-                        </select>
-                    </div>
+          <div class="action-buttons">
+            <button id="ingreso-btn" class="btn btn-success"><span>Registrar Ingreso</span></button>
+            <button id="egreso-btn" class="btn btn-secondary"><span>Registrar Egreso</span></button>
+          </div>
+        </section>
 
-                    <div class="action-buttons">
-                        <button id="capture-btn" class="btn">Capturar Rostro</button>
-                        <button id="back-to-home-from-register" class="btn btn-secondary">Volver</button>
-                        <button id="view-records-btn" class="btn btn-info">Ver Registros</button>
-                        <button id="register-btn" class="btn"><span>Autenticarse como Supervisor</span></button>
-                    </div>
-                </div>
+        <!-- CAPTURA (registro de empleado desde menú supervisor) -->
+        <section id="capture-screen" class="screen">
+          <h2>Captura de Rostro</h2>
+          <p>Por favor, colóquese frente a la cámara.</p>
 
-                <!-- Pantalla de captura facial -->
-                <div id="capture-screen" class="screen">
-                    <h2>Captura de Rostro</h2>
-                    <p>Por favor, colóquese frente a la cámara y asegúrese de que su rostro esté bien iluminado.</p>
-                    
-                    <div class="video-container">
-                        <video id="video" autoplay muted playsinline></video>
-                        <canvas id="overlay"></canvas>
-                    </div>
-                    
-                    <div id="capture-status" class="status info">Esperando detección facial...</div>
+          <div class="video-container">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlay"></canvas>
+          </div>
 
-                    <div class="action-buttons">
-                        <button id="confirm-capture-btn" class="btn" disabled>Confirmar Captura</button>
-                        <button id="retry-capture-btn" class="btn btn-secondary">Reintentar</button>
-                    </div>
-                </div>
+          <div id="capture-status" class="status info">Esperando detección facial...</div>
 
-                <!-- Pantalla de login facial -->
-                <div id="login-screen" class="screen">
-                    <h2 id="login-title">Registro de Ingreso/Egreso</h2>
-                    <br>
-                    <p id="login-description">Por favor, colóquese frente a la cámara para ser reconocido.</p>
-                    
-                    <div class="video-container">
-                        <video id="login-video" autoplay muted playsinline></video>
-                        <canvas id="login-overlay"></canvas>
-                    </div>
-                    
-                    <div id="countdown" class="countdown">5</div>
-                    <div id="login-status" class="status info">Buscando coincidencias...</div>
-                    
-                    <div class="action-buttons">
-                        <button id="back-to-home-from-denied" class="btn btn-secondary">Volver al Inicio</button>
-                    </div>
+          <div class="action-buttons">
+            <button id="confirm-capture-btn" class="btn" disabled>Confirmar Captura</button>
+            <button id="retry-capture-btn" class="btn btn-secondary">Reintentar</button>
+          </div>
+        </section>
 
-                    <div id="egress-info" class="egress-info" style="display: none;">
-                        <div class="employee-info">
-                            <p>Bienvenido</p>
-                            <h2 id="employee-name">Juan Pérez | Gerente de Operaciones</h2>
-                        </div>
+        <!-- LOGIN (ingreso / egreso) -->
+        <section id="login-screen" class="screen">
+          <h2 id="login-title">Registro de Ingreso/Egreso</h2>
+          <p id="login-description">Por favor, colóquese frente a la cámara.</p>
 
-                        <div class="egress-time">
-                            <p>Hora de Egreso: <span id="current-time"></span></p>
-                        </div>
-                        <br>
+          <div class="video-container">
+            <video id="login-video" autoplay muted playsinline></video>
+            <canvas id="login-overlay"></canvas>
+          </div>
 
-                        <div class="button-container">
-                            <!--colocar boton de simular error (nc para que es)-->
-                        </div>
-                    </div>
+          <div id="countdown" class="countdown">5</div>
+          <div id="login-status" class="status info">Buscando coincidencias...</div>
 
-                    <!-- Login manual (oculto inicialmente) -->
-                    <div id="manual-login" class="manual-login" style="display: none;">
-                        <h3>Inicio de Sesión Manual</h3>
-                        <div class="form-group">
-                            <label for="manual-operator-code">Código de Operario:</label>
-                            <input type="text" id="manual-operator-code" placeholder="Ej: OP-001">
-                        </div>
-                        <div class="form-group">
-                            <label for="manual-operator-dni">DNI:</label>
-                            <input type="text" id="manual-operator-dni" placeholder="Ej: 12345678">
-                        </div>
-                        <div class="action-buttons">
-                            <button id="manual-login-btn" class="btn">Iniciar Sesión</button>
-                            <button id="retry-facial-login-btn" class="btn btn-secondary">Reintentar Reconocimiento Facial</button>
-                        </div>
-                    </div>
-                </div>
+          <div class="action-buttons">
+            <button id="back-to-home-from-denied" class="btn btn-secondary">Volver al Inicio</button>
+          </div>
 
-                <!-- Pantalla de acceso permitido -->
-                <div id="access-granted-screen" class="screen">
-                    <div class="status success">
-                        <h2>¡Registro Exitoso!</h2>
-                        <p id="welcome-message">Registro completado</p>
-                    </div>
-                    <div class="action-buttons">
-                        <button id="back-after-access" class="btn">Volver al Inicio</button>
-
-                        <!-- Botón de menú supervisor que aparecerá condicionalmente -->
-                        <button id="supervisor-menu-btn" class="btn btn-info" style="display: none;">
-                            <span>Acceder al Menú de Supervisor</span>
-                        </button>
-
-                    </div>
-                </div>
-
-                <!-- Pantalla de acceso denegado -->
-                <div id="access-denied-screen" class="screen">
-                    <div class="status error">
-                        <h2>Acceso Denegado</h2>
-                        <p id="denial-reason">No se pudo verificar su identidad</p>
-                    </div>
-                    <div class="action-buttons">
-                        <button id="try-again-btn" class="btn">Intentar Nuevamente</button>
-                        <button id="back-to-home-from-denied" class="btn btn-secondary">Volver al Inicio</button>
-                    </div>
-                </div>
-
-                <!-- Pantalla de registros (Solo para Supervisor) -->
-                <div id="records-screen" class="screen">
-                    <div class="records-container">
-                        <h2>Registro de Ingresos y Egresos</h2>
-                        <div class="records-controls">
-                            <button id="back-to-home-from-records" class="btn btn-secondary">Volver al Inicio</button>
-                            <button id="refresh-records" class="btn">Actualizar Registros</button>
-                        </div>
-                        <div class="records-summary">
-                            <div class="summary-card">
-                                <h3>Personas Dentro</h3>
-                                <span id="people-inside-count">0</span>
-                            </div>
-                            <div class="summary-card">
-                                <h3>Personas Fuera</h3>
-                                <span id="people-outside-count">0</span>
-                            </div>
-                        </div>
-                        <div class="records-list">
-                            <h3>Historial de Accesos</h3>
-                            <div id="records-table-container">
-                                <table id="records-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Fecha y Hora</th>
-                                            <th>Nombre</th>
-                                            <th>Código</th>
-                                            <th>Tipo</th>
-                                            <th>Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="records-tbody">
-                                        <!-- Los registros se cargarán dinámicamente -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+          <div id="manual-login" class="manual-login" style="display:none;">
+            <h3>Inicio de Sesión Manual</h3>
+            <div class="form-group">
+              <label for="manual-operator-code">Código:</label>
+              <input type="text" id="manual-operator-code">
             </div>
-        </div>
-    </div>
-</body>
+            <div class="form-group">
+              <label for="manual-operator-dni">DNI:</label>
+              <input type="text" id="manual-operator-dni">
+            </div>
+            <button id="manual-login-btn" class="btn">Iniciar Sesión</button>
+            <button id="retry-facial-login-btn" class="btn btn-secondary">Reintentar</button>
+          </div>
+        </section>
 
+        <!-- ACCESS GRANTED -->
+        <section id="access-granted-screen" class="screen">
+          <div class="status success">
+            <h2>¡Registro Exitoso!</h2>
+            <p id="welcome-message"></p>
+          </div>
+          <div class="action-buttons-small">
+            <button id="back-after-access" class="btn">Volver al Inicio</button>
+            <button id="supervisor-menu-btn" class="btn btn-info" style="display:none;">Menú Supervisor</button>
+          </div>
+        </section>
+
+        <!-- ACCESS DENIED -->
+        <section id="access-denied-screen" class="screen">
+          <div class="status error">
+            <h2>Acceso Denegado</h2>
+            <p id="denial-reason"></p>
+          </div>
+          <div class="action-buttons-small">
+            <button id="try-again-btn" class="btn">Intentar Nuevamente</button>
+            <button id="back-to-home-from-denied-2" class="btn btn-secondary">Volver al Inicio</button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</body>
 </html>
