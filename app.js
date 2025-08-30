@@ -550,3 +550,4 @@ async function loadRecords() {
 
 // Iniciar cuando cargue la página
 window.addEventListener('load', init);
+
