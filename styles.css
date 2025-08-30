@@ -5,43 +5,71 @@
     padding: 0;
 
 
-    font-family: "Raleway", sans-serif;
+
+
+    font-family: "Lexend Deca", sans-serif;
     font-optical-sizing: auto;
     font-weight: weight;
-    font-style: normal;
+    font-style: inherit;
+
+
 }
 
 body {
-    background: linear-gradient(45deg, #6a8a79, #eaf0ec);
+    background: linear-gradient(45deg, #eaf0ec, #eaf0ec);
     min-height: 100vh;
     justify-content: center;
     align-items: center;
-    display: flex;
-
+    position: relative;
     animation: slideIn 0.8s ease-out;
 
 }
 
+
+
+.container {
+    border-radius: 30px;
+    border: 5px;
+    max-width: 600px;
+    height: 850px;
+    width: auto;
+    font-size: 20px;
+
+    text-align: center;
+    position: relative;
+    left: 35%;
+    top: 30px;
+
+    background-color: rgb(7 16 45);
+    background: linear-gradient(to top right, rgb(101, 114, 111), rgb(192, 241, 238));
+    background: -webkit-linear-gradient(to top right, rgb(180, 181, 185), rgb(17, 48, 47));
+
+    border: 1px solid rgb(84 90 106);
+}
+
+/*
 .container {
 
     border-radius: 30px;
     border: 5px;
     max-width: 600px;
     height: 800px;
-    width: 100%;
+    width: auto;
     font-size: 20px;
 
     text-align: center;
+    position: relative;
+    left: 35%;
+    top: 30px;
 }
+    */
 
 .titulo {
-    font-family: "Montserrat", sans-serif;
+    font-family: "Lexend Deca", sans-serif;
     font-optical-sizing: auto;
-    font-weight: 300;
-    letter-spacing: 2px;
+    font-weight: normal;
     font-style: normal;
-
-    font-size: 50px;
+    font-size: 60px;
 }
 
 /*animación-------------*/
@@ -82,9 +110,81 @@ body {
 }
 
 
+/*
+
+.title-header {
+    
+    font-family: "Raleway", sans-serif;
+    color:  rgba(10, 75, 11, 0.556);
+    border-radius: 10px;
+    border: 10px;
+    width: auto;
+    text-align:start;
+    justify-content:center;
+    align-items:center;    
+    height: 100px;  
+    background: rgba(101, 126, 92, 0.424);
+
+}
+*/
+
+.egress-info {
+    top: 50px;
+    display: flex;
+    width: auto;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    height: 300px;
+}
 
 
 
+.employee-info {
+    margin-bottom: 15px;
+}
+
+#employee-name {
+    font-size: 1.4em;
+    color: #333;
+    font-weight: bold;
+}
+
+.egress-time {
+    margin-bottom: 30px;
+}
+
+#current-time {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.btn {
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: #fff;
+}
 
 
 
@@ -94,9 +194,13 @@ body {
 
 
 .header {
+    background-color: #004085;
     color: white;
     padding: 20px;
     text-align: center;
+    position: fixed;
+    top: 0;
+    width: 100%;
 }
 
 .header h1 {
@@ -122,7 +226,9 @@ body {
 }
 
 blockquote {
+    position: relative;
     width: 100%;
+    top: 50px;
 
 }
 
@@ -169,29 +275,9 @@ button:hover span:after {
 
 
 
-
- .vertical {
-        width: 100%;
-        display: flex; /* o flex-direction: column; */
-        flex-direction: column; /* Coloca los botones uno debajo del otro */
-        align-items: center; /* Opcional: centra horizontalmente dentro de su contenedor */
-        margin-bottom: 20px; /* Espacio entre los grupos de botones */
-    }
-
-    .horizontal {
-        text-align: center;
-        width: 100%;
-        display: flex; /* Coloca los botones uno al lado del otro */
-        justify-content: center; /* Centra los botones horizontalmente */
-    }
-
-
-
-
-
 .btn {
 
-
+    border-radius: 30px;
     border: 5px;
 
     color: white;
@@ -201,21 +287,17 @@ button:hover span:after {
 
     font-size: large;
 
-    background: black;
+    background: linear-gradient(45deg, #043a21, #4b6358);
     width: 100%;
 
 }
 
 .btn:hover {
-    background: black;
+    background: linear-gradient(45deg, #043a21, #4b6358);
     transform: translateY(-2px);
 }
 
 .btn-secondary {
-    width: 100%;
-        border-radius: 30px;
-        padding: 20px 24px;
-        
     background: linear-gradient(45deg, #043a21, #4b6358);
 
 }
@@ -225,9 +307,6 @@ button:hover span:after {
 }
 
 .btn-success {
-    width: 100%;
-    padding: 20px 24px;
-    border-radius: 30px;
     background: linear-gradient(45deg, #043a21, #4b6358);
 }
 
@@ -388,6 +467,8 @@ button:hover span:after {
     }
 }
 
+
+
 /* Pantalla de registros */
 #records-screen {
     padding: 2rem;
@@ -482,8 +563,6 @@ button:hover span:after {
 }
 
 .btn-info {
-    background: black;
-    padding: 20px 10px;
     color: white;
 }
 

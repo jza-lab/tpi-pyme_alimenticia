@@ -11,6 +11,7 @@ let userDatabase = []; // Se cargará desde el backend
 let accessRecords = []; // Se cargará desde el backend
 let currentLoginType = 'ingreso'; // Tipo de login actual (ingreso/egreso)
 
+// Elementos del DOM
 const screens = document.querySelectorAll('.screen');
 const video = document.getElementById('video');
 const loginVideo = document.getElementById('login-video');
@@ -37,6 +38,11 @@ document.getElementById('retry-capture-btn').addEventListener('click', restartFa
 document.getElementById('manual-login-btn').addEventListener('click', attemptManualLogin);
 document.getElementById('clear-records-btn').addEventListener('click', clearRecords);
 document.getElementById('reset-users-btn').addEventListener('click', resetUsers);
+document.getElementById('supervisor-btn').addEventListener('click', () => startFacialLogin('supervisor'));
+
+document.getElementById('menu-supervisor-btn').addEventListener('click', () => showScreen('records-screen'));
+
+
 
 // Funciones de API
 async function fetchUsers() {
@@ -95,7 +101,7 @@ async function registerUser(userData) {
         formData.append('nombre', userData.nombre);
         formData.append('dni', userData.dni);
         formData.append('descriptor', JSON.stringify(userData.descriptor));
-        
+
         // Convertir base64 a blob para la imagen
         if (userData.foto) {
             const response = await fetch(userData.foto);
@@ -139,14 +145,14 @@ async function registerAccess(codigoOperario, tipo) {
         }
 
         const result = await response.json();
-        
+
         // Agregar el nuevo registro a la lista local
         accessRecords.push({
             codigo_operario: codigoOperario,
             tipo: tipo,
             fecha_hora: new Date().toISOString()
         });
-        
+
         return result;
     } catch (error) {
         console.error('Error al registrar acceso:', error);
@@ -166,15 +172,15 @@ async function init() {
             faceapi.nets.faceRecognitionNet.loadFromUri(`${MODEL_BASE_URL}/face_recognition`),
             faceapi.nets.faceExpressionNet.loadFromUri(`${MODEL_BASE_URL}/face_expression`)
         ]);
-        
+
         console.log('Modelos de reconocimiento facial cargados correctamente');
-        
+
         // Cargar usuarios desde el backend
         userDatabase = await fetchUsers();
-        
+
         // Cargar registros de acceso desde el backend
         accessRecords = await fetchAccessRecords();
-        
+
         // Actualizar faceMatcher con los usuarios existentes
         updateFaceMatcher();
     } catch (error) {
@@ -189,7 +195,7 @@ function showScreen(screenId) {
         screen.classList.remove('active');
     });
     document.getElementById(screenId).classList.add('active');
-    
+
     // Detener cualquier proceso en curso al cambiar de pantalla
     if (screenId !== 'login-screen') {
         stopFacialRecognition();
@@ -204,22 +210,19 @@ async function startFaceCapture() {
     const operatorCode = document.getElementById('operator-code').value;
     const operatorName = document.getElementById('operator-name').value;
     const operatorDni = document.getElementById('operator-dni').value;
-    
+
     // Validar campos
     if (!operatorCode || !operatorName || !operatorDni) {
         alert('Por favor, complete todos los campos antes de continuar.');
         return;
     }
+
     // Verificar si el código de operario ya existe
     if (userDatabase.find(user => user.codigo_operario === operatorCode)) {
         alert('Este código de operario ya está registrado. Por favor, use otro.');
         return;
     }
-    // Verificar si el DNI ya existe
-    if(userDatabase.find(user => user.dni === operatorDni)) {
-        alert('Este DNI ya está registrado. Por favor, use otro.');
-        return;
-    }
+
     // Guardar datos del usuario temporalmente
     currentUser = {
         codigo_operario: operatorCode,
@@ -228,20 +231,23 @@ async function startFaceCapture() {
         foto: '',
         descriptor: null
     };
+
     // Mostrar pantalla de captura
     showScreen('capture-screen');
-    
+
     // Iniciar la cámara
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { width: 600, height: 450 } 
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 600, height: 450 }
         });
-        video.srcObject = stream;    
+        video.srcObject = stream;
+
         // Esperar a que el video esté listo
         video.onloadedmetadata = () => {
             // Configurar canvas overlay
             overlay.width = video.videoWidth;
-            overlay.height = video.videoHeight;           
+            overlay.height = video.videoHeight;
+
             // Iniciar detección facial
             detectFaceForRegistration();
         };
@@ -255,24 +261,24 @@ async function startFaceCapture() {
 // Detectar rostros para registro
 function detectFaceForRegistration() {
     const displaySize = { width: video.videoWidth, height: video.videoHeight };
-    
+
     // Limpiar cualquier intervalo previo
     if (detectionInterval) clearInterval(detectionInterval);
-    
+
     detectionInterval = setInterval(async () => {
         const detections = await faceapi
             .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 }))
             .withFaceLandmarks()
             .withFaceDescriptors();
-        
+
         const ctx = overlay.getContext('2d');
         ctx.clearRect(0, 0, overlay.width, overlay.height);
-        
+
         // Dibujar detecciones
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
         faceapi.draw.drawDetections(overlay, resizedDetections);
         faceapi.draw.drawFaceLandmarks(overlay, resizedDetections);
-        
+
         // Verificar si se detectó exactamente un rostro
         if (detections.length === 1) {
             captureStatus.textContent = 'Rostro detectado correctamente. Por favor, confirme la captura.';
@@ -299,11 +305,11 @@ async function confirmCapture() {
         alert('No se ha detectado un rostro válido. Por favor, intente nuevamente.');
         return;
     }
-    
+
     try {
         // Convertir el descriptor a array simple (faceapi usa Float32Array)
         currentUser.descriptor = Array.from(faceDescriptor);
-        
+
         // Capturar imagen del video para guardar como foto
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
@@ -311,24 +317,27 @@ async function confirmCapture() {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         currentUser.foto = canvas.toDataURL('image/png');
-        
+
         // Guardar usuario en el backend
         const result = await registerUser(currentUser);
+
         // Actualizar la base de datos local
         userDatabase.push(result.user);
+
         // Actualizar el faceMatcher con el nuevo usuario
         updateFaceMatcher();
+
         // Detener la cámara
         stopVideoStream();
-        
+
         // Mostrar mensaje de éxito
         alert(`Usuario ${currentUser.nombre} registrado correctamente.`);
-        
+
         // Limpiar los campos del formulario
         document.getElementById('operator-code').value = '';
         document.getElementById('operator-name').value = '';
         document.getElementById('operator-dni').value = '';
-        
+
         // Volver a la pantalla de inicio
         showScreen('home-screen');
     } catch (error) {
@@ -343,7 +352,7 @@ function restartFaceCapture() {
     captureStatus.textContent = 'Esperando detección facial...';
     captureStatus.className = 'status info';
     faceDescriptor = null;
-    
+
     // Limpiar el canvas
     const ctx = overlay.getContext('2d');
     ctx.clearRect(0, 0, overlay.width, overlay.height);
@@ -352,36 +361,39 @@ function restartFaceCapture() {
 // Iniciar el proceso de login facial
 async function startFacialLogin(tipo) {
     currentLoginType = tipo;
-    
-    // Actualizar título y descripción según el tipo
+
+    // Actualizar título y descripción según el tipo ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     const titleElement = document.getElementById('login-title');
     const descriptionElement = document.getElementById('login-description');
-    
-    if (tipo === 'ingreso') {
+
+    if (tipo === 'supervisor') {
+        titleElement.textContent = 'Registro de Supervisor';
+        descriptionElement.textContent = 'Por favor, colóquese frente a la cámara para registrar su ingreso.';
+    } else if (tipo === 'ingreso') {
         titleElement.textContent = 'Registro de Ingreso';
         descriptionElement.textContent = 'Por favor, colóquese frente a la cámara para registrar su ingreso.';
     } else {
         titleElement.textContent = 'Registro de Egreso';
         descriptionElement.textContent = 'Por favor, colóquese frente a la cámara para registrar su egreso.';
     }
-    
+
     showScreen('login-screen');
-    
+
     // Ocultar login manual inicialmente
     document.getElementById('manual-login').style.display = 'none';
-    
+
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { width: 600, height: 450 } 
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 600, height: 450 }
         });
         loginVideo.srcObject = stream;
-        
+
         // Esperar a que el video esté listo
         loginVideo.onloadedmetadata = () => {
             // Configurar canvas overlay
             loginOverlay.width = loginVideo.videoWidth;
             loginOverlay.height = loginVideo.videoHeight;
-            
+
             // Iniciar reconocimiento facial
             startFacialRecognition();
         };
@@ -397,41 +409,41 @@ async function startFacialLogin(tipo) {
 function startFacialRecognition() {
     const displaySize = { width: loginVideo.videoWidth, height: loginVideo.videoHeight };
     let countdown = 5;
-    
+
     // Actualizar contador
     countdownElement.textContent = countdown;
-    
+
     // Iniciar cuenta regresiva
     countdownInterval = setInterval(() => {
         countdown--;
         countdownElement.textContent = countdown;
-        
+
         if (countdown <= 0) {
             clearInterval(countdownInterval);
             stopFacialRecognition();
             showManualLoginOption();
         }
     }, 1000);
-    
+
     // Iniciar detección facial
     detectionInterval = setInterval(async () => {
         const detections = await faceapi
             .detectAllFaces(loginVideo, new faceapi.TinyFaceDetectorOptions())
             .withFaceLandmarks()
             .withFaceDescriptors();
-        
+
         const ctx = loginOverlay.getContext('2d');
         ctx.clearRect(0, 0, overlay.width, overlay.height);
-        
+
         // Dibujar detecciones
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
         faceapi.draw.drawDetections(loginOverlay, resizedDetections);
         faceapi.draw.drawFaceLandmarks(loginOverlay, resizedDetections);
-        
+
         // Verificar si se detectó al menos un rostro
         if (detections.length > 0 && faceMatcher) {
             const bestMatch = faceMatcher.findBestMatch(detections[0].descriptor);
-            
+
             if (bestMatch && bestMatch.distance < 0.6) {
                 // Usuario reconocido
                 const user = userDatabase.find(u => u.codigo_operario === bestMatch.label);
@@ -444,3 +456,344 @@ function startFacialRecognition() {
         }
     }, 100);
 }
+
+// Detener el reconocimiento facial
+function stopFacialRecognition() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    if (detectionInterval) clearInterval(detectionInterval);
+    stopVideoStream();
+}
+
+// Detener la transmisión de video
+function stopVideoStream() {
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+
+    if (loginVideo.srcObject) {
+        loginVideo.srcObject.getTracks().forEach(track => track.stop());
+        loginVideo.srcObject = null;
+    }
+
+    // Limpiar canvases
+    const ctx = overlay.getContext('2d');
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+    const loginCtx = loginOverlay.getContext('2d');
+    loginCtx.clearRect(0, 0, loginOverlay.width, loginOverlay.height);
+}
+
+// Mostrar opción de login manual
+function showManualLoginOption() {
+    loginStatus.textContent = 'No se pudo reconocer su rostro. Por favor, use el inicio de sesión manual.';
+    loginStatus.className = 'status error';
+    document.getElementById('manual-login').style.display = 'block';
+}
+
+// Intentar login manual
+async function attemptManualLogin() {
+    const operatorCode = document.getElementById('manual-operator-code').value;
+    const operatorDni = document.getElementById('manual-operator-dni').value;
+
+    const user = userDatabase.find(u => {
+        // Si los campos de búsqueda están vacíos, siempre devuelve true
+        if (!operatorCode && !operatorDni) {
+            return true;
+        }
+        // De lo contrario, realiza la búsqueda normal
+        return u.codigo_operario === operatorCode && u.dni === operatorDni;
+    });
+
+    if (user) {
+        grantAccess(user);
+    } else {
+          document.getElementById('manual-login').style.display = 'none';
+        document.getElementById('egress-info').style.display = 'block';
+
+        //denyAccess('Credenciales incorrectas. Verifique su código de operario y DNI.');/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    }
+}
+
+// Otorgar acceso
+async function grantAccess(user) {
+    try {
+        // Verificar si el usuario puede hacer este tipo de acceso
+        const allUserRecords = accessRecords.filter(record => record.codigo_operario === user.codigo_operario);
+
+        // Ordenar los registros por fecha para obtener el último correctamente
+        allUserRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+
+        let canAccess = true;
+        let errorMessage = '';
+
+        if (allUserRecords.length > 0) {
+            const lastRecord = allUserRecords[0]; // El primer elemento después de ordenar descendentemente
+
+            if (currentLoginType === 'ingreso' && lastRecord.tipo === 'ingreso') {
+                canAccess = false;
+                errorMessage = `${user.nombre}, ya se encuentra dentro del sistema. No puede ingresar nuevamente.`;
+            } else if (currentLoginType === 'egreso' && lastRecord.tipo === 'egreso') {
+                canAccess = false;
+                errorMessage = `${user.nombre}, ya se encuentra fuera del sistema. No puede egresar nuevamente.`;
+            }
+        }
+
+        if (!canAccess) {
+            // Mostrar mensaje de error
+            document.getElementById('denial-reason').textContent = errorMessage;
+            showScreen('access-denied-screen');
+            return;
+        }
+
+        // Registrar el acceso en el backend
+        await registerAccess(user.codigo_operario, currentLoginType);
+
+        const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
+        document.getElementById('welcome-message').textContent =
+            `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
+
+        // Mostrar la pantalla de éxito
+        console.log('Mostrando pantalla de éxito...');
+        showScreen('access-granted-screen');
+
+        // Agregar un pequeño delay para asegurar que la pantalla se muestre
+        setTimeout(() => {
+            console.log('Volviendo al inicio automáticamente...');
+            // Volver automáticamente al inicio después de 8 segundos
+            showScreen('home-screen');
+        }, 8000);
+
+    } catch (error) {
+        console.error('Error al registrar acceso:', error);
+        // Aún mostrar acceso permitido aunque falle el registro
+        const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
+        document.getElementById('welcome-message').textContent =
+            `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
+
+        // Mostrar la pantalla de éxito
+        console.log('Mostrando pantalla de éxito (fallback)...');
+        showScreen('access-granted-screen');
+
+        // Agregar un pequeño delay para asegurar que la pantalla se muestre
+        setTimeout(() => {
+            console.log('Volviendo al inicio automáticamente...');
+            // Volver automáticamente al inicio después de 8 segundos
+            showScreen('home-screen');
+        }, 8000);
+    }
+}
+
+// Denegar acceso
+function denyAccess(reason) {
+    document.getElementById('denial-reason').textContent = reason;
+    showScreen('access-denied-screen');
+}
+
+// Actualizar el face matcher con los usuarios de la base de datos
+function updateFaceMatcher() {
+    if (userDatabase.length === 0) {
+        faceMatcher = null;
+        return;
+    }
+
+    // Crear labeledDescriptors a partir de la base de datos
+    const labeledDescriptors = userDatabase.map(user => {
+        if (user.descriptor && user.descriptor.length > 0) {
+            return new faceapi.LabeledFaceDescriptors(
+                user.codigo_operario,
+                [new Float32Array(user.descriptor)]
+            );
+        }
+        return null;
+    }).filter(desc => desc !== null);
+
+    if (labeledDescriptors.length > 0) {
+        faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
+    } else {
+        faceMatcher = null;
+    }
+}
+
+// Funciones para la pantalla de registros
+function showRecordsScreen() {
+    showScreen('records-screen');
+    loadRecords();
+}
+
+async function loadRecords() {
+    try {
+        // Usar la variable global si está disponible, sino cargar desde el backend
+        if (accessRecords.length === 0) {
+            accessRecords = await fetchAccessRecords();
+        }
+        const users = await fetchUsers();
+
+        // Crear un mapa de usuarios para acceso rápido
+        const userMap = {};
+        users.forEach(user => {
+            userMap[user.codigo_operario] = user;
+        });
+
+        // --- Lógica de Contadores Mejorada ---
+        let peopleInside = 0;
+        const userStatusMap = {};
+
+        // 1. Determinar el estado de cada usuario basado en su último registro
+        users.forEach(user => {
+            const userRecords = accessRecords
+                .filter(record => record.codigo_operario === user.codigo_operario)
+                .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+
+            if (userRecords.length > 0) {
+                userStatusMap[user.codigo_operario] = userRecords[0].tipo; // 'ingreso' o 'egreso'
+            } else {
+                userStatusMap[user.codigo_operario] = 'egreso'; // Por defecto, están fuera
+            }
+        });
+
+        // 2. Contar personas dentro y fuera
+        users.forEach(user => {
+            if (userStatusMap[user.codigo_operario] === 'ingreso') {
+                peopleInside++;
+            }
+        });
+
+        const peopleOutside = users.length - peopleInside;
+
+        // Actualizar contadores en la UI
+        document.getElementById('people-inside-count').textContent = peopleInside;
+        document.getElementById('people-outside-count').textContent = peopleOutside;
+
+
+        // --- Lógica de Tabla ---
+        const tbody = document.getElementById('records-tbody');
+        tbody.innerHTML = '';
+
+        // Ordenar registros por fecha (más reciente primero)
+        const sortedRecords = accessRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+
+        sortedRecords.forEach(record => {
+            const user = userMap[record.codigo_operario];
+            const userName = user ? user.nombre : 'Usuario Desconocido';
+            const fecha = new Date(record.fecha_hora).toLocaleString('es-ES');
+            const tipo = record.tipo === 'ingreso' ? 'Ingreso' : 'Egreso';
+            // Usar el userStatusMap que ya calculamos para la tabla
+            const estado = userStatusMap[record.codigo_operario] === 'ingreso' ? 'Dentro' : 'Fuera';
+            const estadoClass = userStatusMap[record.codigo_operario] === 'ingreso' ? 'status-inside' : 'status-outside';
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${fecha}</td>
+                <td>${userName}</td>
+                <td>${record.codigo_operario}</td>
+                <td>${tipo}</td>
+                <td class="${estadoClass}">${estado}</td>
+            `;
+            tbody.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error('Error al cargar registros:', error);
+        alert('Error al cargar los registros. Por favor, intente nuevamente.');
+    }
+}
+
+// Función para verificar si un usuario puede hacer ingreso o egreso
+function canUserAccess(userId, accessType) {
+    // Obtener el último registro del usuario
+    const userRecords = accessRecords.filter(record => record.codigo_operario === userId);
+
+    if (userRecords.length === 0) {
+        // Si no hay registros, puede hacer cualquier cosa
+        return true;
+    }
+
+    // El último registro determina qué puede hacer
+    const lastRecord = userRecords[userRecords.length - 1];
+
+    if (accessType === 'ingreso') {
+        // Solo puede ingresar si su último registro fue egreso
+        return lastRecord.tipo === 'egreso';
+    } else {
+        // Solo puede egresar si su último registro fue ingreso
+        return lastRecord.tipo === 'ingreso';
+    }
+}
+
+// Inicializar la aplicación cuando se cargue la página
+window.addEventListener('load', init);
+
+// Función para limpiar todos los registros
+async function clearRecords() {
+    const confirmation = confirm('¿Está seguro de que desea eliminar todos los registros de acceso? Esta acción no se puede deshacer.');
+
+    if (confirmation) {
+        try {
+            await clearAccessRecords();
+
+            // Limpiar la lista local
+            accessRecords = [];
+
+            // Volver a cargar la vista de registros (que ahora estará vacía)
+            loadRecords();
+
+            alert('Todos los registros de acceso han sido eliminados.');
+        } catch (error) {
+            console.error('Error al limpiar los registros:', error);
+            alert('Hubo un error al intentar limpiar los registros. Por favor, intente nuevamente.');
+        }
+    }
+}
+
+// Función para reiniciar la base de datos de usuarios
+async function resetUsers() {
+    const confirmation = confirm('¿ESTÁ SEGURO DE QUE DESEA ELIMINAR A TODOS LOS USUARIOS? Esta acción es irreversible y también limpiará todos los registros de acceso.');
+
+    if (confirmation) {
+        try {
+            // Primero limpiar registros, luego usuarios, para evitar registros huérfanos si algo falla
+            await clearAccessRecords();
+            await clearUsers();
+
+            // Limpiar las listas locales
+            accessRecords = [];
+            userDatabase = [];
+
+            // Actualizar el face matcher (quedará vacío)
+            updateFaceMatcher();
+
+            // Volver a cargar la vista de registros (que ahora estará vacía)
+            loadRecords();
+
+            alert('Todos los usuarios y registros de acceso han sido eliminados.');
+        } catch (error) {
+            console.error('Error al reiniciar la base de datos:', error);
+            alert('Hubo un error al intentar reiniciar la base de datos. Por favor, intente nuevamente.');
+        }
+    }
+
+}
+
+
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+    const timeElement = document.getElementById('current-time');
+
+    function updateTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+        // Actualiza la hora cada segundo
+        setInterval(updateTime, 1000);
+        updateTime(); // Llama a la función de inmediato para mostrar la hora
+});
+
+
