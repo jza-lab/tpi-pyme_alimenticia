@@ -217,6 +217,7 @@ button:hover span:after {
     transition: border-color 0.3s ease;
 }
 
+
 .form-group input:focus, .form-group select:focus {
     outline: none;
     border-color: #043a21;
@@ -229,6 +230,12 @@ button:hover span:after {
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     background-size: 16px 12px;
+
+.form-group input:focus {
+    outline: none;
+    border-color: #043a21;
+    box-shadow: 0 0 0 2px rgba(4, 58, 33, 0.2);
+
 }
 
 .video-container {

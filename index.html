@@ -57,6 +57,7 @@
                         <label for="operator-dni">DNI:</label>
                         <input type="text" id="operator-dni" placeholder="Ej: 12345678">
                     </div>
+
                     <div class="form-group">
                         <label for="operator-nivel">Nivel de Acceso:</label>
                         <select id="operator-nivel" class="form-control">
@@ -67,6 +68,7 @@
                             <option value="5">5 - Administrador</option>
                         </select>
                     </div>
+
                     <div class="action-buttons">
                         <button id="capture-btn" class="btn">Capturar Rostro</button>
                         <button id="back-to-home-from-register" class="btn btn-secondary">Volver</button>
@@ -104,6 +106,9 @@
                     <div id="login-status" class="status info">Buscando coincidencias...</div>
                     <div class="action-buttons">
                         <button id="back-to-home-from-denied" class="btn btn-secondary">Volver al Inicio</button>
+
+                        <button id="menu-supervisor-btn" class="btn menu-supervisor">ir a menu</button>
+
                     </div>
 
                     <div id="egress-info" class="egress-info" style="display: none;">
@@ -148,10 +153,12 @@
                     </div>
                     <div class="action-buttons">
                         <button id="back-after-access" class="btn">Volver al Inicio</button>
+
                         <!-- Botón de menú supervisor que aparecerá condicionalmente -->
                         <button id="supervisor-menu-btn" class="btn btn-info" style="display: none;">
                             <span>Acceder al Menú de Supervisor</span>
                         </button>
+
                     </div>
                 </div>
 

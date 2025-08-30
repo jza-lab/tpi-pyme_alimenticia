@@ -291,8 +291,6 @@ async function confirmCapture() {
     try {
         // Convertir el descriptor a array simple (faceapi usa Float32Array)
         currentUser.descriptor = Array.from(faceDescriptor);
-
-        // Capturar imagen del video para save como foto
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -320,6 +318,7 @@ async function confirmCapture() {
         document.getElementById('operator-name').value = '';
         document.getElementById('operator-dni').value = '';
         document.getElementById('operator-level').value = '1';
+
 
         // Volver a la pantalla de inicio
         showScreen('home-screen');
@@ -531,6 +530,7 @@ async function grantAccess(user) {
         const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
         document.getElementById('welcome-message').textContent =
             `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
+
 
         // Mostrar botón de menú solo si es ingreso y tiene nivel de acceso 3 o superior
         if (currentLoginType === 'ingreso' && user.nivel_acceso >= 3) {
