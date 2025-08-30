@@ -40,8 +40,9 @@ document.getElementById('confirm-capture-btn').addEventListener('click', confirm
 document.getElementById('retry-capture-btn').addEventListener('click', restartFaceCapture);
 document.getElementById('manual-login-btn').addEventListener('click', attemptManualLogin);
 document.getElementById('retry-facial-login-btn').addEventListener('click', () => startFacialLogin(currentLoginType));
-document.getElementById('clear-records-btn').addEventListener('click', clearRecords);
-document.getElementById('reset-users-btn').addEventListener('click', resetUsers);
+
+// REMOVIDOS: clearRecords y resetUsers event listeners
+
 document.getElementById('supervisor-menu-btn').addEventListener('click', () => window.location.href = 'menu.html');
 
 // Funciones de API
@@ -64,28 +65,6 @@ async function fetchAccessRecords() {
     } catch (error) {
         console.error('Error al cargar registros de acceso:', error);
         return [];
-    }
-}
-
-async function clearAccessRecords() {
-    try {
-        const { data, error } = await supabaseClient.functions.invoke('access', { method: 'DELETE' });
-        if (error) throw new Error(error.message);
-        return data;
-    } catch (error) {
-        console.error('Error al limpiar registros de acceso:', error);
-        throw error;
-    }
-}
-
-async function clearUsers() {
-    try {
-        const { data, error } = await supabaseClient.functions.invoke('users', { method: 'DELETE' });
-        if (error) throw new Error(error.message);
-        return data;
-    } catch (error) {
-        console.error('Error al limpiar registros:', error);
-        throw error;
     }
 }
 
@@ -145,17 +124,28 @@ async function init() {
     try {
         console.log('Iniciando carga de modelos...');
         
-        // Cargar modelos de face-api.js desde el frontend
+        // CORRECCIÓN: Usar la ruta correcta de tus modelos locales
         const MODEL_BASE_URL = '/models';
 
-        await Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri(`${MODEL_BASE_URL}/tiny_face_detector`),
-            faceapi.nets.faceLandmark68Net.loadFromUri(`${MODEL_BASE_URL}/face_landmark_68`),
-            faceapi.nets.faceRecognitionNet.loadFromUri(`${MODEL_BASE_URL}/face_recognition`),
-            faceapi.nets.faceExpressionNet.loadFromUri(`${MODEL_BASE_URL}/face_expression`)
-        ]);
+        // CORRECCIÓN CRÍTICA: Solo cargar modelos necesarios y esperar correctamente
+        await faceapi.nets.tinyFaceDetector.loadFromUri(`${MODEL_BASE_URL}/tiny_face_detector`);
+        console.log('TinyFaceDetector cargado');
+        
+        await faceapi.nets.faceLandmark68Net.loadFromUri(`${MODEL_BASE_URL}/face_landmark_68`);
+        console.log('FaceLandmarks cargado');
+        
+        await faceapi.nets.faceRecognitionNet.loadFromUri(`${MODEL_BASE_URL}/face_recognition`);
+        console.log('FaceRecognition cargado');
 
-        console.log('Modelos de reconocimiento facial cargados correctamente');
+        // Opcional: solo si necesitas expresiones
+        try {
+            await faceapi.nets.faceExpressionNet.loadFromUri(`${MODEL_BASE_URL}/face_expression`);
+            console.log('FaceExpression cargado');
+        } catch (error) {
+            console.log('FaceExpression no disponible, continuando...');
+        }
+
+        console.log('Todos los modelos necesarios cargados correctamente');
 
         // Cargar usuarios desde el backend
         userDatabase = await fetchUsers();
@@ -240,8 +230,8 @@ async function startFaceCapture() {
 
         // Esperar a que el video esté listo
         video.onloadedmetadata = () => {
-            // CAMBIO CRÍTICO: Configurar canvas overlay correctamente
             video.onplay = () => {
+                // CORRECCIÓN: Configurar canvas overlay correctamente
                 const displaySize = { width: video.videoWidth, height: video.videoHeight };
                 overlay.width = displaySize.width;
                 overlay.height = displaySize.height;
@@ -250,8 +240,10 @@ async function startFaceCapture() {
                 captureStatus.textContent = 'Cámara lista. Esperando detección facial...';
                 captureStatus.className = 'status info';
                 
-                // Iniciar detección facial
-                detectFaceForRegistration();
+                // Esperar un poco para que todo esté listo
+                setTimeout(() => {
+                    detectFaceForRegistration();
+                }, 500);
             };
         };
     } catch (error) {
@@ -268,15 +260,14 @@ function detectFaceForRegistration() {
 
     detectionInterval = setInterval(async () => {
         if (!video.videoWidth || !video.videoHeight) {
-            console.log('Video no ready yet');
             return;
         }
 
         try {
-            // CAMBIO CRÍTICO: Mejorar opciones de detección
+            // CORRECCIÓN CRÍTICA: Usar TinyFaceDetectorOptions correctamente
             const detections = await faceapi
                 .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ 
-                    inputSize: 416, 
+                    inputSize: 320,
                     scoreThreshold: 0.5 
                 }))
                 .withFaceLandmarks()
@@ -286,10 +277,12 @@ function detectFaceForRegistration() {
             ctx.clearRect(0, 0, overlay.width, overlay.height);
 
             // Dibujar detecciones
-            const displaySize = { width: video.videoWidth, height: video.videoHeight };
-            const resizedDetections = faceapi.resizeResults(detections, displaySize);
-            faceapi.draw.drawDetections(overlay, resizedDetections);
-            faceapi.draw.drawFaceLandmarks(overlay, resizedDetections);
+            if (detections.length > 0) {
+                const displaySize = { width: video.videoWidth, height: video.videoHeight };
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                faceapi.draw.drawDetections(overlay, resizedDetections);
+                faceapi.draw.drawFaceLandmarks(overlay, resizedDetections);
+            }
 
             // Verificar si se detectó exactamente un rostro
             if (detections.length === 1) {
@@ -310,8 +303,10 @@ function detectFaceForRegistration() {
             }
         } catch (error) {
             console.error('Error en detección facial:', error);
+            captureStatus.textContent = 'Error en la detección facial. Verifique que los modelos estén cargados.';
+            captureStatus.className = 'status error';
         }
-    }, 100);
+    }, 200); // Aumenté el intervalo para mejor rendimiento
 }
 
 // Confirmar la captura facial y guardar el usuario
@@ -405,7 +400,6 @@ async function startFacialLogin(tipo) {
 
         // Esperar a que el video esté listo
         loginVideo.onloadedmetadata = () => {
-            // CAMBIO CRÍTICO: Configurar canvas overlay correctamente
             loginVideo.onplay = () => {
                 const displaySize = { width: loginVideo.videoWidth, height: loginVideo.videoHeight };
                 loginOverlay.width = displaySize.width;
@@ -413,8 +407,10 @@ async function startFacialLogin(tipo) {
                 
                 console.log('Login video dimensions:', displaySize);
                 
-                // Iniciar reconocimiento facial
-                startFacialRecognition();
+                // Esperar un poco para que todo esté listo
+                setTimeout(() => {
+                    startFacialRecognition();
+                }, 500);
             };
         };
     } catch (error) {
@@ -454,7 +450,7 @@ function startFacialRecognition() {
         try {
             const detections = await faceapi
                 .detectAllFaces(loginVideo, new faceapi.TinyFaceDetectorOptions({ 
-                    inputSize: 416, 
+                    inputSize: 320, 
                     scoreThreshold: 0.5 
                 }))
                 .withFaceLandmarks()
@@ -464,18 +460,19 @@ function startFacialRecognition() {
             ctx.clearRect(0, 0, loginOverlay.width, loginOverlay.height);
 
             // Dibujar detecciones
-            const resizedDetections = faceapi.resizeResults(detections, displaySize);
-            faceapi.draw.drawDetections(loginOverlay, resizedDetections);
-            faceapi.draw.drawFaceLandmarks(loginOverlay, resizedDetections);
+            if (detections.length > 0) {
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                faceapi.draw.drawDetections(loginOverlay, resizedDetections);
+                faceapi.draw.drawFaceLandmarks(loginOverlay, resizedDetections);
+            }
 
             // Verificar si se detectó al menos un rostro
             if (detections.length > 0 && faceMatcher) {
-                // CAMBIO CRÍTICO: Mejorar threshold de reconocimiento
                 const bestMatch = faceMatcher.findBestMatch(detections[0].descriptor);
                 
                 console.log('Best match:', bestMatch.label, 'Distance:', bestMatch.distance);
 
-                if (bestMatch && bestMatch.distance < 0.6) { // Threshold ajustado
+                if (bestMatch && bestMatch.distance < 0.6) {
                     // Usuario reconocido
                     const user = userDatabase.find(u => u.codigo_empleado === bestMatch.label);
                     if (user) {
@@ -488,14 +485,13 @@ function startFacialRecognition() {
         } catch (error) {
             console.error('Error en reconocimiento facial:', error);
         }
-    }, 100);
+    }, 200);
 }
 
 // Detener el reconocimiento facial
 function stopFacialRecognition() {
     if (countdownInterval) clearInterval(countdownInterval);
     if (detectionInterval) clearInterval(detectionInterval);
-    // No detener el video aquí para que se pueda usar manualmente
 }
 
 // Detener la transmisión de video
