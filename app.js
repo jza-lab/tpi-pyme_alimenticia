@@ -472,3 +472,32 @@ function stopVideoStream() {
     const loginCtx = loginOverlay.getContext('2d');
     loginCtx.clearRect(0, 0, loginOverlay.width, loginOverlay.height);
 }
+
+// Mostrar opción de login manual
+function showManualLoginOption() {
+    loginStatus.textContent = 'No se pudo reconocer su rostro. Por favor, use el inicio de sesión manual.';
+    loginStatus.className = 'status error';
+    document.getElementById('manual-login').style.display = 'block';
+}
+
+// Intentar login manual
+async function attemptManualLogin() {
+    const operatorCode = document.getElementById('manual-operator-code').value;
+    const operatorDni = document.getElementById('manual-operator-dni').value;
+    
+    if (!operatorCode || !operatorDni) {
+        alert('Por favor, complete todos los campos.');
+        return;
+    }
+    
+    const user = userDatabase.find(u => 
+        u.codigo_operario === operatorCode && u.dni === operatorDni
+    );
+    
+    if (user) {
+        grantAccess(user);
+    } else {
+        denyAccess('Credenciales incorrectas. Verifique su código de operario y DNI.');
+    }
+}
+
