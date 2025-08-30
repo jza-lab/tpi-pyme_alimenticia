@@ -124,8 +124,7 @@ async function init() {
     try {
         console.log('Iniciando carga de modelos...');
         
-        // CORRECCIÓN: Usar la ruta correcta de tus modelos locales
-        const MODEL_BASE_URL = '/models';
+        const MODEL_BASE_URL = '/tpi-pyme_alimenticia/models';
 
         // CORRECCIÓN CRÍTICA: Solo cargar modelos necesarios y esperar correctamente
         await faceapi.nets.tinyFaceDetector.loadFromUri(`${MODEL_BASE_URL}/tiny_face_detector`);
