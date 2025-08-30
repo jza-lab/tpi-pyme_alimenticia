@@ -208,7 +208,7 @@ button:hover span:after {
     color: #333;
 }
 
-.form-group input {
+.form-group input, .form-group select {
     width: 100%;
     padding: 12px;
     border: 1px solid #ddd;
@@ -217,10 +217,25 @@ button:hover span:after {
     transition: border-color 0.3s ease;
 }
 
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: #043a21;
+    box-shadow: 0 0 0 2px rgba(4, 58, 33, 0.2);
+}
+
+.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+
 .form-group input:focus {
     outline: none;
     border-color: #043a21;
     box-shadow: 0 0 0 2px rgba(4, 58, 33, 0.2);
+
 }
 
 .video-container {

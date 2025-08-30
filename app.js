@@ -1,4 +1,3 @@
-
 // Configuración de la API
 const API_BASE_URL = 'https://xtruedkvobfabctfmyys.supabase.co/functions/v1';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0cnVlZGt2b2JmYWJjdGZteXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NzkzOTUsImV4cCI6MjA3MjA1NTM5NX0.ViqW5ii4uOpvO48iG3FD6S4eg085GvXr-xKUC4TLrqo';
@@ -43,7 +42,7 @@ document.getElementById('manual-login-btn').addEventListener('click', attemptMan
 document.getElementById('retry-facial-login-btn').addEventListener('click', () => startFacialLogin(currentLoginType));
 document.getElementById('clear-records-btn').addEventListener('click', clearRecords);
 document.getElementById('reset-users-btn').addEventListener('click', resetUsers);
-
+document.getElementById('go-to-menu-btn').addEventListener('click', () => window.location.href = 'menu.html');
 
 // Funciones de API
 async function fetchUsers() {
@@ -96,6 +95,7 @@ async function registerUser(userData) {
         formData.append('codigo_empleado', userData.codigo_empleado);
         formData.append('nombre', userData.nombre);
         formData.append('dni', userData.dni);
+        formData.append('nivel_acceso', userData.nivel_acceso);
         formData.append('descriptor', JSON.stringify(userData.descriptor));
         if (userData.foto) {
             const response = await fetch(userData.foto);
@@ -190,9 +190,10 @@ async function startFaceCapture() {
     const operatorCode = document.getElementById('operator-code').value;
     const operatorName = document.getElementById('operator-name').value;
     const operatorDni = document.getElementById('operator-dni').value;
+    const operatorLevel = document.getElementById('operator-level').value;
 
     // Validar campos
-    if (!operatorCode || !operatorName || !operatorDni) {
+    if (!operatorCode || !operatorName || !operatorDni || !operatorLevel) {
         alert('Por favor, complete todos los campos antes de continuar.');
         return;
     }
@@ -208,6 +209,7 @@ async function startFaceCapture() {
         codigo_empleado: operatorCode,
         nombre: operatorName,
         dni: operatorDni,
+        nivel_acceso: parseInt(operatorLevel),
         foto: '',
         descriptor: null
     };
@@ -289,8 +291,6 @@ async function confirmCapture() {
     try {
         // Convertir el descriptor a array simple (faceapi usa Float32Array)
         currentUser.descriptor = Array.from(faceDescriptor);
-
-        // Capturar imagen del video para guardar como foto
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -317,6 +317,8 @@ async function confirmCapture() {
         document.getElementById('operator-code').value = '';
         document.getElementById('operator-name').value = '';
         document.getElementById('operator-dni').value = '';
+        document.getElementById('operator-level').value = '1';
+
 
         // Volver a la pantalla de inicio
         showScreen('home-screen');
@@ -529,6 +531,14 @@ async function grantAccess(user) {
         document.getElementById('welcome-message').textContent =
             `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
 
+
+        // Mostrar botón de menú solo si es ingreso y tiene nivel de acceso 3 o superior
+        if (currentLoginType === 'ingreso' && user.nivel_acceso >= 3) {
+            document.getElementById('go-to-menu-btn').style.display = 'block';
+        } else {
+            document.getElementById('go-to-menu-btn').style.display = 'none';
+        }
+
         // Mostrar la pantalla de éxito
         console.log('Mostrando pantalla de éxito...');
         showScreen('access-granted-screen');
@@ -697,9 +707,6 @@ function canUserAccess(userId, accessType) {
     }
 }
 
-// Inicializar la aplicación cuando se cargue la página
-window.addEventListener('load', init);
-
 // Función para limpiar todos los registros
 async function clearRecords() {
     const confirmation = confirm('¿Está seguro de que desea eliminar todos los registros de acceso? Esta acción no se puede deshacer.');
@@ -749,3 +756,6 @@ async function resetUsers() {
         }
     }
 }
+
+// Inicializar la aplicación cuando se cargue la página
+window.addEventListener('load', init);
