@@ -501,3 +501,77 @@ async function attemptManualLogin() {
     }
 }
 
+// Otorgar acceso
+async function grantAccess(user) {
+    try {
+        // Verificar si el usuario puede hacer este tipo de acceso
+        const allUserRecords = accessRecords.filter(record => record.codigo_operario === user.codigo_operario);
+        
+        // Ordenar los registros por fecha para obtener el último correctamente
+        allUserRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+
+        let canAccess = true;
+        let errorMessage = '';
+        
+        if (allUserRecords.length > 0) {
+            const lastRecord = allUserRecords[0]; // El primer elemento después de ordenar descendentemente
+            
+            if (currentLoginType === 'ingreso' && lastRecord.tipo === 'ingreso') {
+                canAccess = false;
+                errorMessage = `${user.nombre}, ya se encuentra dentro del sistema. No puede ingresar nuevamente.`;
+            } else if (currentLoginType === 'egreso' && lastRecord.tipo === 'egreso') {
+                canAccess = false;
+                errorMessage = `${user.nombre}, ya se encuentra fuera del sistema. No puede egresar nuevamente.`;
+            }
+        }
+        
+        if (!canAccess) {
+            // Mostrar mensaje de error
+            document.getElementById('denial-reason').textContent = errorMessage;
+            showScreen('access-denied-screen');
+            return;
+        }
+        
+        // Registrar el acceso en el backend
+        await registerAccess(user.codigo_operario, currentLoginType);
+        
+        const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
+        document.getElementById('welcome-message').textContent = 
+            `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
+        
+        // Mostrar la pantalla de éxito
+        console.log('Mostrando pantalla de éxito...');
+        showScreen('access-granted-screen');
+        
+        // Agregar un pequeño delay para asegurar que la pantalla se muestre
+        setTimeout(() => {
+            console.log('Volviendo al inicio automáticamente...');
+            // Volver automáticamente al inicio después de 8 segundos
+            showScreen('home-screen');
+        }, 8000);
+        
+    } catch (error) {
+        console.error('Error al registrar acceso:', error);
+        // Aún mostrar acceso permitido aunque falle el registro
+        const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
+        document.getElementById('welcome-message').textContent = 
+            `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
+        
+        // Mostrar la pantalla de éxito
+        console.log('Mostrando pantalla de éxito (fallback)...');
+        showScreen('access-granted-screen');
+        
+        // Agregar un pequeño delay para asegurar que la pantalla se muestre
+        setTimeout(() => {
+            console.log('Volviendo al inicio automáticamente...');
+            // Volver automáticamente al inicio después de 8 segundos
+            showScreen('home-screen');
+        }, 8000);
+    }
+}
+
+// Denegar acceso
+function denyAccess(reason) {
+    document.getElementById('denial-reason').textContent = reason;
+    showScreen('access-denied-screen');
+}
