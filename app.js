@@ -143,7 +143,7 @@ async function registerAccess(codigoOperario, tipo) {
 async function init() {
     try {
         // Cargar modelos de face-api.js desde el frontend
-        const MODEL_BASE_URL = '/tpi-pyme-alimenticia/models';
+        const MODEL_BASE_URL = '/tpi-pyme_alimenticia/models';
 
         await Promise.all([
             faceapi.nets.tinyFaceDetector.loadFromUri(`${MODEL_BASE_URL}/tiny_face_detector`),
