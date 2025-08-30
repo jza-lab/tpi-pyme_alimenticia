@@ -128,7 +128,7 @@ async function registerAccess(codigoOperario, tipo) {
 async function init() {
   try {
     console.log('Cargando modelos face-api...');
-    const MODEL_BASE_URL = '/models';
+    const MODEL_BASE_URL = '/tpi-pyme_alimenticia/models';
     await faceapi.nets.tinyFaceDetector.loadFromUri(`${MODEL_BASE_URL}/tiny_face_detector`);
     await faceapi.nets.faceLandmark68Net.loadFromUri(`${MODEL_BASE_URL}/face_landmark_68`);
     await faceapi.nets.faceRecognitionNet.loadFromUri(`${MODEL_BASE_URL}/face_recognition`);
