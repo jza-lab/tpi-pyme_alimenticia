@@ -11,7 +11,10 @@ let accessRecords = [];
 
 document.addEventListener('DOMContentLoaded', () => {
   // Route protection
-  if (sessionStorage.getItem('isSupervisor') !== 'true') {
+  const isSupervisor = sessionStorage.getItem('isSupervisor');
+  console.log('Menu page loaded. isSupervisor flag is:', isSupervisor);
+  if (isSupervisor !== 'true') {
+    console.log('Redirecting to index.html due to missing supervisor flag.');
     window.location.href = 'index.html';
     return;
   }

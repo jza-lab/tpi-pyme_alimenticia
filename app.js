@@ -172,6 +172,7 @@ async function init() {
 // Mostrar una pantalla específica y ocultar las demás
 function showScreen(screenId) {
     if (screenId === 'home-screen') {
+        console.log('Navigating to home screen, clearing isSupervisor flag.');
         sessionStorage.removeItem('isSupervisor');
     }
     screens.forEach(screen => {
@@ -538,6 +539,7 @@ async function grantAccess(user) {
         // Mostrar botón de menú solo si es ingreso y tiene nivel de acceso 3 o superior
         if (currentLoginType === 'ingreso' && user.nivel_acceso >= 3) {
             document.getElementById('supervisor-menu-btn').style.display = 'block';
+            console.log('Supervisor access granted. Setting isSupervisor flag in sessionStorage.');
             sessionStorage.setItem('isSupervisor', 'true');
         } else {
             document.getElementById('supervisor-menu-btn').style.display = 'none';
