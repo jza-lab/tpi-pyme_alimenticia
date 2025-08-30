@@ -9,11 +9,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&family=Montserrat:ital,wght@0,200;1,200&family=Raleway:ital,wght@0,200;1,200&family=Rubik:ital,wght@0,300;1,300&display=swap"
         rel="stylesheet">
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script defer src="app.js"></script>
+    <!--
+    <div class="title-header">
+        <br>
+        <h1 >Control de Acceso por Reconocimiento Facial</h1>
+    </div>
+-->
 </head>
 
 <body>
@@ -22,7 +30,7 @@
         <div class="content">
             <!-- Pantalla de inicio -->
             <div id="home-screen" class="screen active">
-                <h2 class="titulo">Bienvenido al sistema</h2>
+                <h2 class="titulo">Bienvenido</h2>
                 <br>
                 <p>Sistema de reconocimiento facial para registro y autenticación de usuarios</p>
 
@@ -34,17 +42,13 @@
                 <p>Seleccione una opción para continuar:</p>
                 <div class="action-buttons">
                     <blockquote>
+                        <button id="ingreso-btn" class="btn btn-success"><span>Registrar Ingreso</span></button>
                         <br>
-                        <button id="ingreso-btn" class="btn btn-success">Registrar Ingreso</button>
-                        <br>
-                        <button id="egreso-btn" class="btn btn-secondary">Registrar Egreso</button>
-                        <br>
-                        <button id="view-records-btn" class="btn btn-info">Ver Registros</button>
-                        <br>
-                        <button id="register-btn" class="btn">Registrar Empleados</button>
+                        <button id="egreso-btn" class="btn btn-secondary"><span>Registrar Egreso</span></button>
                     </blockquote>
                 </div>
             </div>
+
 
             <!-- Pantalla de registro -->
             <div id="register-screen" class="screen">
@@ -64,6 +68,9 @@
                 <div class="action-buttons">
                     <button id="capture-btn" class="btn">Capturar Rostro</button>
                     <button id="back-to-home-from-register" class="btn btn-secondary">Volver</button>
+                    <button id="view-records-btn" class="btn btn-info"> Ver Registros</button>
+                    <button id="register-btn" class="btn"><span> Autenticarse como Supervisor </span></button>
+
                 </div>
             </div>
 
@@ -76,6 +83,8 @@
                     <canvas id="overlay"></canvas>
                 </div>
                 <div id="capture-status" class="status info">Esperando detección facial...</div>
+
+
                 <div class="action-buttons">
                     <button id="confirm-capture-btn" class="btn" disabled>Confirmar Captura</button>
                     <button id="retry-capture-btn" class="btn btn-secondary">Reintentar</button>
@@ -85,6 +94,7 @@
             <!-- Pantalla de login facial -->
             <div id="login-screen" class="screen">
                 <h2 id="login-title">Registro de Ingreso/Egreso</h2>
+                <br>
                 <p id="login-description">Por favor, colóquese frente a la cámara para ser reconocido.</p>
                 <div class="video-container">
                     <video id="login-video" width="600" height="450" autoplay muted></video>
@@ -94,7 +104,27 @@
                 <div id="login-status" class="status info">Buscando coincidencias...</div>
                 <div class="action-buttons">
                     <!-- No hay botón de volver en login -->
+                    <button id="back-to-home-from-denied" class="btn btn-secondary">Volver al Inicio</button>
+                    <button id="menu-supervisor-btn" class="btn menu-supervisor">ir a menu</button>
                 </div>
+
+                <div id="egress-info" class="egress-info" style="display: none;">
+
+                    <div class="employee-info">
+                        <p> Bienvenido </p>
+                        <h2 id="employee-name">Juan Pérez | Gerente de Operaciones</h2>
+                    </div>
+
+                    <div class="egress-time">
+                        <p>Hora de Egreso: <span id="current-time"></span></p>
+                    </div>
+                    <br>
+
+                    <div class="button-container">
+                        <!--colocar boton de simular error (nc para que es)-->
+                    </div>
+                </div>
+
 
                 <!-- Login manual (oculto inicialmente) -->
                 <div id="manual-login" class="manual-login" style="display: none;">
@@ -136,7 +166,7 @@
                 </div>
             </div>
 
-            <!-- Pantalla de registros -->
+            <!-- Pantalla de registros (Solo para Supervisor) -->
             <div id="records-screen" class="screen">
                 <div class="records-container">
                     <h2>Registro de Ingresos y Egresos</h2>
@@ -180,7 +210,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.1"></script>
 </body>
 
 </html>
