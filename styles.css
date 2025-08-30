@@ -29,7 +29,7 @@ body {
 .container {
     border-radius: 30px;
     border: 1px solid rgb(84 90 106);
-    max-width: 600px;
+    max-width: 700px; /* Aumentado para acomodar mejor el video */
     min-height: 600px;
     width: 100%;
     text-align: center;
@@ -217,7 +217,6 @@ button:hover span:after {
     transition: border-color 0.3s ease;
 }
 
-
 .form-group input:focus, .form-group select:focus {
     outline: none;
     border-color: #043a21;
@@ -230,14 +229,9 @@ button:hover span:after {
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     background-size: 16px 12px;
-
-.form-group input:focus {
-    outline: none;
-    border-color: #043a21;
-    box-shadow: 0 0 0 2px rgba(4, 58, 33, 0.2);
-
 }
 
+/* ARREGLOS IMPORTANTES PARA EL VIDEO Y CANVAS */
 .video-container {
     position: relative;
     width: 100%;
@@ -249,12 +243,14 @@ button:hover span:after {
     display: flex;
     justify-content: center;
     align-items: center;
+    background: #000; /* Fondo negro para el video */
 }
 
 #video,
 #login-video {
     width: 100%;
-    height: auto;
+    height: 450px; /* Altura fija para consistencia */
+    object-fit: cover; /* Mantener proporción sin deformar */
     display: block;
     background: #000;
     z-index: 1;
@@ -277,6 +273,9 @@ button:hover span:after {
     margin: 15px 0;
     border-radius: 8px;
     font-weight: 600;
+    /* Agregar separación para evitar que se peguen */
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .status.success {
@@ -300,15 +299,18 @@ button:hover span:after {
 .countdown {
     font-size: 24px;
     text-align: center;
-    margin: 20px 0;
+    margin: 20px 0; /* Separación arriba y abajo */
     font-weight: bold;
     color: #1a2a6c;
+    padding: 10px;
 }
 
 .manual-login {
     margin-top: 30px;
     padding-top: 20px;
     border-top: 1px solid #ddd;
+    /* Separación adicional */
+    margin-bottom: 20px;
 }
 
 .action-buttons {
@@ -316,6 +318,8 @@ button:hover span:after {
     flex-direction: column;
     gap: 10px;
     margin-top: 20px;
+    /* Separación adicional */
+    margin-bottom: 20px;
 }
 
 .egress-info {
@@ -455,6 +459,7 @@ button:hover span:after {
     .container {
         border-radius: 20px;
         min-height: 550px;
+        max-width: 95%;
     }
     
     .content {
@@ -471,6 +476,16 @@ button:hover span:after {
     
     .logo {
         height: 120px;
+    }
+    
+    .video-container {
+        max-width: 100%;
+        margin: 15px auto;
+    }
+    
+    #video,
+    #login-video {
+        height: 350px;
     }
     
     .records-controls {
@@ -533,6 +548,11 @@ button:hover span:after {
         margin: 15px auto;
     }
     
+    #video,
+    #login-video {
+        height: 280px;
+    }
+    
     .countdown {
         font-size: 20px;
     }
@@ -593,6 +613,11 @@ button:hover span:after {
         font-size: 14px;
         padding: 12px;
     }
+    
+    #video,
+    #login-video {
+        height: 240px;
+    }
 }
 
 /* Landscape mode para smartphones */
@@ -619,4 +644,9 @@ button:hover span:after {
         font-size: 24px;
         margin-bottom: 10px;
     }
-}}
+    
+    #video,
+    #login-video {
+        height: 200px;
+    }
+}
