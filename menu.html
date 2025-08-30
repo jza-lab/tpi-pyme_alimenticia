@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú de Supervisor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&family=Montserrat:ital,wght@0,200;1,200&family=Raleway:ital,wght@0,200;1,200&family=Rubik:ital,wght@0,300;1,300&display=swap"
+        rel="stylesheet">
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script defer src="menu.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="content">
+            <div id="record-screen" class="screen active">
+                <div class="list-header">
+                    <button class="btn-menu">
+                        <span class="icon">
+                            <svg viewBox="0 0 175 80" width="40" height="40">
+                                <rect width="80" height="15" fill="#f0f0f0" rx="10"></rect>
+                                <rect y="30" width="80" height="15" fill="#f0f0f0" rx="10"></rect>
+                                <rect y="60" width="80" height="15" fill="#f0f0f0" rx="10"></rect>
+                            </svg>
+                        </span>
+                        <span class="text">MENU</span>
+                    </button>
+                </div>
+                <section id="sidebar">
+                    <a href="#" class="brand">
+                        <i class='bx bxs-smile  bx-lg'></i>
+                        <span class="text"></span>
+                    </a>
+                    <ul class="side-menu top">
+                        <li class="active">
+                            <a href="#ingresos">
+                                <i class='bx bxs-dashboard bx-sm'></i>
+                                <span class="text">Ingresos/Egresos</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#id-records-container1">
+                                <i class='bx bxs-shopping-bag-alt bx-sm'></i>
+                                <span class="text">Lista de Empleados</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#record-screen-estadisticas">
+                                <i class='bx bxs-doughnut-chart bx-sm'></i>
+                                <span class="text">Estadisticas</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#">
+                                <i class='bx bxs-message-dots bx-sm'></i>
+                                <span class="text">Cargar de planilla</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#">
+                                <i class='bx bxs-group bx-sm'></i>
+                                <span class="text">Autorizaciones</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="side-menu bottom">
+                        <li>
+                            <a href="#">
+                                <i class='bx bxs-cog bx-sm bx-spin-hover'></i>
+                                <span class="text">Settings</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="logout">
+                                <i class='bx bx-power-off bx-sm bx-burst-hover'></i>
+                                <span class="text">Logout</span>
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+                <div id="content">
+                    <!--Pantalla de Registros de Ingresos/Egresos-->
+                    <div id="id-records-container" class="records-container">
+                        <h2>Registro de Ingresos y Egresos</h2>
+                        <div class="records-controls">
+                            <button id="back-to-home-from-records" class="btn btn-secondary"> <span>Volver al
+                                    Inicio</span></button>
+                            <button id="refresh-records" class="btn btn-primary">Actualizar Registros</button>
+                            <button id="clear-records-btn" class="btn btn-danger">Limpiar Registros</button>
+                            <button id="reset-users-btn" class="btn btn-warning">Reiniciar Usuarios</button>
+                        </div>
+                        <div class="records-summary">
+                            <div class="summary-card">
+                                <h3>Personas Dentro</h3>
+                                <span id="people-inside-count">0</span>
+                            </div>
+                            <div class="summary-card">
+                                <h3>Personas Fuera</h3>
+                                <span id="people-outside-count">0</span>
+                            </div>
+                        </div>
+                        <div id="" class="records-list">
+                            <h3>Historial de Accesos</h3>
+                            <div id="records-table-container">
+                                <table id="records-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha y Hora</th>
+                                            <th>Nombre</th>
+                                            <th>Código</th>
+                                            <th>Tipo</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="records-tbody">
+                                        <!-- Los registros se cargarán dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
