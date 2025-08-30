@@ -12,16 +12,16 @@
         href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&family=Montserrat:ital,wght@0,200;1,200&family=Raleway:ital,wght@0,200;1,200&family=Rubik:ital,wght@0,300;1,300&display=swap"
         rel="stylesheet">
 
+
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/dist/boxicons.js' rel='stylesheet'>
+
+
     <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
     <script defer src="app.js"></script>
-    <!--
-    <div class="title-header">
-        <br>
-        <h1 >Control de Acceso por Reconocimiento Facial</h1>
-    </div>
--->
 </head>
 
 <body>
@@ -35,7 +35,7 @@
                 <p>Sistema de reconocimiento facial para registro y autenticación de usuarios</p>
 
                 <div class="logo">
-                    <img class="img_usuario" src="../prototipo_pyme/img/ChatGPT Image 27 ago 2025, 15_05_03.png" alt="">
+                    <img class="img_usuario" src="../icono.png" alt="">
                 </div>
 
 
@@ -167,12 +167,83 @@
             </div>
 
             <!-- Pantalla de registros (Solo para Supervisor) -->
-            <div id="records-screen" class="screen">
-                <div class="records-container">
+
+            <div id="record-screen" class="screen">
+
+                <div class="list-header">
+                    <button class="btn-menu">
+                        <span class="icon">
+                            <svg viewBox="0 0 175 80" width="40" height="40">
+                                <rect width="80" height="15" fill="#f0f0f0" rx="10"></rect>
+                                <rect y="30" width="80" height="15" fill="#f0f0f0" rx="10"></rect>
+                                <rect y="60" width="80" height="15" fill="#f0f0f0" rx="10"></rect>
+                            </svg>
+                        </span>
+                        <span class="text">MENU</span>
+                    </button>
+                </div>
+                
+
+                <section id="sidebar">
+                    <a href="#" class="brand">
+                        <i class='bx bxs-smile  bx-lg'></i>
+                        <span class="text"></span>
+                    </a>
+                    <ul class="side-menu top">
+                        <li class="active">
+                            <a href="#ingresos">
+                                <i class='bx bxs-dashboard bx-sm'></i>
+                                <span class="text">Ingresos/Egresos</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#id-records-container1">
+                                <i class='bx bxs-shopping-bag-alt bx-sm'></i>
+                                <span class="text">Lista de Empleados</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#record-screen-estadisticas">
+                                <i class='bx bxs-doughnut-chart bx-sm'></i>
+                                <span class="text">Estadisticas</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#">
+                                <i class='bx bxs-message-dots bx-sm'></i>
+                                <span class="text">Cargar de planilla</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#">
+                                <i class='bx bxs-group bx-sm'></i>
+                                <span class="text">Autorizaciones</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="side-menu bottom">
+                        <li>
+                            <a href="#">
+                                <i class='bx bxs-cog bx-sm bx-spin-hover'></i>
+                                <span class="text">Settings</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="logout">
+                                <i class='bx bx-power-off bx-sm bx-burst-hover'></i>
+                                <span class="text">Logout</span>
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+
+                <!--Pantalla de Registros de Ingresos/Egresos-->
+                <div id="id-records-container" class="records-container">
                     <h2>Registro de Ingresos y Egresos</h2>
                     <div class="records-controls">
-                        <button id="back-to-home-from-records" class="btn btn-secondary">Volver al Inicio</button>
-                        <button id="refresh-records" class="btn">Actualizar Registros</button>
+                        <button id="back-to-home-from-records" class="btn btn-secondary"> <span>Volver al
+                                Inicio</span></button>
+                        <button id="refresh-records" class="btn btn-primary">Actualizar Registros</button>
                         <button id="clear-records-btn" class="btn btn-danger">Limpiar Registros</button>
                         <button id="reset-users-btn" class="btn btn-warning">Reiniciar Usuarios</button>
                     </div>
@@ -186,7 +257,7 @@
                             <span id="people-outside-count">0</span>
                         </div>
                     </div>
-                    <div class="records-list">
+                    <div id="" class="records-list">
                         <h3>Historial de Accesos</h3>
                         <div id="records-table-container">
                             <table id="records-table">
@@ -207,6 +278,14 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Pantalla de registros (Solo para Supervisor) -->
+
+             <div id="record-screen" class="screen">
+
+             </div>
+
+
         </div>
     </div>
 
