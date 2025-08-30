@@ -575,3 +575,112 @@ function denyAccess(reason) {
     document.getElementById('denial-reason').textContent = reason;
     showScreen('access-denied-screen');
 }
+
+// Actualizar el face matcher con los usuarios de la base de datos
+function updateFaceMatcher() {
+    if (userDatabase.length === 0) {
+        faceMatcher = null;
+        return;
+    }
+    
+    // Crear labeledDescriptors a partir de la base de datos
+    const labeledDescriptors = userDatabase.map(user => {
+        if (user.descriptor && user.descriptor.length > 0) {
+            return new faceapi.LabeledFaceDescriptors(
+                user.codigo_operario, 
+                [new Float32Array(user.descriptor)]
+            );
+        }
+        return null;
+    }).filter(desc => desc !== null);
+    
+    if (labeledDescriptors.length > 0) {
+        faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
+    } else {
+        faceMatcher = null;
+    }
+}
+
+// Funciones para la pantalla de registros
+function showRecordsScreen() {
+    showScreen('records-screen');
+    loadRecords();
+}
+
+async function loadRecords() {
+    try {
+        // Usar la variable global si está disponible, sino cargar desde el backend
+        if (accessRecords.length === 0) {
+            accessRecords = await fetchAccessRecords();
+        }
+        const users = await fetchUsers();
+        
+        // Crear un mapa de usuarios para acceso rápido
+        const userMap = {};
+        users.forEach(user => {
+            userMap[user.codigo_operario] = user;
+        });
+        
+        // --- Lógica de Contadores Mejorada ---
+        let peopleInside = 0;
+        const userStatusMap = {};
+
+        // 1. Determinar el estado de cada usuario basado en su último registro
+        users.forEach(user => {
+            const userRecords = accessRecords
+                .filter(record => record.codigo_operario === user.codigo_operario)
+                .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+
+            if (userRecords.length > 0) {
+                userStatusMap[user.codigo_operario] = userRecords[0].tipo; // 'ingreso' o 'egreso'
+            } else {
+                userStatusMap[user.codigo_operario] = 'egreso'; // Por defecto, están fuera
+            }
+        });
+
+        // 2. Contar personas dentro y fuera
+        users.forEach(user => {
+            if (userStatusMap[user.codigo_operario] === 'ingreso') {
+                peopleInside++;
+            }
+        });
+        
+        const peopleOutside = users.length - peopleInside;
+
+        // Actualizar contadores en la UI
+        document.getElementById('people-inside-count').textContent = peopleInside;
+        document.getElementById('people-outside-count').textContent = peopleOutside;
+
+
+        // --- Lógica de Tabla ---
+        const tbody = document.getElementById('records-tbody');
+        tbody.innerHTML = '';
+        
+        // Ordenar registros por fecha (más reciente primero)
+        const sortedRecords = accessRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+        
+        sortedRecords.forEach(record => {
+            const user = userMap[record.codigo_operario];
+            const userName = user ? user.nombre : 'Usuario Desconocido';
+            const fecha = new Date(record.fecha_hora).toLocaleString('es-ES');
+            const tipo = record.tipo === 'ingreso' ? 'Ingreso' : 'Egreso';
+            // Usar el userStatusMap que ya calculamos para la tabla
+            const estado = userStatusMap[record.codigo_operario] === 'ingreso' ? 'Dentro' : 'Fuera';
+            const estadoClass = userStatusMap[record.codigo_operario] === 'ingreso' ? 'status-inside' : 'status-outside';
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${fecha}</td>
+                <td>${userName}</td>
+                <td>${record.codigo_operario}</td>
+                <td>${tipo}</td>
+                <td class="${estadoClass}">${estado}</td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+    } catch (error) {
+        console.error('Error al cargar registros:', error);
+        alert('Error al cargar los registros. Por favor, intente nuevamente.');
+    }
+}
