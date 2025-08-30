@@ -42,7 +42,7 @@ document.getElementById('manual-login-btn').addEventListener('click', attemptMan
 document.getElementById('retry-facial-login-btn').addEventListener('click', () => startFacialLogin(currentLoginType));
 document.getElementById('clear-records-btn').addEventListener('click', clearRecords);
 document.getElementById('reset-users-btn').addEventListener('click', resetUsers);
-document.getElementById('go-to-menu-btn').addEventListener('click', () => window.location.href = 'menu.html');
+document.getElementById('supervisor-menu-btn').addEventListener('click', () => window.location.href = 'menu.html');
 
 // Funciones de API
 async function fetchUsers() {
@@ -534,9 +534,9 @@ async function grantAccess(user) {
 
         // Mostrar botón de menú solo si es ingreso y tiene nivel de acceso 3 o superior
         if (currentLoginType === 'ingreso' && user.nivel_acceso >= 3) {
-            document.getElementById('go-to-menu-btn').style.display = 'block';
+            document.getElementById('supervisor-menu-btn').style.display = 'block';
         } else {
-            document.getElementById('go-to-menu-btn').style.display = 'none';
+            document.getElementById('supervisor-menu-btn').style.display = 'none';
         }
 
         // Mostrar la pantalla de éxito
