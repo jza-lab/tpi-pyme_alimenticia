@@ -684,3 +684,78 @@ async function loadRecords() {
         alert('Error al cargar los registros. Por favor, intente nuevamente.');
     }
 }
+
+// Función para verificar si un usuario puede hacer ingreso o egreso
+function canUserAccess(userId, accessType) {
+    // Obtener el último registro del usuario
+    const userRecords = accessRecords.filter(record => record.codigo_operario === userId);
+    
+    if (userRecords.length === 0) {
+        // Si no hay registros, puede hacer cualquier cosa
+        return true;
+    }
+    
+    // El último registro determina qué puede hacer
+    const lastRecord = userRecords[userRecords.length - 1];
+    
+    if (accessType === 'ingreso') {
+        // Solo puede ingresar si su último registro fue egreso
+        return lastRecord.tipo === 'egreso';
+    } else {
+        // Solo puede egresar si su último registro fue ingreso
+        return lastRecord.tipo === 'ingreso';
+    }
+}
+
+// Inicializar la aplicación cuando se cargue la página
+window.addEventListener('load', init);
+
+// Función para limpiar todos los registros
+async function clearRecords() {
+    const confirmation = confirm('¿Está seguro de que desea eliminar todos los registros de acceso? Esta acción no se puede deshacer.');
+
+    if (confirmation) {
+        try {
+            await clearAccessRecords();
+
+            // Limpiar la lista local
+            accessRecords = [];
+
+            // Volver a cargar la vista de registros (que ahora estará vacía)
+            loadRecords();
+
+            alert('Todos los registros de acceso han sido eliminados.');
+        } catch (error) {
+            console.error('Error al limpiar los registros:', error);
+            alert('Hubo un error al intentar limpiar los registros. Por favor, intente nuevamente.');
+        }
+    }
+}
+
+// Función para reiniciar la base de datos de usuarios
+async function resetUsers() {
+    const confirmation = confirm('¿ESTÁ SEGURO DE QUE DESEA ELIMINAR A TODOS LOS USUARIOS? Esta acción es irreversible y también limpiará todos los registros de acceso.');
+
+    if (confirmation) {
+        try {
+            // Primero limpiar registros, luego usuarios, para evitar registros huérfanos si algo falla
+            await clearAccessRecords();
+            await clearUsers();
+
+            // Limpiar las listas locales
+            accessRecords = [];
+            userDatabase = [];
+
+            // Actualizar el face matcher (quedará vacío)
+            updateFaceMatcher();
+
+            // Volver a cargar la vista de registros (que ahora estará vacía)
+            loadRecords();
+
+            alert('Todos los usuarios y registros de acceso han sido eliminados.');
+        } catch (error) {
+            console.error('Error al reiniciar la base de datos:', error);
+            alert('Hubo un error al intentar reiniciar la base de datos. Por favor, intente nuevamente.');
+        }
+    }
+}
