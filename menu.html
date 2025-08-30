@@ -1,44 +1,21 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Menú de Supervisor</title>
+  <title>Panel de Supervisor</title>
   <link rel="stylesheet" href="menu.css">
-  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script defer src="menu.js"></script>
 </head>
-
 <body>
-  <section id="sidebar">
-    <a href="#" class="brand">
-      <i class='bx bxs-user-detail bx-lg'></i>
-      <span class="text">Supervisor</span>
-    </a>
-    <ul class="side-menu top">
-      <li class="active">
-        <a href="#empleados"><i class='bx bxs-group bx-sm'></i><span class="text">Gestión de Empleados</span></a>
-      </li>
-      <li>
-        <a href="#accesos"><i class='bx bxs-id-card bx-sm'></i><span class="text">Accesos</span></a>
-      </li>
-      <li>
-        <a href="#estadisticas"><i class='bx bxs-bar-chart-alt-2 bx-sm'></i><span class="text">Estadísticas</span></a>
-      </li>
-    </ul>
-    <ul class="side-menu bottom">
-      <li><a href="#" class="logout"><i class='bx bx-power-off bx-sm'></i><span class="text">Salir</span></a></li>
-    </ul>
-  </section>
+
+  <!-- Botón de salir -->
+  <button class="logout-btn">Salir</button>
 
   <div id="content">
-    <div class="list-header">
-      <button class="btn-menu"><i class='bx bx-menu bx-md'></i></button>
-    </div>
 
-    <!-- Empleados -->
+    <!-- Gestión de empleados -->
     <section id="empleados" class="content-section">
       <h2>Gestión de Empleados</h2>
       <button id="btn-nuevo-empleado" class="btn btn-primary">Registrar Nuevo Empleado</button>
@@ -46,16 +23,26 @@
       <div id="empleados-list"></div>
     </section>
 
-    <!-- Accesos -->
+    <!-- Historial -->
     <section id="accesos" class="content-section">
       <h2>Historial de Ingresos/Egresos</h2>
       <button id="refresh-records" class="btn btn-primary">Actualizar Registros</button>
+
       <div class="records-summary">
-        <div class="summary-card"><h3>Dentro</h3><span id="people-inside-count">0</span></div>
-        <div class="summary-card"><h3>Fuera</h3><span id="people-outside-count">0</span></div>
+        <div class="summary-card">
+          <h3>Dentro</h3>
+          <span id="people-inside-count">0</span>
+        </div>
+        <div class="summary-card">
+          <h3>Fuera</h3>
+          <span id="people-outside-count">0</span>
+        </div>
       </div>
+
       <table>
-        <thead><tr><th>Fecha</th><th>Nombre</th><th>Código</th><th>Tipo</th><th>Estado</th></tr></thead>
+        <thead>
+          <tr><th>Fecha</th><th>Nombre</th><th>Código</th><th>Tipo</th><th>Estado</th></tr>
+        </thead>
         <tbody id="records-tbody"></tbody>
       </table>
     </section>
@@ -65,6 +52,8 @@
       <h2>Estadísticas</h2>
       <canvas id="statsChart"></canvas>
     </section>
+
   </div>
+
 </body>
 </html>

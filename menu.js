@@ -16,13 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Botón menú (hamburger)
-  document.querySelector('.btn-menu').addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('hide');
-  });
-
-  // Logout
-  const logoutBtn = document.querySelector('.logout');
+  // Botón salir (esquina superior derecha)
+  const logoutBtn = document.querySelector('.logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       sessionStorage.removeItem('isSupervisor');
@@ -30,32 +25,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Botón para refrescar registros
+  // Botón refrescar registros
   document.getElementById('refresh-records').addEventListener('click', loadRecords);
 
-  // Botón para registrar nuevo empleado
-  document.getElementById('capture-btn').addEventListener('click', () => {
-    const operatorCode = document.getElementById('operator-code').value;
-    const operatorName = document.getElementById('operator-name').value;
-    const operatorDni = document.getElementById('operator-dni').value;
-    const operatorLevel = document.getElementById('operator-level').value;
+  // Botón registrar nuevo empleado
+  const nuevoEmpleadoBtn = document.getElementById('btn-nuevo-empleado');
+  if (nuevoEmpleadoBtn) {
+    nuevoEmpleadoBtn.addEventListener('click', () => {
+      const operatorCode = prompt("Ingrese código de empleado:");
+      const operatorName = prompt("Ingrese nombre:");
+      const operatorDni = prompt("Ingrese DNI:");
+      const operatorLevel = prompt("Ingrese nivel de acceso:");
 
-    if (!operatorCode || !operatorName || !operatorDni || !operatorLevel) {
-      alert('Por favor complete todos los campos');
-      return;
-    }
+      if (!operatorCode || !operatorName || !operatorDni || !operatorLevel) {
+        alert('Por favor complete todos los datos.');
+        return;
+      }
 
-    // Guardamos en sessionStorage para usarlo en la captura
-    sessionStorage.setItem('nuevoEmpleado', JSON.stringify({
-      codigo_empleado: operatorCode,
-      nombre: operatorName,
-      dni: operatorDni,
-      nivel_acceso: parseInt(operatorLevel),
-    }));
+      // Guardamos en sessionStorage para usarlo en la captura
+      sessionStorage.setItem('nuevoEmpleado', JSON.stringify({
+        codigo_empleado: operatorCode,
+        nombre: operatorName,
+        dni: operatorDni,
+        nivel_acceso: parseInt(operatorLevel),
+      }));
 
-    // Redirigir a index en la pantalla de captura
-    window.location.href = 'index.html#capture-screen';
-  });
+      // Redirigir a index en la pantalla de captura
+      window.location.href = 'index.html#capture-screen';
+    });
+  }
 
   init();
 });
