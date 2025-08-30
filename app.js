@@ -40,6 +40,7 @@ document.getElementById('capture-btn').addEventListener('click', startFaceCaptur
 document.getElementById('confirm-capture-btn').addEventListener('click', confirmCapture);
 document.getElementById('retry-capture-btn').addEventListener('click', restartFaceCapture);
 document.getElementById('manual-login-btn').addEventListener('click', attemptManualLogin);
+document.getElementById('retry-facial-login-btn').addEventListener('click', () => startFacialLogin(currentLoginType));
 document.getElementById('clear-records-btn').addEventListener('click', clearRecords);
 document.getElementById('reset-users-btn').addEventListener('click', resetUsers);
 
@@ -464,7 +465,9 @@ function stopVideoStream() {
 function showManualLoginOption() {
     loginStatus.textContent = 'No se pudo reconocer su rostro. Por favor, use el inicio de sesión manual.';
     loginStatus.className = 'status error';
-    document.getElementById('manual-login').style.display = 'block';
+    const manualLoginElement = document.getElementById('manual-login');
+    manualLoginElement.style.display = 'block';
+    manualLoginElement.scrollIntoView({ behavior: 'smooth' });
 }
 
 // Intentar login manual
