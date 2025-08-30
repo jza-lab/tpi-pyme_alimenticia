@@ -10,26 +10,26 @@ let userDatabase = [];
 let accessRecords = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('back-to-home-from-records').addEventListener('click', () => {
-    window.location.href = 'index.html';
-  });
-  document.getElementById('refresh-records').addEventListener('click', loadRecords);
-  document.getElementById('clear-records-btn').addEventListener('click', clearRecords);
-  document.getElementById('reset-users-btn').addEventListener('click', resetUsers);
-
-  document.querySelector('.btn-menu').addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('hide');
-  });
-
-  // Logout
-  const logoutBtn = document.querySelector('.logout');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      window.location.href = 'index.html';
+    document.getElementById('back-to-home-from-records').addEventListener('click', () => {
+        window.location.href = 'index.html';
     });
-  }
+    document.getElementById('refresh-records').addEventListener('click', loadRecords);
+    document.getElementById('clear-records-btn').addEventListener('click', clearRecords);
+    document.getElementById('reset-users-btn').addEventListener('click', resetUsers);
 
-  init();
+    document.querySelector('.btn-menu').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('hide');
+    });
+
+    // Logout
+    const logoutBtn = document.querySelector('.logout');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+    }
+
+    init();
 });
 
 // Funciones de API
