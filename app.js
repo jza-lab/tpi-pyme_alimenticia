@@ -171,6 +171,9 @@ async function init() {
 
 // Mostrar una pantalla específica y ocultar las demás
 function showScreen(screenId) {
+    if (screenId === 'home-screen') {
+        sessionStorage.removeItem('isSupervisor');
+    }
     screens.forEach(screen => {
         screen.classList.remove('active');
     });
@@ -535,6 +538,7 @@ async function grantAccess(user) {
         // Mostrar botón de menú solo si es ingreso y tiene nivel de acceso 3 o superior
         if (currentLoginType === 'ingreso' && user.nivel_acceso >= 3) {
             document.getElementById('supervisor-menu-btn').style.display = 'block';
+            sessionStorage.setItem('isSupervisor', 'true');
         } else {
             document.getElementById('supervisor-menu-btn').style.display = 'none';
         }
