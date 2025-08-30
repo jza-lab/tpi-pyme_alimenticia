@@ -409,7 +409,7 @@ function startFacialRecognition() {
             .withFaceDescriptors();
         
         const ctx = loginOverlay.getContext('2d');
-        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        ctx.clearRect(0, 0, loginOverlay.width, loginOverlay.height);
         
         // Dibujar detecciones
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
