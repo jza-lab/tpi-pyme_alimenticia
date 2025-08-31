@@ -194,12 +194,12 @@ function showEmployeesList(employees) {
     card.className = 'employee-card';
     card.innerHTML = `
     <div class="employee-info">
-        <h4>${employee.name}</h4>
-        <p>Código: ${employee.code} | DNI: ${employee.dni}</p>
-        <p>Estado: <span class="status-${employee.status}">${employee.status === 'inside' ? 'Dentro' : 'Fuera'}</span></p>
+        <h4>${employee.nombre}</h4>
+        <p>Código: ${employee.codigo_empleado} | DNI: ${employee.dni}</p>
+        <p>Estado: <span class="status-${employee.estado}">${employee.estado === 'ingreso' ? 'Dentro' : 'Fuera'}</span></p>
     </div>
-    <div class="employee-level level-${employee.level}">
-        ${employee.level === 1 ? 'Empleado' : 'Supervisor'}
+    <div class="employee-level level-${employee.nivel_acceso}">
+        ${employee.nivel_acceso === 1 ? 'Empleado' : 'Supervisor'}
     </div>
     `;
   containerSeccionEmpleados.appendChild(card);
@@ -214,7 +214,7 @@ async function loadEmployees() {
 
     if (!employees || employees.length === 0) {
       console.warn('No se encontraron empleados');
-      container.innerHTML = '<p>No hay empleados para mostrar.</p>';
+      containerSeccionEmpleados.innerHTML = '<p>No hay empleados para mostrar.</p>';
       return;
     }
 
@@ -222,7 +222,7 @@ async function loadEmployees() {
     showEmployeesList(employees);
   } catch (err) {
     console.error('Error al cargar los empleados:', err);
-    container.innerHTML = '<p>Error al cargar los datos.</p>';
+    containerSeccionEmpleados.innerHTML = '<p>Error al cargar los datos.</p>';
   }
 }
 // Llamar a la función para cargar los datos al iniciar
