@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Actualizar contenido según la sección
       if (section === 'accesos') {
-        loadAccessRecords();
+        renderRecords();
       } else if (section === 'empleados') {
         loadEmployees();
       } else if (section === 'estadisticas') {
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   document.getElementById('refresh-records')?.addEventListener('click', function () {
-    loadAccessRecords();
+    renderRecords();
   });
 
   // Cargar datos iniciales
@@ -213,16 +213,6 @@ async function fetchAccessRecords() {
   } catch (err) {
     console.error('Error al cargar registros:', err);
     return [];
-  }
-}
-
-async function init() {
-  try {
-    userDatabase = await fetchUsers();
-    accessRecords = await fetchAccessRecords();
-    loadAccessRecords();
-  } catch (err) {
-    console.error('Error al inicializar:', err);
   }
 }
 
