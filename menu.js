@@ -5,6 +5,18 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let userDatabase = [];
 let accessRecords = [];
+let faceMatcher = null;
+let currentUser = null;
+let faceDescriptor = null;
+let detectionInterval = null;
+
+// Referencias a elementos
+const video = document.getElementById('video');
+const overlay = document.getElementById('overlay');
+const captureStatus = document.getElementById('capture-status');
+
+
+
 
 // ------------------- EVENTOS INICIALES ------------------- //
 /**document.addEventListener('DOMContentLoaded', () => {
@@ -90,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Actualizar contenido según la sección
       if (section === 'accesos') {
-        renderRecords();
+        loadAccessRecords();
       } else if (section === 'empleados') {
         loadEmployees();
       } else if (section === 'estadisticas') {
@@ -130,14 +142,22 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    // Guardar datos temporalmente
-    sessionStorage.setItem('nuevoEmpleado', JSON.stringify({
+    // Verificar si el código ya existe
+    if (userDatabase.find(u => u.codigo_empleado === code)) {
+      alert('Código ya registrado.');
+      return;
+    }
+
+    // Guardar datos del usuario actual
+    currentUser = {
       codigo_empleado: code,
       nombre: name,
       apellido: surname,
       dni: dni,
       nivel_acceso: parseInt(role),
-    }));
+      foto: '',
+      descriptor: null
+    };
 
     showCaptureScreen();
   });
@@ -154,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   document.getElementById('confirm-capture-btn')?.addEventListener('click', function () {
-    // Implementar la lógica para confirmar y guardar
+    // Aquí implementarías la lógica para confirmar y guardar
     alert('Empleado registrado exitosamente');
     showEmployeesMainView();
     // Limpiar formulario
@@ -162,14 +182,59 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   document.getElementById('refresh-records')?.addEventListener('click', function () {
-    renderRecords();
+    loadAccessRecords();
   });
 
   // Cargar datos iniciales
   init();
 });
 
-// ------------------- API ------------------- //
+// Funciones para cargar datos (adaptadas a tu código original)
+async function fetchUsers() {
+  try {
+    // Simular carga desde Supabase - reemplaza con tu código original
+    return [
+      { codigo_empleado: 'EMP001', nombre: 'Juan Pérez', dni: '12345678', nivel_acceso: 1 },
+      { codigo_empleado: 'EMP002', nombre: 'María García', dni: '87654321', nivel_acceso: 3 }
+    ];
+  } catch (err) {
+    console.error('Error al cargar usuarios:', err);
+    return [];
+  }
+}
+
+async function fetchAccessRecords() {
+  try {
+    // Simular registros de acceso - reemplaza con tu código original
+    return [
+      { fecha_hora: new Date().toISOString(), codigo_empleado: 'EMP001', tipo: 'ingreso' },
+      { fecha_hora: new Date(Date.now() - 3600000).toISOString(), codigo_empleado: 'EMP002', tipo: 'egreso' }
+    ];
+  } catch (err) {
+    console.error('Error al cargar registros:', err);
+    return [];
+  }
+}
+
+async function init() {
+  try {
+    userDatabase = await fetchUsers();
+    accessRecords = await fetchAccessRecords();
+    loadAccessRecords();
+  } catch (err) {
+    console.error('Error al inicializar:', err);
+  }
+}
+
+document.getElementById('confirm-capture-btn')?.addEventListener('click', function () {
+  confirmCapture();
+});
+
+document.getElementById('refresh-records')?.addEventListener('click', function () {
+  refreshRecords();
+});
+
+// ------------------- API FUNCTIONS ------------------- //
 async function fetchUsers() {
   try {
     const { data, error } = await supabaseClient.from('users').select('*');
@@ -192,13 +257,28 @@ async function fetchAccessRecords() {
   }
 }
 
+// ------------------- INIT ------------------- //
 async function init() {
   try {
+    console.log('Cargando modelos face-api...');
+    const MODEL_BASE_URL = '/tpi-pyme_alimenticia/models';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(`${MODEL_BASE_URL}/tiny_face_detector`);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(`${MODEL_BASE_URL}/face_landmark_68`);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(`${MODEL_BASE_URL}/face_recognition`);
+    try {
+      await faceapi.nets.faceExpressionNet.loadFromUri(`${MODEL_BASE_URL}/face_expression`);
+    } catch (e) {
+      console.log('Face expression model not found, continuing...');
+    }
+
     userDatabase = await fetchUsers();
     accessRecords = await fetchAccessRecords();
+    updateFaceMatcher();
     renderRecords();
+    console.log('Init OK');
   } catch (err) {
-    console.error('Error al inicializar:', err);
+    console.error('init error', err);
+    alert('Error al cargar los modelos de reconocimiento facial');
   }
 }
 
@@ -210,10 +290,10 @@ async function refreshRecords() {
       btn.disabled = true;
       btn.textContent = 'Actualizando...';
     }
-    // Siempre traer datos nuevos desde Supabase
     const [users, records] = await Promise.all([fetchUsers(), fetchAccessRecords()]);
     userDatabase = users;
     accessRecords = records;
+    updateFaceMatcher();
     renderRecords();
   } catch (err) {
     console.error('Error al refrescar registros:', err);
@@ -226,14 +306,12 @@ async function refreshRecords() {
   }
 }
 
-// ------------------- RENDERIZA (separamos de loadRecords) ------------------- //
+// ------------------- RENDER RECORDS ------------------- //
 function renderRecords() {
   try {
-    // Mapear usuarios
     const userMap = {};
     userDatabase.forEach(u => userMap[u.codigo_empleado] = u);
 
-    // Estado actual de cada usuario
     const userStatusMap = {};
     let peopleInside = 0;
 
@@ -258,7 +336,6 @@ function renderRecords() {
     document.getElementById('people-inside-count').textContent = peopleInside;
     document.getElementById('people-outside-count').textContent = peopleOutside;
 
-    // Tabla de registros
     const tbody = document.getElementById('records-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -267,7 +344,7 @@ function renderRecords() {
 
     sortedRecords.forEach(record => {
       const user = userMap[record.codigo_empleado];
-      const userName = user ? user.nombre : 'Desconocido';
+      const userName = user ? `${user.nombre} ${user.apellido || ''}` : 'Desconocido';
       const fecha = new Date(record.fecha_hora).toLocaleString('es-ES');
       const tipo = record.tipo === 'ingreso' ? 'Ingreso' : 'Egreso';
       const estado = userStatusMap[record.codigo_empleado] === 'ingreso' ? 'Dentro' : 'Fuera';
@@ -275,62 +352,54 @@ function renderRecords() {
 
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${fecha}</td>
-        <td>${userName}</td>
-        <td>${record.codigo_empleado}</td>
-        <td>${tipo}</td>
-        <td class="${estadoClass}">${estado}</td>
-      `;
+            <td>${fecha}</td>
+            <td>${userName}</td>
+            <td>${record.codigo_empleado}</td>
+            <td>${tipo}</td>
+            <td class="${estadoClass}">${estado}</td>
+          `;
       tbody.appendChild(row);
     });
   } catch (err) {
     console.error('Error al renderizar registros:', err);
   }
-  console.log('Cargando registros de acceso...');
 }
 
-// Función para mostrar lista de empleados
-const containerSeccionEmpleados = document.getElementById('empleados-list');
+async function loadEmployees() {
+  showEmployeesMainView();
+  try {
+    const employees = await fetchUsers();
+    if (!employees || employees.length === 0) {
+      console.warn('No se encontraron empleados');
+      document.getElementById('empleados-list').innerHTML = '<p>No hay empleados para mostrar.</p>';
+      return;
+    }
+    showEmployeesList(employees);
+  } catch (err) {
+    console.error('Error al cargar los empleados:', err);
+    document.getElementById('empleados-list').innerHTML = '<p>Error al cargar los datos.</p>';
+  }
+}
 
 function showEmployeesList(employees) {
-  containerSeccionEmpleados.innerHTML = '';
+  const container = document.getElementById('empleados-list');
+  container.innerHTML = '';
 
   employees.forEach(employee => {
     const card = document.createElement('div');
     card.className = 'employee-card';
     card.innerHTML = `
-    <div class="employee-info">
-        <h4>${employee.nombre} ${employee.apellido}</h4>
-        <p>Código: ${employee.codigo_empleado} | DNI: ${employee.dni}</p>
-        <p>Estado: <span class="status-${employee.estado}">${employee.estado === 'inside' ? 'Dentro' : 'Fuera'}</span></p>
-    </div>
-    <div class="employee-level level-${employee.nivel}">
-        ${employee.nivel === 1 ? 'Empleado' : 'Supervisor'}
-    </div>
-    `;
-    containerSeccionEmpleados.appendChild(card);
+          <div class="employee-info">
+            <h4>${employee.nombre} ${employee.apellido || ''}</h4>
+            <p>Código: ${employee.codigo_empleado} | DNI: ${employee.dni}</p>
+            <p>Estado: <span class="status-inside">Activo</span></p>
+          </div>
+          <div class="employee-level level-${employee.nivel_acceso}">
+            ${employee.nivel_acceso === 1 ? 'Empleado' : 'Supervisor'}
+          </div>
+        `;
+    container.appendChild(card);
   });
-}
-
-
-async function loadEmployees() {
-  console.log('Cargando empleados...');
-  try {
-    // Llamar a fetchUsers para obtener los datos
-    const employees = await fetchUsers();
-
-    if (!employees || employees.length === 0) {
-      console.warn('No se encontraron empleados');
-      container.innerHTML = '<p>No hay empleados para mostrar.</p>';
-      return;
-    }
-
-    // Renderizar las tarjetas con los datos obtenidos
-    showEmployeesList(employees);
-  } catch (err) {
-    console.error('Error al cargar los empleados:', err);
-    container.innerHTML = '<p>Error al cargar los datos.</p>';
-  }
 }
 
 async function loadStatistics() {
@@ -338,17 +407,19 @@ async function loadStatistics() {
   // Aquí puedes implementar la carga de estadísticas
 }
 
-// Funciones para manejar las pantallas de empleados
+// ------------------- SCREEN MANAGEMENT ------------------- //
 function showEmployeesMainView() {
   document.getElementById('empleados-main-view').style.display = 'block';
   document.getElementById('register-screen').classList.remove('active');
   document.getElementById('capture-screen').classList.remove('active');
+  stopVideoStream();
 }
 
 function showRegisterScreen() {
   document.getElementById('empleados-main-view').style.display = 'none';
   document.getElementById('register-screen').classList.add('active');
   document.getElementById('capture-screen').classList.remove('active');
+  stopVideoStream();
 }
 
 function showCaptureScreen() {
@@ -366,11 +437,187 @@ function clearRegistrationForm() {
   document.getElementById('operator-role').value = '';
 }
 
-function initCamera() { //Implementar.
-  console.log('Inicializando cámara...');
-  setTimeout(() => {
-    document.getElementById('capture-status').textContent = 'Rostro detectado correctamente';
-    document.getElementById('capture-status').className = 'status success';
-    document.getElementById('confirm-capture-btn').disabled = false;
-  }, 5000);
+// ------------------- CAMERA AND FACE DETECTION ------------------- //
+async function initCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user' }
+    });
+    video.srcObject = stream;
+
+    await new Promise(resolve => {
+      video.onloadedmetadata = () => {
+        video.play();
+        resolve();
+      };
+    });
+
+    const displaySize = {
+      width: video.clientWidth || video.offsetWidth,
+      height: video.clientHeight || video.offsetHeight
+    };
+
+    overlay.width = displaySize.width;
+    overlay.height = displaySize.height;
+    overlay.style.width = `${displaySize.width}px`;
+    overlay.style.height = `${displaySize.height}px`;
+
+    captureStatus.textContent = 'Cámara lista. Esperando detección facial...';
+    captureStatus.className = 'status info';
+
+    detectFaceForRegistration();
+  } catch (err) {
+    console.error('Error al inicializar cámara:', err);
+    captureStatus.textContent = 'Error: No se pudo acceder a la cámara.';
+    captureStatus.className = 'status error';
+  }
+}
+
+function detectFaceForRegistration() {
+  if (detectionInterval) clearInterval(detectionInterval);
+
+  detectionInterval = setInterval(async () => {
+    if (!video || !video.clientWidth || !video.clientHeight) return;
+
+    try {
+      const detections = await faceapi
+        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({
+          inputSize: 320,
+          scoreThreshold: 0.5
+        }))
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+      const displaySize = {
+        width: video.clientWidth || video.offsetWidth,
+        height: video.clientHeight || video.offsetHeight
+      };
+
+      if (overlay.width !== displaySize.width || overlay.height !== displaySize.height) {
+        overlay.width = displaySize.width;
+        overlay.height = displaySize.height;
+        overlay.style.width = `${displaySize.width}px`;
+        overlay.style.height = `${displaySize.height}px`;
+      }
+
+      const ctx = overlay.getContext('2d');
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+      if (detections.length > 0) {
+        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+        faceapi.draw.drawDetections(overlay, resizedDetections);
+        faceapi.draw.drawFaceLandmarks(overlay, resizedDetections);
+      }
+
+      if (detections.length === 1) {
+        captureStatus.textContent = 'Rostro detectado. Confirme la captura.';
+        captureStatus.className = 'status success';
+        document.getElementById('confirm-capture-btn').disabled = false;
+        faceDescriptor = detections[0].descriptor;
+      } else {
+        document.getElementById('confirm-capture-btn').disabled = true;
+        faceDescriptor = null;
+        if (detections.length > 1) {
+          captureStatus.textContent = 'Se detectó más de un rostro. Asegúrese de que solo haya una persona.';
+          captureStatus.className = 'status error';
+        } else {
+          captureStatus.textContent = 'No se detectó rostro.';
+          captureStatus.className = 'status info';
+        }
+      }
+    } catch (err) {
+      console.error('Error en detección facial:', err);
+    }
+  }, 200);
+}
+
+// ------------------- REGISTRATION ------------------- //
+async function registerUser(userData) {
+  try {
+    const { data, error } = await supabaseClient.from('users').insert([{
+      codigo_empleado: userData.codigo_empleado,
+      nombre: userData.nombre,
+      apellido: userData.apellido,
+      dni: userData.dni,
+      nivel_acceso: userData.nivel_acceso,
+      descriptor: userData.descriptor,
+      foto: userData.foto
+    }]);
+
+    if (error) throw error;
+    return { user: userData };
+  } catch (err) {
+    console.error('Error al registrar usuario:', err);
+    throw err;
+  }
+}
+
+async function confirmCapture() {
+  if (!faceDescriptor) {
+    alert('No hay descriptor facial.');
+    return;
+  }
+
+  try {
+    currentUser.descriptor = Array.from(faceDescriptor);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    currentUser.foto = canvas.toDataURL('image/png');
+
+    const result = await registerUser(currentUser);
+    if (result?.user) {
+      userDatabase.push(result.user);
+    }
+
+    updateFaceMatcher();
+    stopVideoStream();
+    alert(`Usuario ${currentUser.nombre} ${currentUser.apellido} registrado exitosamente.`);
+    clearRegistrationForm();
+    showEmployeesMainView();
+    loadEmployees(); // Recargar lista
+  } catch (err) {
+    console.error('Error al confirmar captura:', err);
+    alert('Error al registrar usuario.');
+  }
+}
+
+// ------------------- UTILITY FUNCTIONS ------------------- //
+function stopVideoStream() {
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+    video.srcObject = null;
+  }
+  if (overlay && overlay.getContext) {
+    overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
+  }
+  if (detectionInterval) {
+    clearInterval(detectionInterval);
+    detectionInterval = null;
+  }
+}
+
+function updateFaceMatcher() {
+  if (!userDatabase || userDatabase.length === 0) {
+    faceMatcher = null;
+    return;
+  }
+
+  const labeled = userDatabase.map(u => {
+    if (u.descriptor && u.descriptor.length) {
+      return new faceapi.LabeledFaceDescriptors(
+        u.codigo_empleado,
+        [new Float32Array(u.descriptor)]
+      );
+    }
+    return null;
+  }).filter(Boolean);
+
+  if (labeled.length) {
+    faceMatcher = new faceapi.FaceMatcher(labeled, 0.6);
+  } else {
+    faceMatcher = null;
+  }
 }
