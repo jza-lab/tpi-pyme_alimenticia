@@ -109,17 +109,111 @@ async function registerUser(userData) {
     throw err;
   }
 }
+
+// Reemplaza la función registerAccess existente con esta versión mejorada
 async function registerAccess(codigoOperario, tipo) {
   try {
+    // Solo hacer la llamada al servidor, NO actualizar el array local aquí
     const { data, error } = await supabaseClient.functions.invoke('access', {
       body: { codigo_empleado: codigoOperario, tipo: tipo }
     });
     if (error) throw error;
-    accessRecords.push({ codigo_empleado: codigoOperario, tipo: tipo, fecha_hora: new Date().toISOString() });
+    
+    // Retornar solo el resultado del servidor
     return data;
   } catch (err) {
     console.error('registerAccess error', err);
     throw err;
+  }
+}
+
+// Modifica la función grantAccess para evitar duplicados
+async function grantAccess(user) {
+  try {
+    // 1. Traer registros frescos ANTES de procesar
+    accessRecords = await fetchAccessRecords();
+
+    // 2. Filtrar registros del usuario y ordenar
+    const allUserRecords = (accessRecords || [])
+      .filter(r => r.codigo_empleado === user.codigo_empleado)
+      .sort((a,b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+
+    console.log('grantAccess - latest records for', user.codigo_empleado, allUserRecords);
+
+    let canAccess = true;
+    let errorMessage = '';
+    const last = allUserRecords.length ? allUserRecords[0] : null;
+
+    // Validaciones de lógica de negocio (sin cambios)
+    if (currentLoginType === 'ingreso' && last && last.tipo === 'ingreso' && user.nivel_acceso >= 3) {
+      document.getElementById('welcome-message').textContent = `${user.nombre}, ya está dentro. Puede usar el menú de supervisor.`;
+      const supBtn = document.getElementById('supervisor-menu-btn');
+      if (supBtn) supBtn.style.display = 'block';
+      sessionStorage.setItem('isSupervisor', 'true');
+      showScreen('access-granted-screen');
+      return;
+    }
+
+    if (last) {
+      if (currentLoginType === 'ingreso' && last.tipo === 'ingreso') {
+        canAccess = false;
+        errorMessage = `${user.nombre}, ya está dentro.`;
+      }
+      if (currentLoginType === 'egreso' && last.tipo === 'egreso') {
+        canAccess = false;
+        errorMessage = `${user.nombre}, ya está fuera.`;
+      }
+    }
+
+    if (!canAccess) {
+      console.warn('grantAccess denied:', errorMessage);
+      document.getElementById('denial-reason').textContent = errorMessage;
+      showScreen('access-denied-screen');
+      return;
+    }
+
+    // 3. Registrar SOLO en el servidor
+    await registerAccess(user.codigo_empleado, currentLoginType);
+
+    // 4. Refrescar los datos UNA SOLA VEZ después del registro
+    accessRecords = await fetchAccessRecords();
+
+    // 5. Continuar con el flujo normal
+    const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
+    document.getElementById('welcome-message').textContent = `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
+
+    if (currentLoginType === 'ingreso' && user.nivel_acceso >= 3) {
+      const supBtn = document.getElementById('supervisor-menu-btn');
+      if (supBtn) supBtn.style.display = 'block';
+      sessionStorage.setItem('isSupervisor', 'true');
+    } else {
+      const supBtn = document.getElementById('supervisor-menu-btn');
+      if (supBtn) supBtn.style.display = 'none';
+    }
+
+    showScreen('access-granted-screen');
+  } catch (err) {
+    console.error('grantAccess error', err);
+    document.getElementById('welcome-message').textContent = `${user.nombre}, su registro fue procesado (fallback).`;
+    showScreen('access-granted-screen');
+  }
+}
+
+// Función adicional para debug - puedes llamarla desde la consola
+function debugAccessRecords(codigoEmpleado) {
+  const records = accessRecords.filter(r => r.codigo_empleado === codigoEmpleado);
+  console.log(`Registros para ${codigoEmpleado}:`, records);
+  
+  // Verificar duplicados
+  const duplicates = records.filter((record, index, arr) => {
+    return arr.findIndex(r => 
+      r.fecha_hora === record.fecha_hora && 
+      r.tipo === record.tipo
+    ) !== index;
+  });
+  
+  if (duplicates.length > 0) {
+    console.warn('Duplicados encontrados:', duplicates);
   }
 }
 
@@ -520,84 +614,6 @@ async function attemptManualLogin() {
   const user = userDatabase.find(u => u.codigo_empleado === operatorCode && u.dni === operatorDni);
   if (user) grantAccess(user); else denyAccess('Credenciales incorrectas.');
 }
-
-// grant/deny access
-async function grantAccess(user) {
-  try {
-    // Traer registros frescos desde el servidor y actualizar cache local
-    accessRecords = await fetchAccessRecords();
-
-    // Filtrar sólo los registros del usuario y ordenar por fecha descendente
-    const allUserRecords = (accessRecords || [])
-      .filter(r => r.codigo_empleado === user.codigo_empleado)
-      .sort((a,b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
-
-    console.log('grantAccess - latest records for', user.codigo_empleado, allUserRecords);
-
-    let canAccess = true;
-    let errorMessage = '';
-    const last = allUserRecords.length ? allUserRecords[0] : null;
-
-    // Si intentan registrar INGRESO pero el último registro ya es INGRESO
-    // y además ES supervisor (nivel >= 3), permitir uso del menú SIN registrar nuevo ingreso.
-    if (currentLoginType === 'ingreso' && last && last.tipo === 'ingreso' && user.nivel_acceso >= 3) {
-      document.getElementById('welcome-message').textContent = `${user.nombre}, ya está dentro. Puede usar el menú de supervisor.`;
-      const supBtn = document.getElementById('supervisor-menu-btn');
-      if (supBtn) supBtn.style.display = 'block';
-      sessionStorage.setItem('isSupervisor', 'true');
-
-      showScreen('access-granted-screen');
-      return; // no registramos nuevo acceso
-    }
-
-    // Negar si intentan hacer el mismo tipo de registro consecutivo (y no aplica la excepción de supervisor)
-    if (last) {
-      if (currentLoginType === 'ingreso' && last.tipo === 'ingreso') {
-        canAccess = false;
-        errorMessage = `${user.nombre}, ya está dentro.`;
-      }
-      if (currentLoginType === 'egreso' && last.tipo === 'egreso') {
-        canAccess = false;
-        errorMessage = `${user.nombre}, ya está fuera.`;
-      }
-    }
-
-    if (!canAccess) {
-      console.warn('grantAccess denied:', errorMessage);
-      document.getElementById('denial-reason').textContent = errorMessage;
-      showScreen('access-denied-screen');
-      return;
-    }
-
-    // Si llegamos acá, registramos el acceso (ingreso/egreso)
-    await registerAccess(user.codigo_empleado, currentLoginType);
-
-    // Asegurarnos de actualizar accessRecords local con el nuevo registro (registerAccess ya lo empuja, pero refrescamos por seguridad)
-    accessRecords = await fetchAccessRecords();
-
-    const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
-    document.getElementById('welcome-message').textContent = `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
-
-    // Si ingresó y tiene nivel >= 3, mostramos botón de supervisor y marcamos sesión
-    if (currentLoginType === 'ingreso' && user.nivel_acceso >= 3) {
-      const supBtn = document.getElementById('supervisor-menu-btn');
-      if (supBtn) supBtn.style.display = 'block';
-      sessionStorage.setItem('isSupervisor', 'true');
-    } else {
-      const supBtn = document.getElementById('supervisor-menu-btn');
-      if (supBtn) supBtn.style.display = 'none';
-    }
-
-    // Mostrar pantalla de acceso concedido y dejarla hasta que el usuario presione "Volver al Inicio"
-    showScreen('access-granted-screen');
-  } catch (err) {
-    console.error('grantAccess error', err);
-    // fallback UX: mostrar éxito aún si falla registro remoto (no redirigir automáticamente)
-    document.getElementById('welcome-message').textContent = `${user.nombre}, su registro fue procesado (fallback).`;
-    showScreen('access-granted-screen');
-  }
-}
-
 
 
 function denyAccess(reason) {
