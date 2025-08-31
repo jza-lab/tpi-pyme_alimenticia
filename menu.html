@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Administrativo</title>
+
+  <!-- estilos -->
+  <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="menu.css">
+
+  <!-- librerías necesarias -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+  <!-- tu lógica -->
+  <script defer src="menu.js"></script>
+</head>
+
+<body>
+  <header class="admin-header">
+    <div class="header-inner">
+      <h1 class="panel-title">Panel Administrativo</h1>
+
+      <div class="header-controls">
+        <button class="logout-btn" onclick="logout()">Salir</button>
+      </div>
+
+      <!-- 👇 Botón hamburguesa y sidebar van aquí dentro -->
+      <button id="mobile-menu-btn" class="hamburger" aria-label="Abrir menú lateral" aria-expanded="false"
+        aria-controls="mobile-sidebar">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+      <!-- Sidebar móvil -->
+      <aside id="mobile-sidebar" class="mobile-sidebar" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="mobile-sidebar-header">
+          <strong>Menú</strong>
+          <button id="mobile-sidebar-close" aria-label="Cerrar menú">✕</button>
+        </div>
+        <nav class="mobile-sidebar-nav" role="navigation" aria-label="Navegación móvil">
+          <button class="mobile-side-item" data-section="accesos">📊 Historial de Accesos</button>
+          <button class="mobile-side-item" data-section="empleados">👥 Gestión de Empleados</button>
+          <button class="mobile-side-item" data-section="estadisticas">📈 Estadísticas</button>
+        </nav>
+        <div class="mobile-sidebar-footer">
+          <button class="btn btn-secondary" onclick="logout()">Salir</button>
+        </div>
+      </aside>
+
+      <!-- Overlay -->
+      <div id="mobile-sidebar-overlay" class="mobile-sidebar-overlay" aria-hidden="true"></div>
+    </div>
+
+    <!-- navegación principal (se oculta en mobile por CSS) -->
+    <nav class="admin-nav" role="navigation" aria-label="Panel principal">
+      <button class="nav-btn active" data-section="accesos" aria-controls="accesos">📊 Historial de Accesos</button>
+      <button class="nav-btn" data-section="empleados" aria-controls="empleados">👥 Gestión de Empleados</button>
+      <button class="nav-btn" data-section="estadisticas" aria-controls="estadisticas">📈 Estadísticas</button>
+    </nav>
+  </header>
+
+
+  <main class="container">
+
+    <!-- ACCESOS -->
+    <section id="accesos" class="content-section">
+      <h2>Historial de Ingresos/Egresos</h2>
+      <button id="refresh-records" class="btn btn-primary">Actualizar Registros</button>
+
+      <div class="records-summary">
+        <div class="summary-card">
+          <h3>Dentro</h3>
+          <span id="people-inside-count">0</span>
+        </div>
+        <div class="summary-card">
+          <h3>Fuera</h3>
+          <span id="people-outside-count">0</span>
+        </div>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Nombre</th>
+              <th>Código</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="records-tbody"></tbody> <!-- Registros se cargan aca -->
+        </table>
+      </div>
+    </section>
+
+    <!-- EMPLEADOS -->
+    <section id="empleados" class="content-section">
+      <div id="empleados-main-view">
+        <h2>Gestión de Empleados</h2>
+        <button id="btn-nuevo-empleado" class="btn btn-primary">Registrar Nuevo Empleado</button>
+        <button id="btn-eliminar-empleado" class="btn btn-danger">Eliminar Empleado</button>
+        <div id="empleados-list"></div> <!-- Lista de empleados se carga aca -->
+      </div>
+
+      <!-- Pantalla de registro -->
+      <div id="register-screen" class="screen" hidden>
+        <h2>Registro de Nuevo Usuario</h2>
+        <div class="form-group">
+          <label for="operator-code">Código de Operario:</label>
+          <input type="text" id="operator-code" placeholder="Ej: OP-001">
+        </div>
+        <div class="form-group">
+          <label for="operator-name">Nombre:</label>
+          <input type="text" id="operator-name" placeholder="Ej: Ana">
+        </div>
+        <div class="form-group">
+          <label for="operator-surname">Apellido:</label>
+          <input type="text" id="operator-surname" placeholder="Ej: Perez">
+        </div>
+        <div class="form-group">
+          <label for="operator-dni">DNI:</label>
+          <input type="text" id="operator-dni" placeholder="Ej: 12345678">
+        </div>
+        <div class="form-group">
+          <label for="operator-role">Rol:</label>
+          <select id="operator-role">
+            <option value="">Seleccione un rol...</option>
+            <option value="1">Empleado (Nivel 1)</option>
+            <option value="3">Supervisor (Nivel 3)</option>
+          </select>
+        </div>
+        <div class="action-buttons">
+          <button id="capture-btn" class="btn btn-primary">Capturar Rostro</button>
+          <button id="back-to-employees" class="btn btn-secondary">Volver</button>
+        </div>
+      </div>
+
+      <!-- Pantalla de captura facial -->
+      <div id="capture-screen" class="screen" hidden>
+        <h2>Captura de Rostro</h2>
+        <p>Por favor, colóquese frente a la cámara y asegúrese de que su rostro esté bien iluminado.</p>
+        <div class="video-container">
+          <video id="video" width="600" height="450" autoplay muted></video>
+          <canvas id="overlay"></canvas>
+        </div>
+        <div id="capture-status" class="status info">Esperando detección facial...</div>
+        <div class="action-buttons">
+          <button id="confirm-capture-btn" class="btn btn-primary" disabled>Confirmar Captura</button>
+          <button id="retry-capture-btn" class="btn btn-secondary">Reintentar</button>
+          <button id="back-to-register" class="btn btn-secondary">Volver al Registro</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ESTADISTICAS -->
+    <section id="estadisticas" class="content-section" hidden>
+      <h2>Estadísticas</h2>
+
+      <!-- botones por etapa -->
+      <div class="stage-buttons" role="tablist" aria-label="Etapas de proceso">
+        <button class="stage-btn active" data-stage="Recepcion" role="tab">Recepción</button>
+        <button class="stage-btn" data-stage="Almacenamiento" role="tab">Almacenamiento</button>
+        <button class="stage-btn" data-stage="Procesamiento" role="tab">Procesamiento</button>
+        <button class="stage-btn" data-stage="Conservacion" role="tab">Conservación</button>
+        <button class="stage-btn" data-stage="ServicioDespacho" role="tab">Servicio y Despacho</button>
+        <button class="stage-btn" data-stage="Indicadores" role="tab">Indicadores</button>
+      </div>
+
+      <!-- Contenedor para insights -->
+      <div id="insights-container" class="insights-wrapper" style="display: none;">
+        <h3>Alertas y Observaciones Clave</h3>
+        <div id="insights-list"></div>
+      </div>
+
+      <!-- contenedor del gráfico -->
+      <div class="chart-wrapper">
+        <canvas id="statsCanvas" aria-label="Gráfico de estadísticas" role="img"></canvas>
+        <div id="statsFallback" class="fallback">Gráfico de estadísticas se mostraría aquí</div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <small>© Sistema - Panel Administrativo</small>
+  </footer>
+</body>
+
+</html>
