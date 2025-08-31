@@ -84,3 +84,43 @@ table th, table td {
 table th {
   background: var(--light);
 }
+
+/* Gestion de Empleados */
+        .employee-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .employee-info h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+
+        .employee-info p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .employee-level {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .level-1 {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .level-3 {
+            background: #d4edda;
+            color: #155724;
+        }
