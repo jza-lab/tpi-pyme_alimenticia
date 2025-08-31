@@ -4,6 +4,7 @@ const { createClient } = supabase;
 const supabaseClient = createClient('https://xtruedkvobfabctfmyys.supabase.co', SUPABASE_ANON_KEY);
 
 // ------------------- Globals ------------------- //
+let processingAccess = false;
 let currentUser = null;
 let faceDescriptor = null;
 let faceMatcher = null;
@@ -127,65 +128,56 @@ async function registerAccess(codigoOperario, tipo) {
   }
 }
 
-// =========================
-// Variables globales
-// =========================
-let processingAccess = false; // 🚫 evita registrar 2 veces seguidas
-let recognitionInterval = null;
-let recognitionTimeout = null;
-
-// =========================
-// Inicia reconocimiento
-// =========================
-async function startFacialRecognition() {
+async function registerAccessSafe(codigoOperario, tipo) {
   try {
-    // Si ya hay un intervalo corriendo, lo limpio
-    if (recognitionInterval) clearInterval(recognitionInterval);
-    if (recognitionTimeout) clearTimeout(recognitionTimeout);
+    // 1) Obtener último registro REAL del servidor para este empleado
+    const { data: lastAccess, error: lastErr } = await supabaseClient
+      .from('access')
+      .select('*')
+      .eq('codigo_empleado', codigoOperario)
+      .order('fecha_hora', { ascending: false })
+      .limit(1);
 
-    recognitionInterval = setInterval(async () => {
-      const result = await detectFace(); // tu función de reconocimiento
-      if (result?.employeeCode) {
-        clearInterval(recognitionInterval);
-        clearTimeout(recognitionTimeout);
+    if (lastErr) {
+      console.error('registerAccessSafe - error obteniendo último access:', lastErr);
+      throw lastErr;
+    }
 
-        // Llamar a Supabase para buscar empleado
-        const { data: users, error } = await supabaseClient
-          .from('users')
-          .select('*')
-          .eq('codigo_empleado', result.employeeCode)
-          .limit(1);
+    // 2) Si el último registro existe y es del mismo tipo, no insertar (idempotencia)
+    if (lastAccess && lastAccess.length && lastAccess[0].tipo === tipo) {
+      return { skipped: true, message: 'Último registro es igual, se evitó duplicado.' };
+    }
 
-        if (error) {
-          console.error('Error buscando empleado:', error.message);
-          return;
-        }
+    // 3) Insertar nuevo registro
+    const { data, error: insertErr } = await supabaseClient
+      .from('access')
+      .insert({
+        codigo_empleado: codigoOperario,
+        tipo,
+        fecha_hora: new Date().toISOString()
+      });
 
-        if (users?.length) {
-          await grantAccess(users[0]);
-        } else {
-          console.warn('Empleado no encontrado en DB:', result.employeeCode);
-        }
-      }
-    }, 200); // cada 200ms revisa
+    if (insertErr) {
+      console.error('registerAccessSafe - insert error:', insertErr);
+      throw insertErr;
+    }
 
-    recognitionTimeout = setTimeout(() => {
-      clearInterval(recognitionInterval);
-    }, 15000); // corta después de 15s
+    return { skipped: false, data };
   } catch (err) {
-    console.error('Error en startFacialRecognition:', err);
+    console.error('registerAccessSafe error', err);
+    throw err;
   }
 }
-
-// =========================
-// Registrar acceso/egreso
-// =========================
+// Modifica la función grantAccess para evitar duplicados
 async function grantAccess(user) {
-  if (processingAccess) return; // 🚫 bloqueo si ya se está procesando
+  if (processingAccess) {
+    console.warn('grantAccess: ya se está procesando otro acceso, ignorando.');
+    return;
+  }
   processingAccess = true;
 
   try {
-    // Determinar último acceso
+    // Obtener último registro en servidor (garantizar frescura)
     const { data: lastAccess, error: lastErr } = await supabaseClient
       .from('access')
       .select('*')
@@ -194,39 +186,81 @@ async function grantAccess(user) {
       .limit(1);
 
     if (lastErr) {
-      console.error('Error obteniendo último acceso:', lastErr.message);
+      console.error('Error obteniendo último acceso:', lastErr);
+      // fallback: permitimos seguir, pero lo registramos igual
+    }
+
+    const last = (lastAccess && lastAccess.length) ? lastAccess[0] : null;
+
+    // Reglas de negocio (no permitir doble ingreso/egreso consecutivo)
+    if (last) {
+      if (currentLoginType === 'ingreso' && last.tipo === 'ingreso') {
+        document.getElementById('denial-reason').textContent = `${user.nombre}, ya está dentro.`;
+        showScreen('access-denied-screen');
+        return;
+      }
+      if (currentLoginType === 'egreso' && last.tipo === 'egreso') {
+        document.getElementById('denial-reason').textContent = `${user.nombre}, ya está fuera.`;
+        showScreen('access-denied-screen');
+        return;
+      }
+    }
+
+    // Intentar registrar de forma segura (evita duplicados si otro cliente ya insertó)
+    const res = await registerAccessSafe(user.codigo_empleado, currentLoginType);
+
+    if (res.skipped) {
+      console.info('grantAccess: registro saltado (ya existe uno igual en servidor).');
+      document.getElementById('denial-reason').textContent = `${user.nombre}, su acción ya fue registrada.`;
+      showScreen('access-denied-screen');
       return;
     }
 
-    let tipo = 'ingreso';
-    if (lastAccess?.length && lastAccess[0].tipo === 'ingreso') {
-      tipo = 'egreso';
-    }
+    // Refrescar registros locales una sola vez
+    accessRecords = await fetchAccessRecords();
 
-    // Insertar nuevo registro
-    const { error: insertErr } = await supabaseClient
-      .from('access')
-      .insert({
-        codigo_empleado: user.codigo_empleado,
-        tipo,
-        fecha_hora: new Date().toISOString()
-      });
+    // UI de éxito
+    const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
+    document.getElementById('welcome-message').textContent = `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
 
-    if (insertErr) {
-      console.error('Error insertando access:', insertErr.message);
+    if (currentLoginType === 'ingreso' && user.nivel_acceso >= 3) {
+      const supBtn = document.getElementById('supervisor-menu-btn');
+      if (supBtn) supBtn.style.display = 'block';
+      sessionStorage.setItem('isSupervisor', 'true');
     } else {
-      console.log(`✅ ${tipo.toUpperCase()} registrado para`, user.codigo_empleado);
+      const supBtn = document.getElementById('supervisor-menu-btn');
+      if (supBtn) supBtn.style.display = 'none';
     }
+
+    showScreen('access-granted-screen');
   } catch (err) {
     console.error('grantAccess error:', err);
+    document.getElementById('welcome-message').textContent = `${user.nombre}, su registro fue procesado (fallback).`;
+    showScreen('access-granted-screen');
   } finally {
-    // Liberar flag después de 2s (para evitar ráfagas duplicadas)
-    setTimeout(() => {
-      processingAccess = false;
-    }, 2000);
+    // pequeño retardo para evitar ráfagas (y liberar lock)
+    setTimeout(() => { processingAccess = false; }, 800);
   }
 }
 
+
+// Función adicional para debug - puedes llamarla desde la consola
+function debugAccessRecords(codigoEmpleado) {
+  const records = accessRecords.filter(r => r.codigo_empleado === codigoEmpleado);
+  console.log(`Registros para ${codigoEmpleado}:`, records);
+  
+  // Verificar duplicados
+  const duplicates = records.filter((record, index, arr) => {
+    return arr.findIndex(r => 
+      r.fecha_hora === record.fecha_hora && 
+      r.tipo === record.tipo
+    ) !== index;
+  });
+  
+  if (duplicates.length > 0) {
+    console.warn('Duplicados encontrados:', duplicates);
+  }
+}
 
 // ------------------- Init ------------------- //
 async function init() {
@@ -275,6 +309,60 @@ function resetManualLogin() {
   if (loginStatusEl) {
     loginStatusEl.textContent = 'Buscando coincidencias...';
     loginStatusEl.className = 'status info';
+  }
+}
+
+function renderRecords() {
+  try {
+    const userMap = {};
+    userDatabase.forEach(u => userMap[u.codigo_empleado] = u);
+
+    // Deduplicar registros por clave única (codigo+fecha+tipo)
+    const seen = new Set();
+    const deduped = (accessRecords || []).slice().sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora)).filter(r => {
+      const key = `${r.codigo_empleado}::${r.fecha_hora}::${r.tipo}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    // Mapear estado actual por usuario (último tipo)
+    const userStatusMap = {};
+    userDatabase.forEach(user => {
+      const records = deduped.filter(r => r.codigo_empleado === user.codigo_empleado).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+      userStatusMap[user.codigo_empleado] = records.length ? records[0].tipo : 'egreso';
+    });
+
+    const peopleInside = Object.values(userStatusMap).filter(t => t === 'ingreso').length;
+    const peopleOutside = Math.max(0, userDatabase.length - peopleInside);
+
+    document.getElementById('people-inside-count').textContent = peopleInside;
+    document.getElementById('people-outside-count').textContent = peopleOutside;
+
+    const tbody = document.getElementById('records-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    deduped.forEach(record => {
+      const user = userMap[record.codigo_empleado];
+      const userName = user ? `${user.nombre} ${user.apellido || ''}` : 'Desconocido';
+      const fecha = new Date(record.fecha_hora).toLocaleString('es-ES');
+      const tipo = record.tipo === 'ingreso' ? 'Ingreso' : 'Egreso';
+      const estado = userStatusMap[record.codigo_empleado] === 'ingreso' ? 'Dentro' : 'Fuera';
+      const estadoClass = estado === 'Dentro' ? 'status-inside' : 'status-outside';
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+            <td>${fecha}</td>
+            <td>${userName}</td>
+            <td>${record.codigo_empleado}</td>
+            <td>${tipo}</td>
+            <td class="${estadoClass}">${estado}</td>
+          `;
+      tbody.appendChild(row);
+    });
+  } catch (err) {
+    console.error('Error al renderizar registros:', err);
   }
 }
 
@@ -479,6 +567,85 @@ async function startFacialLogin(tipo) {
   }
 }
 
+  
+
+function startFacialRecognition() {
+  let recognized = false;
+  let countdown = 5;
+  if (countdownElement) countdownElement.textContent = countdown;
+
+  // limpiar timers anteriores
+  if (countdownInterval) clearInterval(countdownInterval);
+  if (detectionInterval) clearInterval(detectionInterval);
+
+  countdownInterval = setInterval(() => {
+    countdown--;
+    if (countdownElement) countdownElement.textContent = Math.max(0, countdown);
+    if (countdown <= 0) {
+      clearInterval(countdownInterval);
+      if (!recognized) {
+        stopFacialRecognition();
+        showManualLoginOption();
+      }
+    }
+  }, 1000);
+
+  detectionInterval = setInterval(async () => {
+    if (!loginVideo || !loginVideo.clientWidth || !loginVideo.clientHeight) return;
+
+    try {
+      const detections = await faceapi
+        .detectAllFaces(loginVideo, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+      const displaySize = {
+        width: loginVideo.clientWidth || loginVideo.offsetWidth,
+        height: loginVideo.clientHeight || loginVideo.offsetHeight
+      };
+
+      // asegurar canvas coincide
+      if (loginOverlay.width !== displaySize.width || loginOverlay.height !== displaySize.height) {
+        loginOverlay.width = displaySize.width;
+        loginOverlay.height = displaySize.height;
+        loginOverlay.style.width = `${displaySize.width}px`;
+        loginOverlay.style.height = `${displaySize.height}px`;
+      }
+
+      const ctx = loginOverlay.getContext('2d');
+      ctx.clearRect(0, 0, loginOverlay.width, loginOverlay.height);
+
+      if (detections.length > 0) {
+        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+        faceapi.draw.drawDetections(loginOverlay, resizedDetections);
+        faceapi.draw.drawFaceLandmarks(loginOverlay, resizedDetections);
+      }
+
+      if (detections.length > 0 && faceMatcher && !processingAccess) {
+        const bestMatch = faceMatcher.findBestMatch(detections[0].descriptor);
+        if (bestMatch && bestMatch.distance < 0.6) {
+          recognized = true;
+          // Detener inmediatamente para evitar reentradas
+          clearInterval(countdownInterval);
+          clearInterval(detectionInterval);
+          stopFacialRecognition();
+
+          // establecer lock para que no venga otra llamada mientras procesamos
+          processingAccess = true;
+          const foundUser = userDatabase.find(u => u.codigo_empleado === bestMatch.label);
+          if (foundUser) {
+            await grantAccess(foundUser);
+          }
+          // grantAccess liberará processingAccess (en su finally) después del timeout
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('startFacialRecognition error', err);
+    }
+  }, 200);
+}
+  
 function stopFacialRecognition() {
   if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
   if (detectionInterval) { clearInterval(detectionInterval); detectionInterval = null; }
@@ -589,4 +756,3 @@ async function loadRecords() {
 
 // Iniciar cuando cargue la página
 window.addEventListener('load', init);
-
