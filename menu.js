@@ -25,8 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Botón refrescar registros
-  document.getElementById('refresh-records').addEventListener('click', loadRecords);
+  // Botón refrescar registros -> ahora llama a refreshRecords que fuerza fetch
+  const refreshBtn = document.getElementById('refresh-records');
+  if (refreshBtn) refreshBtn.addEventListener('click', refreshRecords);
 
   // Botón registrar nuevo empleado
   const nuevoEmpleadoBtn = document.getElementById('btn-nuevo-empleado');
@@ -63,7 +64,7 @@ async function fetchUsers() {
   try {
     const { data, error } = await supabaseClient.from('users').select('*');
     if (error) throw error;
-    return data;
+    return data || [];
   } catch (err) {
     console.error('Error al cargar usuarios:', err);
     return [];
@@ -74,7 +75,7 @@ async function fetchAccessRecords() {
   try {
     const { data, error } = await supabaseClient.from('access').select('*');
     if (error) throw error;
-    return data;
+    return data || [];
   } catch (err) {
     console.error('Error al cargar registros de acceso:', err);
     return [];
@@ -84,21 +85,43 @@ async function fetchAccessRecords() {
 // ------------------- INIT ------------------- //
 async function init() {
   try {
+    // carga inicial (puede venir del cache si ya estaban en memoria)
     userDatabase = await fetchUsers();
     accessRecords = await fetchAccessRecords();
-    loadRecords();
+    renderRecords();
   } catch (err) {
     console.error('Error al inicializar menú:', err);
     alert('Error al inicializar la página de menú.');
   }
 }
 
-// ------------------- REGISTROS ------------------- //
-async function loadRecords() {
+// ------------------- REFRESH (FORZAR FETCH) ------------------- //
+async function refreshRecords() {
+  const btn = document.getElementById('refresh-records');
   try {
-    if (accessRecords.length === 0) accessRecords = await fetchAccessRecords();
-    if (userDatabase.length === 0) userDatabase = await fetchUsers();
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Actualizando...';
+    }
+    // Siempre traer datos nuevos desde Supabase
+    const [users, records] = await Promise.all([ fetchUsers(), fetchAccessRecords() ]);
+    userDatabase = users;
+    accessRecords = records;
+    renderRecords();
+  } catch (err) {
+    console.error('Error al refrescar registros:', err);
+    alert('No se pudieron actualizar los registros. Reintente.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Actualizar Registros';
+    }
+  }
+}
 
+// ------------------- RENDERIZA (separamos de loadRecords) ------------------- //
+function renderRecords() {
+  try {
     // Mapear usuarios
     const userMap = {};
     userDatabase.forEach(u => userMap[u.codigo_empleado] = u);
@@ -108,7 +131,7 @@ async function loadRecords() {
     let peopleInside = 0;
 
     userDatabase.forEach(user => {
-      const records = accessRecords
+      const records = (accessRecords || [])
         .filter(r => r.codigo_empleado === user.codigo_empleado)
         .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
@@ -123,16 +146,17 @@ async function loadRecords() {
       if (userStatusMap[user.codigo_empleado] === 'ingreso') peopleInside++;
     });
 
-    const peopleOutside = userDatabase.length - peopleInside;
+    const peopleOutside = Math.max(0, userDatabase.length - peopleInside);
 
     document.getElementById('people-inside-count').textContent = peopleInside;
     document.getElementById('people-outside-count').textContent = peopleOutside;
 
     // Tabla de registros
     const tbody = document.getElementById('records-tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
 
-    const sortedRecords = accessRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+    const sortedRecords = (accessRecords || []).slice().sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
     sortedRecords.forEach(record => {
       const user = userMap[record.codigo_empleado];
@@ -153,7 +177,6 @@ async function loadRecords() {
       tbody.appendChild(row);
     });
   } catch (err) {
-    console.error('Error al cargar registros:', err);
-    alert('Error al cargar registros.');
+    console.error('Error al renderizar registros:', err);
   }
 }
