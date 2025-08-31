@@ -59,53 +59,53 @@ let accessRecords = [];
   init();
 });
 */
-    
+
 // Función de logout
-    function logout() {
-      sessionStorage.removeItem('isSupervisor');
-      window.location.href = 'index.html';
-    }
+function logout() {
+  sessionStorage.removeItem('isSupervisor');
+  window.location.href = 'index.html';
+}
 
-    // Navegación entre secciones
-    document.addEventListener('DOMContentLoaded', function() {
-      // Configurar navegación
-      document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          // Remover clase active de todos los botones
-          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-          // Agregar clase active al botón clickeado
-          this.classList.add('active');
-          
-          // Obtener la sección a mostrar
-          const section = this.dataset.section;
-          
-          // Ocultar todas las secciones
-          document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-          
-          // Mostrar la sección correspondiente
-          const targetSection = document.getElementById(section);
-          if (targetSection) {
-            targetSection.classList.add('active');
-          }
-          
-          // Actualizar contenido según la sección
-          if (section === 'accesos') {
-            renderRecords();
-          } else if (section === 'empleados') {
-            loadEmployees();
-          } else if (section === 'estadisticas') {
-            loadStatistics();
-          }
-        });
-      });
+// Navegación entre secciones
+document.addEventListener('DOMContentLoaded', function () {
+  // Configurar navegación
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      // Remover clase active de todos los botones
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      // Agregar clase active al botón clickeado
+      this.classList.add('active');
 
-    document.getElementById('refresh-records')?.addEventListener('click', function() {
+      // Obtener la sección a mostrar
+      const section = this.dataset.section;
+
+      // Ocultar todas las secciones
+      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+
+      // Mostrar la sección correspondiente
+      const targetSection = document.getElementById(section);
+      if (targetSection) {
+        targetSection.classList.add('active');
+      }
+
+      // Actualizar contenido según la sección
+      if (section === 'accesos') {
         renderRecords();
-      });
-
-      // Cargar datos iniciales
-      init();
+      } else if (section === 'empleados') {
+        loadEmployees();
+      } else if (section === 'estadisticas') {
+        loadStatistics();
+      }
     });
+  });
+
+  document.getElementById('refresh-records')?.addEventListener('click', function () {
+    renderRecords();
+  });
+
+  // Cargar datos iniciales
+  init();
+});
 
 // ------------------- API ------------------- //
 async function fetchUsers() {
@@ -136,8 +136,8 @@ async function init() {
     accessRecords = await fetchAccessRecords();
     renderRecords();
   } catch (err) {
-      console.error('Error al inicializar:', err);
-    }
+    console.error('Error al inicializar:', err);
+  }
 }
 
 // ------------------- REFRESH ------------------- //
@@ -149,7 +149,7 @@ async function refreshRecords() {
       btn.textContent = 'Actualizando...';
     }
     // Siempre traer datos nuevos desde Supabase
-    const [users, records] = await Promise.all([ fetchUsers(), fetchAccessRecords() ]);
+    const [users, records] = await Promise.all([fetchUsers(), fetchAccessRecords()]);
     userDatabase = users;
     accessRecords = records;
     renderRecords();
@@ -224,11 +224,7 @@ function renderRecords() {
   } catch (err) {
     console.error('Error al renderizar registros:', err);
   }
- console.log('Cargando registros de acceso...');
-  document.getElementById('people-inside-count').textContent = '1';
-  document.getElementById('people-outside-count').textContent = '1';
-
-  
+  console.log('Cargando registros de acceso...');
 }
 
 // Función para mostrar lista de empleados
@@ -237,7 +233,7 @@ const containerSeccionEmpleados = document.getElementById('empleados-list');
 function showEmployeesList(employees) {
   containerSeccionEmpleados.innerHTML = '';
 
-  employees.forEach(employee => {  //CONECTARLO CON TABLA USERS DB
+  employees.forEach(employee => {
     const card = document.createElement('div');
     card.className = 'employee-card';
     card.innerHTML = `
@@ -250,9 +246,9 @@ function showEmployeesList(employees) {
         ${employee.nivel === 1 ? 'Empleado' : 'Supervisor'}
     </div>
     `;
-  containerSeccionEmpleados.appendChild(card);
+    containerSeccionEmpleados.appendChild(card);
   });
-  }
+}
 
 
 async function loadEmployees() {
@@ -275,7 +271,7 @@ async function loadEmployees() {
   }
 }
 
-    async function loadStatistics() {
-      console.log('Cargando estadísticas...');
-      // Aquí puedes implementar la carga de estadísticas
-    }
+async function loadStatistics() {
+  console.log('Cargando estadísticas...');
+  // Implementar estadisticas.
+}
