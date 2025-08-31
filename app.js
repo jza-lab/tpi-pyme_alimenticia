@@ -127,95 +127,106 @@ async function registerAccess(codigoOperario, tipo) {
   }
 }
 
-// Modifica la función grantAccess para evitar duplicados
-async function grantAccess(user) {
+// =========================
+// Variables globales
+// =========================
+let processingAccess = false; // 🚫 evita registrar 2 veces seguidas
+let recognitionInterval = null;
+let recognitionTimeout = null;
+
+// =========================
+// Inicia reconocimiento
+// =========================
+async function startFacialRecognition() {
   try {
-    // 1. Traer registros frescos ANTES de procesar
-    accessRecords = await fetchAccessRecords();
+    // Si ya hay un intervalo corriendo, lo limpio
+    if (recognitionInterval) clearInterval(recognitionInterval);
+    if (recognitionTimeout) clearTimeout(recognitionTimeout);
 
-    // 2. Filtrar registros del usuario y ordenar
-    const allUserRecords = (accessRecords || [])
-      .filter(r => r.codigo_empleado === user.codigo_empleado)
-      .sort((a,b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+    recognitionInterval = setInterval(async () => {
+      const result = await detectFace(); // tu función de reconocimiento
+      if (result?.employeeCode) {
+        clearInterval(recognitionInterval);
+        clearTimeout(recognitionTimeout);
 
-    console.log('grantAccess - latest records for', user.codigo_empleado, allUserRecords);
+        // Llamar a Supabase para buscar empleado
+        const { data: users, error } = await supabaseClient
+          .from('users')
+          .select('*')
+          .eq('codigo_empleado', result.employeeCode)
+          .limit(1);
 
-    let canAccess = true;
-    let errorMessage = '';
-    const last = allUserRecords.length ? allUserRecords[0] : null;
+        if (error) {
+          console.error('Error buscando empleado:', error.message);
+          return;
+        }
 
-    // Validaciones de lógica de negocio (sin cambios)
-    if (currentLoginType === 'ingreso' && last && last.tipo === 'ingreso' && user.nivel_acceso >= 3) {
-      document.getElementById('welcome-message').textContent = `${user.nombre}, ya está dentro. Puede usar el menú de supervisor.`;
-      const supBtn = document.getElementById('supervisor-menu-btn');
-      if (supBtn) supBtn.style.display = 'block';
-      sessionStorage.setItem('isSupervisor', 'true');
-      showScreen('access-granted-screen');
-      return;
-    }
-
-    if (last) {
-      if (currentLoginType === 'ingreso' && last.tipo === 'ingreso') {
-        canAccess = false;
-        errorMessage = `${user.nombre}, ya está dentro.`;
+        if (users?.length) {
+          await grantAccess(users[0]);
+        } else {
+          console.warn('Empleado no encontrado en DB:', result.employeeCode);
+        }
       }
-      if (currentLoginType === 'egreso' && last.tipo === 'egreso') {
-        canAccess = false;
-        errorMessage = `${user.nombre}, ya está fuera.`;
-      }
-    }
+    }, 200); // cada 200ms revisa
 
-    if (!canAccess) {
-      console.warn('grantAccess denied:', errorMessage);
-      document.getElementById('denial-reason').textContent = errorMessage;
-      showScreen('access-denied-screen');
-      return;
-    }
-
-    // 3. Registrar SOLO en el servidor
-    await registerAccess(user.codigo_empleado, currentLoginType);
-
-    // 4. Refrescar los datos UNA SOLA VEZ después del registro
-    accessRecords = await fetchAccessRecords();
-
-    // 5. Continuar con el flujo normal
-    const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
-    document.getElementById('welcome-message').textContent = `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
-
-    if (currentLoginType === 'ingreso' && user.nivel_acceso >= 3) {
-      const supBtn = document.getElementById('supervisor-menu-btn');
-      if (supBtn) supBtn.style.display = 'block';
-      sessionStorage.setItem('isSupervisor', 'true');
-    } else {
-      const supBtn = document.getElementById('supervisor-menu-btn');
-      if (supBtn) supBtn.style.display = 'none';
-    }
-
-    showScreen('access-granted-screen');
+    recognitionTimeout = setTimeout(() => {
+      clearInterval(recognitionInterval);
+    }, 15000); // corta después de 15s
   } catch (err) {
-    console.error('grantAccess error', err);
-    document.getElementById('welcome-message').textContent = `${user.nombre}, su registro fue procesado (fallback).`;
-    showScreen('access-granted-screen');
+    console.error('Error en startFacialRecognition:', err);
   }
 }
 
-// Función adicional para debug - puedes llamarla desde la consola
-function debugAccessRecords(codigoEmpleado) {
-  const records = accessRecords.filter(r => r.codigo_empleado === codigoEmpleado);
-  console.log(`Registros para ${codigoEmpleado}:`, records);
-  
-  // Verificar duplicados
-  const duplicates = records.filter((record, index, arr) => {
-    return arr.findIndex(r => 
-      r.fecha_hora === record.fecha_hora && 
-      r.tipo === record.tipo
-    ) !== index;
-  });
-  
-  if (duplicates.length > 0) {
-    console.warn('Duplicados encontrados:', duplicates);
+// =========================
+// Registrar acceso/egreso
+// =========================
+async function grantAccess(user) {
+  if (processingAccess) return; // 🚫 bloqueo si ya se está procesando
+  processingAccess = true;
+
+  try {
+    // Determinar último acceso
+    const { data: lastAccess, error: lastErr } = await supabaseClient
+      .from('access')
+      .select('*')
+      .eq('codigo_empleado', user.codigo_empleado)
+      .order('fecha_hora', { ascending: false })
+      .limit(1);
+
+    if (lastErr) {
+      console.error('Error obteniendo último acceso:', lastErr.message);
+      return;
+    }
+
+    let tipo = 'ingreso';
+    if (lastAccess?.length && lastAccess[0].tipo === 'ingreso') {
+      tipo = 'egreso';
+    }
+
+    // Insertar nuevo registro
+    const { error: insertErr } = await supabaseClient
+      .from('access')
+      .insert({
+        codigo_empleado: user.codigo_empleado,
+        tipo,
+        fecha_hora: new Date().toISOString()
+      });
+
+    if (insertErr) {
+      console.error('Error insertando access:', insertErr.message);
+    } else {
+      console.log(`✅ ${tipo.toUpperCase()} registrado para`, user.codigo_empleado);
+    }
+  } catch (err) {
+    console.error('grantAccess error:', err);
+  } finally {
+    // Liberar flag después de 2s (para evitar ráfagas duplicadas)
+    setTimeout(() => {
+      processingAccess = false;
+    }, 2000);
   }
 }
+
 
 // ------------------- Init ------------------- //
 async function init() {
@@ -468,80 +479,6 @@ async function startFacialLogin(tipo) {
   }
 }
 
-  
-
-  function startFacialRecognition() {
-    let recognized = false;
-    let countdown = 5;
-    if (countdownElement) countdownElement.textContent = countdown;
-  
-    // limpiar timers anteriores
-    if (countdownInterval) clearInterval(countdownInterval);
-    if (detectionInterval) clearInterval(detectionInterval);
-  
-    countdownInterval = setInterval(() => {
-      countdown--;
-      if (countdownElement) countdownElement.textContent = Math.max(0, countdown);
-      if (countdown <= 0) {
-        clearInterval(countdownInterval);
-        if (!recognized) {
-          stopFacialRecognition();
-          showManualLoginOption();
-        }
-      }
-    }, 1000);
-  
-    detectionInterval = setInterval(async () => {
-      if (!loginVideo || !loginVideo.clientWidth || !loginVideo.clientHeight) return;
-  
-      try {
-        const detections = await faceapi
-          .detectAllFaces(loginVideo, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
-          .withFaceLandmarks()
-          .withFaceDescriptors();
-  
-        const displaySize = {
-          width: loginVideo.clientWidth || loginVideo.offsetWidth,
-          height: loginVideo.clientHeight || loginVideo.offsetHeight
-        };
-  
-        // asegurar canvas coincide
-        if (loginOverlay.width !== displaySize.width || loginOverlay.height !== displaySize.height) {
-          loginOverlay.width = displaySize.width;
-          loginOverlay.height = displaySize.height;
-          loginOverlay.style.width = `${displaySize.width}px`;
-          loginOverlay.style.height = `${displaySize.height}px`;
-        }
-  
-        const ctx = loginOverlay.getContext('2d');
-        ctx.clearRect(0, 0, loginOverlay.width, loginOverlay.height);
-  
-        if (detections.length > 0) {
-          const resizedDetections = faceapi.resizeResults(detections, displaySize);
-          faceapi.draw.drawDetections(loginOverlay, resizedDetections);
-          faceapi.draw.drawFaceLandmarks(loginOverlay, resizedDetections);
-        }
-  
-        if (detections.length > 0 && faceMatcher) {
-          const bestMatch = faceMatcher.findBestMatch(detections[0].descriptor);
-          if (bestMatch && bestMatch.distance < 0.6) {
-            recognized = true;
-            clearInterval(countdownInterval);
-            clearInterval(detectionInterval);
-            const foundUser = userDatabase.find(u => u.codigo_empleado === bestMatch.label);
-            if (foundUser) {
-              stopFacialRecognition();
-              grantAccess(foundUser);
-              return;
-            }
-          }
-        }
-      } catch (err) {
-        console.error('startFacialRecognition error', err);
-      }
-    }, 200);
-  }
-  
 function stopFacialRecognition() {
   if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
   if (detectionInterval) { clearInterval(detectionInterval); detectionInterval = null; }
