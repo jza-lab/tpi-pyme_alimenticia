@@ -468,6 +468,7 @@ function stopVideoStream() {
   stopFacialRecognition();
 }
 
+/* ---------- showManualLoginOption (actualizada) ---------- */
 function showManualLoginOption() {
   const loginStatusEl = document.getElementById('login-status');
   const manualLoginEl = document.getElementById('manual-login');
@@ -475,9 +476,26 @@ function showManualLoginOption() {
   if (!manualLoginEl) return;
   if (manualLoginEl.dataset.visible === 'true') return;
 
-  // mensaje de error
+  // Ajustar títulos y texto del botón según tipo (ingreso/egreso)
+  const manualTitleEl = manualLoginEl.querySelector('h3');
+  const manualBtn = document.getElementById('manual-login-btn');
+  const retryFacialBtn = document.getElementById('retry-facial-login-btn');
+
+  if (currentLoginType === 'egreso') {
+    if (manualTitleEl) manualTitleEl.textContent = 'Cierre de Sesión Manual';
+    if (manualBtn) manualBtn.textContent = 'Acreditar egreso manual';
+    if (loginStatusEl) loginStatusEl.textContent = 'No se pudo acreditar el egreso por reconocimiento. Por favor use el cierre de sesión manual.';
+  } else { // 'ingreso' por defecto
+    if (manualTitleEl) manualTitleEl.textContent = 'Inicio de Sesión Manual';
+    if (manualBtn) manualBtn.textContent = 'Acreditar ingreso manual';
+    if (loginStatusEl) loginStatusEl.textContent = 'No se pudo acreditar el ingreso por reconocimiento. Por favor use el inicio de sesión manual.';
+  }
+
+  // cambiar texto del botón de reintento para mayor claridad
+  if (retryFacialBtn) retryFacialBtn.textContent = 'Reintentar reconocimiento';
+
+  // clases / estilo de status
   if (loginStatusEl) {
-    loginStatusEl.textContent = 'No se pudo reconocer su rostro. Por favor, use el inicio de sesión manual.';
     loginStatusEl.className = 'status error';
     loginStatusEl.style.display = 'block';
   }
@@ -486,8 +504,14 @@ function showManualLoginOption() {
   manualLoginEl.style.display = 'block';
   manualLoginEl.dataset.visible = 'true';
 
+  // enfocar el primer input para acelerar el flujo
+  const firstInput = manualLoginEl.querySelector('input');
+  if (firstInput) firstInput.focus();
+
   manualLoginEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
+
+
 
 async function attemptManualLogin() {
   const operatorCode = document.getElementById('manual-operator-code')?.value;
@@ -497,35 +521,31 @@ async function attemptManualLogin() {
   if (user) grantAccess(user); else denyAccess('Credenciales incorrectas.');
 }
 
-// grant/deny access (versión que prioriza permitir menú a supervisores)
+/* ---------- grantAccess (final; sin redirección automática) ---------- */
 async function grantAccess(user) {
   try {
     const allUserRecords = accessRecords
       .filter(r => r.codigo_empleado === user.codigo_empleado)
       .sort((a,b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
-    // by default permitimos
     let canAccess = true;
     let errorMessage = '';
-
-    // último registro (si existe)
     const last = allUserRecords.length ? allUserRecords[0] : null;
 
-    // --- NUEVA LÓGICA: si es ingreso y el usuario ya está adentro (last.tipo === 'ingreso')
-    // y además ES supervisor (nivel_acceso >= 3), *permitimos* que use el menú sin volver a registrar ingreso.
+    // Si intentan registrar INGRESO pero el último registro ya es INGRESO
+    // y además ES supervisor (nivel >= 3), permitir uso del menú SIN registrar nuevo ingreso.
     if (currentLoginType === 'ingreso' && last && last.tipo === 'ingreso' && user.nivel_acceso >= 3) {
-      // No registramos un nuevo "ingreso". Solo habilitamos el botón y la sesión de supervisor.
       document.getElementById('welcome-message').textContent = `${user.nombre}, ya está dentro. Puede usar el menú de supervisor.`;
       const supBtn = document.getElementById('supervisor-menu-btn');
       if (supBtn) supBtn.style.display = 'block';
       sessionStorage.setItem('isSupervisor', 'true');
 
       showScreen('access-granted-screen');
-      setTimeout(() => showScreen('home-screen'), 4000);
-      return; // salimos: NO registramos un nuevo acceso
+      // NO HAY setTimeout: dejamos la pantalla hasta que el usuario haga click en "Volver al Inicio".
+      return;
     }
 
-    // --- Comportamiento antiguo para negar cuando repiten el mismo tipo y NO son supervisores
+    // Comportamiento antiguo para negar cuando repiten el mismo tipo y NO son supervisores
     if (last) {
       if (currentLoginType === 'ingreso' && last.tipo === 'ingreso') {
         canAccess = false;
@@ -543,7 +563,7 @@ async function grantAccess(user) {
       return;
     }
 
-    // Si llegamos acá, registramos el acceso normalmente
+    // Registramos el acceso (ingreso/egreso)
     await registerAccess(user.codigo_empleado, currentLoginType);
 
     const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
@@ -559,16 +579,17 @@ async function grantAccess(user) {
       if (supBtn) supBtn.style.display = 'none';
     }
 
+    // Mostrar pantalla de acceso concedido y dejarla hasta que el usuario vuelva al inicio
     showScreen('access-granted-screen');
-    setTimeout(() => showScreen('home-screen'), 4000);
+    // <-- ya no hay setTimeout que vuelva al home automáticamente
   } catch (err) {
     console.error('grantAccess error', err);
-    // fallback UX: mostrar éxito aún si falla registro remoto
+    // fallback UX: mostrar éxito aún si falla registro remoto y no redirigir automáticamente
     document.getElementById('welcome-message').textContent = `${user.nombre}, su registro fue procesado (fallback).`;
     showScreen('access-granted-screen');
-    setTimeout(() => showScreen('home-screen'), 4000);
   }
 }
+
 
 function denyAccess(reason) {
   document.getElementById('denial-reason').textContent = reason;
