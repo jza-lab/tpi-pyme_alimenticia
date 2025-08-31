@@ -99,6 +99,68 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // Configurar botones de empleados
+  document.getElementById('btn-nuevo-empleado')?.addEventListener('click', function () {
+    showRegisterScreen();
+  });
+
+  document.getElementById('btn-eliminar-empleado')?.addEventListener('click', function () {
+    const codigo = prompt("Ingrese el código del empleado a eliminar:");
+    if (codigo) {
+      // Aquí implementarías la lógica para eliminar empleado
+      alert('Funcionalidad de eliminar empleado en desarrollo');
+    }
+  });
+
+  // Configurar botones de las pantallas de registro
+  document.getElementById('back-to-employees')?.addEventListener('click', function () {
+    showEmployeesMainView();
+  });
+
+  document.getElementById('capture-btn')?.addEventListener('click', function () {
+    // Validar formulario antes de ir a captura
+    const code = document.getElementById('operator-code').value.trim();
+    const name = document.getElementById('operator-name').value.trim();
+    const surname = document.getElementById('operator-surname').value.trim();
+    const dni = document.getElementById('operator-dni').value.trim();
+    const role = document.getElementById('operator-role').value;
+
+    if (!code || !name || !surname || !dni || !role) {
+      alert('Por favor complete todos los campos.');
+      return;
+    }
+
+    // Guardar datos temporalmente
+    sessionStorage.setItem('nuevoEmpleado', JSON.stringify({
+      codigo_empleado: code,
+      nombre: name,
+      apellido: surname,
+      dni: dni,
+      nivel_acceso: parseInt(role),
+    }));
+
+    showCaptureScreen();
+  });
+
+  document.getElementById('back-to-register')?.addEventListener('click', function () {
+    showRegisterScreen();
+  });
+
+  document.getElementById('retry-capture-btn')?.addEventListener('click', function () {
+    // Reiniciar captura
+    document.getElementById('capture-status').textContent = 'Esperando detección facial...';
+    document.getElementById('capture-status').className = 'status info';
+    document.getElementById('confirm-capture-btn').disabled = true;
+  });
+
+  document.getElementById('confirm-capture-btn')?.addEventListener('click', function () {
+    // Implementar la lógica para confirmar y guardar
+    alert('Empleado registrado exitosamente');
+    showEmployeesMainView();
+    // Limpiar formulario
+    clearRegistrationForm();
+  });
+
   document.getElementById('refresh-records')?.addEventListener('click', function () {
     renderRecords();
   });
@@ -238,7 +300,7 @@ function showEmployeesList(employees) {
     card.className = 'employee-card';
     card.innerHTML = `
     <div class="employee-info">
-        <h4>${employee.nombre}</h4>
+        <h4>${employee.nombre} ${employee.apellido}</h4>
         <p>Código: ${employee.codigo_empleado} | DNI: ${employee.dni}</p>
         <p>Estado: <span class="status-${employee.estado}">${employee.estado === 'inside' ? 'Dentro' : 'Fuera'}</span></p>
     </div>
@@ -273,5 +335,42 @@ async function loadEmployees() {
 
 async function loadStatistics() {
   console.log('Cargando estadísticas...');
-  // Implementar estadisticas.
+  // Aquí puedes implementar la carga de estadísticas
+}
+
+// Funciones para manejar las pantallas de empleados
+function showEmployeesMainView() {
+  document.getElementById('empleados-main-view').style.display = 'block';
+  document.getElementById('register-screen').classList.remove('active');
+  document.getElementById('capture-screen').classList.remove('active');
+}
+
+function showRegisterScreen() {
+  document.getElementById('empleados-main-view').style.display = 'none';
+  document.getElementById('register-screen').classList.add('active');
+  document.getElementById('capture-screen').classList.remove('active');
+}
+
+function showCaptureScreen() {
+  document.getElementById('empleados-main-view').style.display = 'none';
+  document.getElementById('register-screen').classList.remove('active');
+  document.getElementById('capture-screen').classList.add('active');
+  initCamera();
+}
+
+function clearRegistrationForm() {
+  document.getElementById('operator-code').value = '';
+  document.getElementById('operator-name').value = '';
+  document.getElementById('operator-surname').value = '';
+  document.getElementById('operator-dni').value = '';
+  document.getElementById('operator-role').value = '';
+}
+
+function initCamera() { //Implementar.
+  console.log('Inicializando cámara...');
+  setTimeout(() => {
+    document.getElementById('capture-status').textContent = 'Rostro detectado correctamente';
+    document.getElementById('capture-status').className = 'status success';
+    document.getElementById('confirm-capture-btn').disabled = false;
+  }, 5000);
 }

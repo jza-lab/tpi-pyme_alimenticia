@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +10,6 @@
   <script defer src="menu.js"></script>
 
 </head>
-
 <body>
   <button class="logout-btn" onclick="logout()">Salir</button>
 
@@ -50,13 +48,7 @@
 
       <table>
         <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Nombre</th>
-            <th>Código</th>
-            <th>Tipo</th>
-            <th>Estado</th>
-          </tr>
+          <tr><th>Fecha</th><th>Nombre</th><th>Código</th><th>Tipo</th><th>Estado</th></tr>
         </thead>
         <tbody id="records-tbody"></tbody> <!-- Registros se cargan aca -->
       </table>
@@ -64,10 +56,60 @@
 
     <!-- Gestión de empleados -->
     <section id="empleados" class="content-section">
-      <h2>Gestión de Empleados</h2>
-      <button id="btn-nuevo-empleado" class="btn btn-primary">Registrar Nuevo Empleado</button>
-      <button id="btn-eliminar-empleado" class="btn btn-danger">Eliminar Empleado</button>
-      <div id="empleados-list"></div> <!-- Lista de empleados se carga aca -->
+      <div id="empleados-main-view">
+        <h2>Gestión de Empleados</h2>
+        <button id="btn-nuevo-empleado" class="btn btn-primary">Registrar Nuevo Empleado</button>
+        <button id="btn-eliminar-empleado" class="btn btn-danger">Eliminar Empleado</button>
+        <div id="empleados-list"></div> <!-- Lista de empleados se carga aca -->
+      </div>
+      <!-- Pantalla de registro -->
+      <div id="register-screen" class="screen">
+        <h2>Registro de Nuevo Usuario</h2>
+        <div class="form-group">
+          <label for="operator-code">Código de Operario:</label>
+          <input type="text" id="operator-code" placeholder="Ej: OP-001">
+        </div>
+        <div class="form-group">
+          <label for="operator-name">Nombre:</label>
+          <input type="text" id="operator-name" placeholder="Ej: Ana">
+        </div>
+        <div class="form-group">
+          <label for="operator-surname">Apellido:</label>
+          <input type="text" id="operator-surname" placeholder="Ej: Perez">
+        </div>
+        <div class="form-group">
+          <label for="operator-dni">DNI:</label>
+          <input type="text" id="operator-dni" placeholder="Ej: 12345678">
+        </div>
+        <div class="form-group">
+          <label for="operator-role">Rol:</label>
+          <select id="operator-role">
+            <option value="">Seleccione un rol...</option>
+            <option value="1">Empleado (Nivel 1)</option>
+            <option value="3">Supervisor (Nivel 3)</option>
+          </select>
+        </div>
+        <div class="action-buttons">
+          <button id="capture-btn" class="btn btn-primary">Capturar Rostro</button>
+          <button id="back-to-employees" class="btn btn-secondary">Volver</button>
+        </div>
+      </div>
+
+      <!-- Pantalla de captura facial -->
+      <div id="capture-screen" class="screen">
+        <h2>Captura de Rostro</h2>
+        <p>Por favor, colóquese frente a la cámara y asegúrese de que su rostro esté bien iluminado.</p>
+        <div class="video-container">
+          <video id="video" width="600" height="450" autoplay muted></video>
+          <canvas id="overlay"></canvas>
+        </div>
+        <div id="capture-status" class="status info">Esperando detección facial...</div>
+        <div class="action-buttons">
+          <button id="confirm-capture-btn" class="btn btn-primary" disabled>Confirmar Captura</button>
+          <button id="retry-capture-btn" class="btn btn-secondary">Reintentar</button>
+          <button id="back-to-register" class="btn btn-secondary">Volver al Registro</button>
+        </div>
+      </div>
     </section>
 
     <!-- Estadísticas -->
@@ -81,5 +123,4 @@
   </div>
 
 </body>
-
 </html>
