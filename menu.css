@@ -156,7 +156,7 @@ body {
 }
 
 /* Tabla de accesos */
-table.container {
+.table-container {
   overflow-x: auto;
   width: 100%;
 }

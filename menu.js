@@ -212,6 +212,10 @@ async function fetchAccessRecords() {
   }
 }
 
+document.getElementById('refresh-records')?.addEventListener('click', function () {
+  refreshRecords();
+});
+
 // ------------------- API FUNCTIONS ------------------- //
 async function fetchUsers() {
   try {
