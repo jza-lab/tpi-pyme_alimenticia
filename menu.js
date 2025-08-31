@@ -552,6 +552,44 @@ async function registerUser(userData) {
   }
 }
 
+function dataURLtoBlob(dataURL) {
+  const arr = dataURL.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
+}
+
+async function uploadPhoto(base64Data, filename) {
+  const blob = dataURLtoBlob(base64Data);
+
+  const { data, error } = await supabaseClient
+    .storage
+    .from('fotos')
+    .upload(`empleados/${filename}.png`, blob, {
+      contentType: 'image/png',
+      upsert: true
+    });
+
+  if (error) {
+    console.error('Error al subir foto:', error);
+    throw error;
+  }
+
+  // Obtener URL pública
+  const { data: publicUrlData } = supabaseClient
+    .storage
+    .from('fotos')
+    .getPublicUrl(`empleados/${filename}.png`);
+
+  return publicUrlData.publicUrl;
+}
+
+
 async function confirmCapture() {
   if (!faceDescriptor) {
     alert('No hay descriptor facial.');
@@ -565,8 +603,13 @@ async function confirmCapture() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-    currentUser.foto = canvas.toDataURL('image/png');
+    const fotoBase64 = canvas.toDataURL('image/png');
 
+    // Subir foto al bucket y obtener URL pública
+    const fotoUrl = await uploadPhoto(fotoBase64, currentUser.codigo_empleado);
+    currentUser.foto = fotoUrl;
+
+    // Registrar en la tabla
     const result = await registerUser(currentUser);
     if (result?.user) {
       userDatabase.push(result.user);
@@ -583,6 +626,7 @@ async function confirmCapture() {
     alert('Error al registrar usuario.');
   }
 }
+
 
 // ------------------- UTILITY FUNCTIONS ------------------- //
 function stopVideoStream() {
