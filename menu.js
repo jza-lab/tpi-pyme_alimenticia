@@ -585,6 +585,16 @@ async function confirmCapture() {
     alert('No hay descriptor facial.');
     return;
   }
+  // Verificar si el rostro ya existe
+  if (faceMatcher) {
+    const bestMatch = faceMatcher.findBestMatch(faceDescriptor);
+    if (bestMatch.distance < 0.6) {
+      const existingUser = userDatabase.find(u => u.codigo_empleado === bestMatch.label);
+      const userName = existingUser ? `${existingUser.nombre} ${existingUser.apellido || ''}`.trim() : 'un usuario existente';
+      alert(`Este rostro ya está registrado para ${userName} (código: ${bestMatch.label}). No se puede registrar un mismo rostro para múltiples empleados.`);
+      return; // Detener el proceso de registro
+    }
+  }
 
   try {
     currentUser.descriptor = Array.from(faceDescriptor);
