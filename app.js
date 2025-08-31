@@ -1,12 +1,9 @@
-// app.js (versión corregida)
-
-// Supabase config (mantén tu key)
 const API_BASE_URL = 'https://xtruedkvobfabctfmyys.supabase.co/functions/v1';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0cnVlZGt2b2JmYWJjdGZteXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NzkzOTUsImV4cCI6MjA3MjA1NTM5NX0.ViqW5ii4uOpvO48iG3FD6S4eg085GvXr-xKUC4TLrqo'; 
 const { createClient } = supabase;
 const supabaseClient = createClient('https://xtruedkvobfabctfmyys.supabase.co', SUPABASE_ANON_KEY);
 
-// Globals
+// ------------------- Globals ------------------- //
 let currentUser = null;
 let faceDescriptor = null;
 let faceMatcher = null;
@@ -16,7 +13,7 @@ let userDatabase = [];
 let accessRecords = [];
 let currentLoginType = 'ingreso';
 
-// DOM refs (obténlos dinámicamente)
+// ------------------- DOM refs ------------------- //
 const screens = document.querySelectorAll('.screen');
 const video = document.getElementById('video');
 const loginVideo = document.getElementById('login-video');
@@ -26,7 +23,7 @@ const countdownElement = document.getElementById('countdown');
 const captureStatus = document.getElementById('capture-status');
 const loginStatus = document.getElementById('login-status');
 
-// ------------------- Event listeners seguros (comprobar existencia) -------------------
+// ------------------- Event listeners ------------------- //
 (function attachListeners() {
   const el = id => document.getElementById(id);
 
@@ -36,8 +33,11 @@ const loginStatus = document.getElementById('login-status');
   const egresoBtn = el('egreso-btn');
   if (egresoBtn) egresoBtn.addEventListener('click', () => startFacialLogin('egreso'));
 
-  const backDenied = el('back-to-home-from-denied');
-  if (backDenied) backDenied.addEventListener('click', () => showScreen('home-screen'));
+  // 🔹 FIX: cubrir ambos botones "volver"
+  ['back-to-home-from-denied', 'back-to-home-from-denied-2'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.addEventListener('click', () => showScreen('home-screen'));
+  });
 
   const backAfterAccess = el('back-after-access');
   if (backAfterAccess) backAfterAccess.addEventListener('click', () => showScreen('home-screen'));
@@ -64,7 +64,7 @@ const loginStatus = document.getElementById('login-status');
   if (refreshRecordsBtn) refreshRecordsBtn.addEventListener('click', () => loadRecords());
 })();
 
-// ------------------- API helpers (mantén tus implementaciones) -------------------
+// ------------------- API helpers ------------------- //
 async function fetchUsers() {
   try {
     const { data, error } = await supabaseClient.from('users').select('*');
@@ -86,7 +86,6 @@ async function fetchAccessRecords() {
   }
 }
 async function registerUser(userData) {
-  // Mantén tu implementación real; aquí uso la función que ya tenías
   try {
     const formData = new FormData();
     formData.append('codigo_empleado', userData.codigo_empleado);
@@ -124,7 +123,7 @@ async function registerAccess(codigoOperario, tipo) {
   }
 }
 
-// ------------------- Inicialización -------------------
+// ------------------- Init ------------------- //
 async function init() {
   try {
     console.log('Cargando modelos face-api...');
@@ -132,7 +131,7 @@ async function init() {
     await faceapi.nets.tinyFaceDetector.loadFromUri(`${MODEL_BASE_URL}/tiny_face_detector`);
     await faceapi.nets.faceLandmark68Net.loadFromUri(`${MODEL_BASE_URL}/face_landmark_68`);
     await faceapi.nets.faceRecognitionNet.loadFromUri(`${MODEL_BASE_URL}/face_recognition`);
-    try { await faceapi.nets.faceExpressionNet.loadFromUri(`${MODEL_BASE_URL}/face_expression`); } catch (e) { /* opcional */ }
+    try { await faceapi.nets.faceExpressionNet.loadFromUri(`${MODEL_BASE_URL}/face_expression`); } catch (e) {}
 
     userDatabase = await fetchUsers();
     accessRecords = await fetchAccessRecords();
@@ -143,16 +142,35 @@ async function init() {
   }
 }
 
-// Mostrar pantalla
+// ------------------- Screens ------------------- //
 function showScreen(screenId) {
   if (screenId === 'home-screen') sessionStorage.removeItem('isSupervisor');
   screens.forEach(s => s.classList.remove('active'));
   const el = document.getElementById(screenId);
   if (el) el.classList.add('active');
 
-  // parar procesos al cambiar
+  // parar procesos
   if (screenId !== 'login-screen') stopFacialRecognition();
   if (screenId !== 'capture-screen') stopVideoStream();
+
+  // 🔹 reset manual login si volvemos al login
+  if (screenId === 'login-screen') resetManualLogin();
+}
+
+// ------------------- Manual Login Reset ------------------- //
+function resetManualLogin() {
+  const manualLoginEl = document.getElementById('manual-login');
+  if (manualLoginEl) {
+    manualLoginEl.style.display = 'none';
+    manualLoginEl.dataset.visible = 'false';
+    document.getElementById('manual-operator-code').value = '';
+    document.getElementById('manual-operator-dni').value = '';
+  }
+  const loginStatusEl = document.getElementById('login-status');
+  if (loginStatusEl) {
+    loginStatusEl.textContent = 'Buscando coincidencias...';
+    loginStatusEl.className = 'status info';
+  }
 }
 
 // ------------------- Registro (captura) -------------------
@@ -310,50 +328,52 @@ function restartFaceCapture() {
 
 // ------------------- Login facial (reconocimiento) -------------------
 async function startFacialLogin(tipo) {
-    currentLoginType = tipo;
-    const title = document.getElementById('login-title');
-    const desc = document.getElementById('login-description');
-    if (tipo === 'ingreso') {
-      title.textContent = 'Registro de Ingreso';
-      desc.textContent = 'Por favor, colóquese frente a la cámara para registrar su ingreso.';
-    } else {
-      title.textContent = 'Registro de Egreso';
-      desc.textContent = 'Por favor, colóquese frente a la cámara para registrar su egreso.';
-    }
-  
-    showScreen('login-screen');
-    document.getElementById('manual-login') && (document.getElementById('manual-login').style.display = 'none');
-  
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-      loginVideo.srcObject = stream;
-  
-      // esperar metadata y play
-      await new Promise(resolve => {
-        loginVideo.onloadedmetadata = () => {
-          loginVideo.play();
-          resolve();
-        };
-      });
-  
-      // Ajustar overlay al tamaño visual del elemento video (clientWidth/clientHeight)
-      const displaySize = {
-        width: loginVideo.clientWidth || loginVideo.offsetWidth,
-        height: loginVideo.clientHeight || loginVideo.offsetHeight
-      };
-      loginOverlay.width = displaySize.width;
-      loginOverlay.height = displaySize.height;
-      loginOverlay.style.width = `${displaySize.width}px`;
-      loginOverlay.style.height = `${displaySize.height}px`;
-  
-      startFacialRecognition();
-    } catch (err) {
-      console.error('startFacialLogin camera error', err);
-      loginStatus.textContent = 'No se pudo acceder a la cámara.';
-      loginStatus.className = 'status error';
-      showManualLoginOption();
-    }
+  currentLoginType = tipo;
+
+  // resetear manual-login para que vuelva a mostrarse si falla
+  const manualLoginEl = document.getElementById('manual-login');
+  if (manualLoginEl) {
+    manualLoginEl.style.display = 'none';
+    manualLoginEl.dataset.visible = 'false'; // <-- reset
   }
+
+  const title = document.getElementById('login-title');
+  const desc = document.getElementById('login-description');
+  if (tipo === 'ingreso') {
+    title.textContent = 'Registro de Ingreso';
+    desc.textContent = 'Por favor, colóquese frente a la cámara para registrar su ingreso.';
+  } else {
+    title.textContent = 'Registro de Egreso';
+    desc.textContent = 'Por favor, colóquese frente a la cámara para registrar su egreso.';
+  }
+
+  showScreen('login-screen');
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    loginVideo.srcObject = stream;
+    await new Promise(resolve => {
+      loginVideo.onloadedmetadata = () => { loginVideo.play(); resolve(); };
+    });
+
+    const displaySize = {
+      width: loginVideo.clientWidth || loginVideo.offsetWidth,
+      height: loginVideo.clientHeight || loginVideo.offsetHeight
+    };
+    loginOverlay.width = displaySize.width;
+    loginOverlay.height = displaySize.height;
+    loginOverlay.style.width = `${displaySize.width}px`;
+    loginOverlay.style.height = `${displaySize.height}px`;
+
+    startFacialRecognition();
+  } catch (err) {
+    console.error('startFacialLogin camera error', err);
+    loginStatus.textContent = 'No se pudo acceder a la cámara.';
+    loginStatus.className = 'status error';
+    showManualLoginOption();
+  }
+}
+
   
 
   function startFacialRecognition() {
@@ -449,28 +469,26 @@ function stopVideoStream() {
 }
 
 function showManualLoginOption() {
-    const loginStatusEl = document.getElementById('login-status');
-    const manualLoginEl = document.getElementById('manual-login');
-  
-    // protección: si ya está visible, no hacemos nada
-    if (!manualLoginEl) return;
-    if (manualLoginEl.dataset.visible === 'true') return;
-  
-    // mostrar mensaje de error en el status (centrado y con estilo)
-    if (loginStatusEl) {
-      loginStatusEl.textContent = 'No se pudo reconocer su rostro. Por favor, use el inicio de sesión manual.';
-      loginStatusEl.className = 'status error';
-      loginStatusEl.style.display = 'block';
-    }
-  
-    // mostrar el contenedor del login manual (con data-flag para no repetir)
-    manualLoginEl.style.display = 'block';
-    manualLoginEl.dataset.visible = 'true';
-  
-    // desplazar la vista hacia ese formulario
-    manualLoginEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const loginStatusEl = document.getElementById('login-status');
+  const manualLoginEl = document.getElementById('manual-login');
+
+  if (!manualLoginEl) return;
+  if (manualLoginEl.dataset.visible === 'true') return;
+
+  // mensaje de error
+  if (loginStatusEl) {
+    loginStatusEl.textContent = 'No se pudo reconocer su rostro. Por favor, use el inicio de sesión manual.';
+    loginStatusEl.className = 'status error';
+    loginStatusEl.style.display = 'block';
   }
-  
+
+  // mostrar manual login
+  manualLoginEl.style.display = 'block';
+  manualLoginEl.dataset.visible = 'true';
+
+  manualLoginEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 async function attemptManualLogin() {
   const operatorCode = document.getElementById('manual-operator-code')?.value;
   const operatorDni = document.getElementById('manual-operator-dni')?.value;
