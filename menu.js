@@ -183,9 +183,8 @@ function renderRecords() {
 }
 
 // Función para mostrar lista de empleados
-const containerSeccionEmpleados = document.getElementById('employee-container');
 
-//const containerSeccionEmpleados = document.getElementById('empleados-list');
+const containerSeccionEmpleados = document.getElementById('empleados-list');
 
 function showEmployeesList(employees) {
   containerSeccionEmpleados.innerHTML = '';
