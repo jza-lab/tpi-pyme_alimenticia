@@ -1,0 +1,324 @@
+{
+  "Recepcion": [
+    {
+      "Fecha": "2025-08-15",
+      "Proveedor": "Carnes Argentinas",
+      "Tipo": "Carne Vacuna",
+      "Cantidad Recibida (en Kg)": 500,
+      "Temperatura (°C)": 2.5,
+      "Inspección Visual": "Buena sin manchas",
+      "Decisión": "Aceptado",
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha": "2025-08-15",
+      "Proveedor": "Avícola del Sur",
+      "Tipo": "Pollo Fresco",
+      "Cantidad Recibida (en Kg)": 300,
+      "Temperatura (°C)": 1.8,
+      "Inspección Visual": "Textura firme",
+      "Decisión": "Aceptado",
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha": "2025-08-15",
+      "Proveedor": "Especias SRL",
+      "Tipo": "Mezcla de Especias",
+      "Cantidad Recibida (en Kg)": 50,
+      "Temperatura (°C)": 22.0,
+      "Inspección Visual": "Olor natural",
+      "Decisión": "Aceptado",
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha": "2025-08-15",
+      "Proveedor": "Porcinos Ltda",
+      "Tipo": "Carne de Cerdo",
+      "Cantidad Recibida (en Kg)": 200,
+      "Temperatura (°C)": 3.2,
+      "Inspección Visual": "Con manchas",
+      "Decisión": "Rechazado",
+      "Riesgo": "Contaminación visual"
+    },
+    {
+      "Fecha": "2025-08-16",
+      "Proveedor": "Avícola del Sur",
+      "Tipo": "Pollo Fresco",
+      "Cantidad Recibida (en Kg)": 150,
+      "Temperatura (°C)": 2.0,
+      "Inspección Visual": "Con manchas",
+      "Decisión": "Rechazado",
+      "Riesgo": "Posible deterioro"
+    },
+    {
+      "Fecha": "2025-08-17",
+      "Proveedor": "Porcinos Ltda",
+      "Tipo": "Carne de Cerdo",
+      "Cantidad Recibida (en Kg)": 250,
+      "Temperatura (°C)": 1.5,
+      "Inspección Visual": "Buena sin manchas",
+      "Decisión": "Aceptado",
+      "Riesgo": "Ninguno"
+    }
+  ],
+  "Almacenamiento": [
+    {
+      "Fecha de Ingreso": "2025-08-15",
+      "Tipo": "Pollo Fresco",
+      "Ubicación": "Cámara Fría 2",
+      "Cantidad almacenada (en Kg)": 300,
+      "Temperatura (°C)": 0.5,
+      "Humedad (en %)": 90,
+      "Fecha de Vencimiento": "2025-08-25",
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Ingreso": "2025-08-15",
+      "Tipo": "Carne Vacuna",
+      "Ubicación": "Cámara Fría 1",
+      "Cantidad almacenada (en Kg)": 500,
+      "Temperatura (°C)": 1.0,
+      "Humedad (en %)": 85,
+      "Fecha de Vencimiento": "2025-08-30",
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Ingreso": "2025-08-15",
+      "Tipo": "Mezcla de Especias",
+      "Ubicación": "Almacén Seco",
+      "Cantidad almacenada (en Kg)": 50,
+      "Temperatura (°C)": 20.0,
+      "Humedad (en %)": 50,
+      "Fecha de Vencimiento": "2026-02-15",
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Ingreso": "2025-08-15",
+      "Tipo": "Envases Plásticos",
+      "Ubicación": "Almacén Seco",
+      "Cantidad almacenada (en Kg)": 100,
+      "Temperatura (°C)": 22.0,
+      "Humedad (en %)": 45,
+      "Fecha de Vencimiento": "Indefinido",
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Ingreso": "2025-08-17",
+      "Tipo": "Carne de Cerdo",
+      "Ubicación": "Cámara Fría 3",
+      "Cantidad almacenada (en Kg)": 250,
+      "Temperatura (°C)": 1.0,
+      "Humedad (en %)": 85,
+      "Fecha de Vencimiento": "2025-09-02",
+      "Riesgo": "Posible cruzada si no FIFO"
+    }
+  ],
+  "Procesamiento": [
+    {
+      "Fecha": "2025-08-15",
+      "Producto": "Hamburguesas",
+      "Cantidades Procesadas (en Unidades)": 2000,
+      "Tiempo de Operación (en Horas)": 4,
+      "pH": "5,6",
+      "Rendimiento (en %)": 95,
+      "Observaciones": "Mezcla uniforme",
+      "Desperdicio (en %)": 5,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha": "2025-08-15",
+      "Producto": "Milanesas",
+      "Cantidades Procesadas (en Unidades)": 1500,
+      "Tiempo de Operación (en Horas)": 3,
+      "pH": "5,8",
+      "Rendimiento (en %)": 92,
+      "Observaciones": "Empanado sin grumos",
+      "Desperdicio (en %)": 8,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha": "2025-08-15",
+      "Producto": "Salchichas",
+      "Cantidades Procesadas (en Unidades)": 1200,
+      "Tiempo de Operación (en Horas)": 5,
+      "pH": "5,5",
+      "Rendimiento (en %)": 90,
+      "Observaciones": "Embutido preciso",
+      "Desperdicio (en %)": 10,
+      "Riesgo": "Posible bajo pH"
+    },
+    {
+      "Fecha": "2025-08-15",
+      "Producto": "Albóndigas",
+      "Cantidades Procesadas (en Unidades)": 1800,
+      "Tiempo de Operación (en Horas)": 2,
+      "pH": "5,7",
+      "Rendimiento (en %)": 96,
+      "Observaciones": "Formado redondo",
+      "Desperdicio (en %)": 4,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha": "2025-08-15",
+      "Producto": "Nuggets",
+      "Cantidades Procesadas (en Unidades)": 2500,
+      "Tiempo de Operación (en Horas)": 4,
+      "pH": "5,9",
+      "Rendimiento (en %)": 93,
+      "Observaciones": "Corte consistente",
+      "Desperdicio (en %)": 7,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha": "2025-08-15",
+      "Producto": "Medallones",
+      "Cantidades Procesadas (en Unidades)": 1750,
+      "Tiempo de Operación (en Horas)": 3,
+      "pH": "5,7",
+      "Rendimiento (en %)": 94,
+      "Observaciones": "Forma consistente",
+      "Desperdicio (en %)": 6,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha": "2025-08-17",
+      "Producto": "Hamburguesas",
+      "Cantidades Procesadas (en Unidades)": 1900,
+      "Tiempo de Operación (en Horas)": 4,
+      "pH": "5,6",
+      "Rendimiento (en %)": 94,
+      "Observaciones": "Mezcla uniforme",
+      "Desperdicio (en %)": 6,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha": "2025-08-17",
+      "Producto": "Medallones",
+      "Cantidades Procesadas (en Unidades)": 1700,
+      "Tiempo de Operación (en Horas)": 3,
+      "pH": "5,7",
+      "Rendimiento (en %)": 94,
+      "Observaciones": "Forma consistente",
+      "Desperdicio (en %)": 6,
+      "Riesgo": "Ninguno"
+    }
+  ],
+  "Conservacion": [
+    {
+      "Fecha de Envasado": "2025-08-15",
+      "Producto": "Hamburguesas",
+      "Método de Conservación": "Envasado al Vacío",
+      "Temperatura (°C)": -18,
+      "Vida útil (en Dias)": 90,
+      "Cantidad envasada (en Unidades)": 2000,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Envasado": "2025-08-15",
+      "Producto": "Milanesas",
+      "Método de Conservación": "Congelación",
+      "Temperatura (°C)": -18,
+      "Vida útil (en Dias)": 60,
+      "Cantidad envasada (en Unidades)": 1500,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Envasado": "2025-08-15",
+      "Producto": "Salchichas",
+      "Método de Conservación": "Refrigeración",
+      "Temperatura (°C)": 2,
+      "Vida útil (en Dias)": 30,
+      "Cantidad envasada (en Unidades)": 1200,
+      "Riesgo": "Posible oxidación si >2°C"
+    },
+    {
+      "Fecha de Envasado": "2025-08-15",
+      "Producto": "Albóndigas",
+      "Método de Conservación": "Envasado al Vacío",
+      "Temperatura (°C)": -18,
+      "Vida útil (en Dias)": 90,
+      "Cantidad envasada (en Unidades)": 1800,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Envasado": "2025-08-15",
+      "Producto": "Nuggets",
+      "Método de Conservación": "Congelación",
+      "Temperatura (°C)": -18,
+      "Vida útil (en Dias)": 60,
+      "Cantidad envasada (en Unidades)": 2500,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Envasado": "2025-08-17",
+      "Producto": "Medallones",
+      "Método de Conservación": "Congelación",
+      "Temperatura (°C)": -18,
+      "Vida útil (en Dias)": 70,
+      "Cantidad envasada (en Unidades)": 1700,
+      "Riesgo": "Ninguno"
+    }
+  ],
+  "ServicioDespacho": [
+    {
+      "Fecha de Despacho": "2025-08-15",
+      "Producto": "Hamburguesas",
+      "Cantidades despachadas (en unidades)": 1800,
+      "Destino": "Supermercado A",
+      "Temperatura de carga (°C)": -18,
+      "Documentación completa": "Sí",
+      "Tiempo en transito (en Horas)": 2,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Despacho": "2025-08-15",
+      "Producto": "Milanesas",
+      "Cantidades despachadas (en unidades)": 1400,
+      "Destino": "Distribuidor B",
+      "Temperatura de carga (°C)": -18,
+      "Documentación completa": "Sí",
+      "Tiempo en transito (en Horas)": 3,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Despacho": "2025-08-15",
+      "Producto": "Salchichas",
+      "Cantidades despachadas (en unidades)": 1100,
+      "Destino": "Tienda C",
+      "Temperatura de carga (°C)": 2,
+      "Documentación completa": "Sí",
+      "Tiempo en transito (en Horas)": 1,
+      "Riesgo": "Posible ruptura frío"
+    },
+    {
+      "Fecha de Despacho": "2025-08-15",
+      "Producto": "Albóndigas",
+      "Cantidades despachadas (en unidades)": 1700,
+      "Destino": "Supermercado D",
+      "Temperatura de carga (°C)": -18,
+      "Documentación completa": "Sí",
+      "Tiempo en transito (en Horas)": 4,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Despacho": "2025-08-15",
+      "Producto": "Nuggets",
+      "Cantidades despachadas (en unidades)": 2400,
+      "Destino": "Distribuidor E",
+      "Temperatura de carga (°C)": -18,
+      "Documentación completa": "Sí",
+      "Tiempo en transito (en Horas)": 2,
+      "Riesgo": "Ninguno"
+    },
+    {
+      "Fecha de Despacho": "2025-08-17",
+      "Producto": "Medallones",
+      "Cantidades despachadas (en unidades)": 1700,
+      "Destino": "Maxi Supermercado A",
+      "Temperatura de carga (°C)": -18,
+      "Documentación completa": "Sí",
+      "Tiempo en transito (en Horas)": 3,
+      "Riesgo": "Ninguno"
+    }
+  ]
+}
