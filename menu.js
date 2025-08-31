@@ -85,10 +85,33 @@ function setupSidebar() {
   if (closeBtn) closeBtn.addEventListener("click", closeSidebar);
   if (overlay) overlay.addEventListener("click", closeSidebar);
 
-  // también cerrar al hacer clic en cualquier item del menú
+  // al hacer clic en un item de la sidebar -> navega + cierra
   document.querySelectorAll(".mobile-side-item").forEach(item => {
-    item.addEventListener("click", closeSidebar);
+    item.addEventListener("click", () => {
+      const section = item.dataset.section;
+
+      // limpiar clases
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+
+      // activar la sección correspondiente
+      const targetSection = document.getElementById(section);
+      if (targetSection) targetSection.classList.add('active');
+
+      // marcar también el botón principal como activo (coherencia)
+      const mainBtn = document.querySelector(`.nav-btn[data-section="${section}"]`);
+      if (mainBtn) mainBtn.classList.add('active');
+
+      // llamar a funciones asociadas
+      if (section === 'accesos') renderRecords();
+      if (section === 'empleados') loadEmployees();
+      if (section === 'estadisticas') loadStatistics();
+
+      // cerrar el sidebar
+      closeSidebar();
+    });
   });
+
 }
 
 function setDefaultView() {
