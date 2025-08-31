@@ -157,7 +157,7 @@ body {
 
 /* Tabla de accesos */
 table.container {
-  margin-top: 20px;
+  width: 100%;
   overflow-x: auto;
 }
 
