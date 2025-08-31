@@ -497,22 +497,46 @@ async function attemptManualLogin() {
   if (user) grantAccess(user); else denyAccess('Credenciales incorrectas.');
 }
 
-// grant/deny access (mantengo tu lógica)
 async function grantAccess(user) {
   try {
-    const allUserRecords = accessRecords.filter(r => r.codigo_empleado === user.codigo_empleado)
-      .sort((a,b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
-    let canAccess = true; let errorMessage = '';
+    //  Refrescar accesos desde BD para ese usuario
+    const { data: freshRecords, error } = await supabaseClient
+      .from('access')
+      .select('*')
+      .eq('codigo_empleado', user.codigo_empleado)
+      .order('fecha_hora', { ascending: false });
+
+    if (error) throw error;
+
+    const allUserRecords = freshRecords || [];
+
+    let canAccess = true;
+    let errorMessage = '';
+
     if (allUserRecords.length > 0) {
       const last = allUserRecords[0];
-      if (currentLoginType === 'ingreso' && last.tipo === 'ingreso') { canAccess = false; errorMessage = `${user.nombre}, ya está dentro.`; }
-      if (currentLoginType === 'egreso' && last.tipo === 'egreso') { canAccess = false; errorMessage = `${user.nombre}, ya está fuera.`; }
+      if (currentLoginType === 'ingreso' && last.tipo === 'ingreso') {
+        canAccess = false;
+        errorMessage = `${user.nombre}, ya está dentro.`;
+      }
+      if (currentLoginType === 'egreso' && last.tipo === 'egreso') {
+        canAccess = false;
+        errorMessage = `${user.nombre}, ya está fuera.`;
+      }
     }
-    if (!canAccess) { document.getElementById('denial-reason').textContent = errorMessage; showScreen('access-denied-screen'); return; }
 
+    if (!canAccess) {
+      document.getElementById('denial-reason').textContent = errorMessage;
+      showScreen('access-denied-screen');
+      return;
+    }
+
+    // registrar el acceso en Supabase
     await registerAccess(user.codigo_empleado, currentLoginType);
+
     const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
-    document.getElementById('welcome-message').textContent = `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
+    document.getElementById('welcome-message').textContent =
+      `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
 
     if (currentLoginType === 'ingreso' && user.nivel_acceso >= 3) {
       document.getElementById('supervisor-menu-btn').style.display = 'block';
@@ -523,10 +547,11 @@ async function grantAccess(user) {
 
     showScreen('access-granted-screen');
     setTimeout(() => showScreen('home-screen'), 8000);
+
   } catch (err) {
     console.error('grantAccess error', err);
-    // fallback UX: mostrar éxito aún si falla registro remoto
-    document.getElementById('welcome-message').textContent = `${user.nombre}, su registro fue procesado (fallback).`;
+    document.getElementById('welcome-message').textContent =
+      `${user.nombre}, su registro fue procesado (fallback).`;
     showScreen('access-granted-screen');
     setTimeout(() => showScreen('home-screen'), 8000);
   }
