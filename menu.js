@@ -360,70 +360,353 @@ function onStageClick(e) {
   renderStage(btn.dataset.stage);
 }
 
+// Helpers para colores de gráficos
+function getRandomColor() {
+  const r = Math.floor(Math.random() * 255);
+  const g = Math.floor(Math.random() * 255);
+  const b = Math.floor(Math.random() * 255);
+  return `rgba(${r}, ${g}, ${b}, 0.7)`;
+}
+
+function getColors(count) {
+  const colors = [];
+  for (let i = 0; i < count; i++) {
+    colors.push(getRandomColor());
+  }
+  return colors;
+}
+
+function generateInsights(allData, oeeResults) {
+    const insights = [];
+    const latestOeeData = oeeResults.datasets.oee.length > 0 ? oeeResults.datasets.oee[oeeResults.datasets.oee.length - 1] : null;
+
+    // --- Success Insights (Green) ---
+    if (latestOeeData && latestOeeData >= 0.85) {
+        insights.push({
+            text: `¡Excelente! El OEE del último día (${(latestOeeData * 100).toFixed(1)}%) es de clase mundial.`,
+            level: 'success'
+        });
+    }
+
+    // --- Alert Insights (Red) ---
+    const recepcionData = allData.Recepcion || [];
+    if (recepcionData.length > 0) {
+        const totalRecibido = recepcionData.reduce((sum, item) => sum + item['Cantidad Recibida (en Kg)'], 0);
+        const totalRechazado = recepcionData.filter(item => item.Decisión === 'Rechazado').reduce((sum, item) => sum + item['Cantidad Recibida (en Kg)'], 0);
+        const rechazoRate = (totalRecibido > 0) ? (totalRechazado / totalRecibido) : 0;
+        if (rechazoRate > 0.20) {
+            insights.push({
+                text: `ALERTA: Alto porcentaje de rechazo de materias primas (${(rechazoRate * 100).toFixed(1)}%). Proveedores a revisar.`,
+                level: 'alert'
+            });
+        } else if (rechazoRate < 0.05) {
+             insights.push({
+                text: `BUEN TRABAJO: Tasa de rechazo de materia prima muy baja (${(rechazoRate * 100).toFixed(1)}%).`,
+                level: 'success'
+            });
+        }
+    }
+
+    // --- Warning Insights (Yellow) ---
+    const procesamientoData = allData.Procesamiento || [];
+    if (procesamientoData.length > 0) {
+        const promedioDesperdicio = procesamientoData.reduce((sum, item) => sum + item['Desperdicio (en %)'], 0) / procesamientoData.length;
+        const productosConAltoDesperdicio = procesamientoData.filter(item => item['Desperdicio (en %)'] > (promedioDesperdicio * 1.25));
+        if (productosConAltoDesperdicio.length > 0) {
+            const nombres = productosConAltoDesperdicio.map(p => `${p.Producto} (${p['Desperdicio (en %)']}%)`).join(', ');
+            insights.push({
+                text: `ADVERTENCIA: Productos con desperdicio elevado: ${nombres}.`,
+                level: 'warning'
+            });
+        }
+    }
+    
+    const conservacionData = allData.Conservacion || [];
+    const despachoData = allData.ServicioDespacho || [];
+    const riesgos = [];
+    conservacionData.forEach(item => {
+      if (item.Riesgo && item.Riesgo !== "Ninguno") {
+        riesgos.push(`En ${item.Producto}: ${item.Riesgo}`);
+      }
+    });
+    despachoData.forEach(item => {
+      if (item.Riesgo && item.Riesgo !== "Ninguno") {
+        riesgos.push(`En despacho de ${item.Producto}: ${item.Riesgo}`);
+      }
+    });
+    if (riesgos.length > 0) {
+      insights.push({
+          text: `ADVERTENCIA: Riesgos detectados: ${riesgos.join('; ')}.`,
+          level: 'warning'
+      });
+    }
+
+    // --- Success insight if no risks ---
+    if (riesgos.length === 0 && (conservacionData.length > 0 || despachoData.length > 0)) {
+        insights.push({
+            text: 'BUEN TRABAJO: No se han detectado riesgos significativos en conservación ni en despacho.',
+            level: 'success'
+        });
+    }
+
+    return insights;
+}
+
+function calculateOEE(procesamientoData) {
+  const idealCycleTimes_seconds = {
+    'Hamburguesas': 6,
+    'Milanesas': 6.5,
+    'Salchichas': 13,
+    'Albóndigas': 3.5,
+    'Nuggets': 5,
+    'Medallones': 5.5
+  };
+
+  const dates = [...new Set(procesamientoData.map(p => p.Fecha))];
+  const results = {
+    labels: [],
+    datasets: {
+      availability: [],
+      performance: [],
+      quality: [],
+      oee: []
+    }
+  };
+
+  dates.forEach(date => {
+    const dailyData = procesamientoData.filter(p => p.Fecha === date);
+    if (dailyData.length === 0) return;
+
+    results.labels.push(new Date(date).toLocaleDateString('es-ES'));
+
+    // --- Availability ---
+    const unplannedStopTime_hours = 1;
+    const cleaningTimePerProcess_hours = 0.75; // 45 minutes
+    const numProcesses = dailyData.length;
+    const totalCleaningTime_hours = (numProcesses > 1) ? (numProcesses - 1) * cleaningTimePerProcess_hours : 0;
+    const totalStopTime_hours = unplannedStopTime_hours + totalCleaningTime_hours;
+    const actualRunTime_hours = dailyData.reduce((sum, p) => sum + p['Tiempo de Operación (en Horas)'], 0);
+    const plannedProductionTime_hours = actualRunTime_hours + totalStopTime_hours;
+    const availability = (plannedProductionTime_hours > 0) ? actualRunTime_hours / plannedProductionTime_hours : 0;
+
+    // --- Quality ---
+    let totalGoodCount = 0;
+    let totalCount = 0;
+    dailyData.forEach(p => {
+      const processedCount = p['Cantidades Procesadas (en Unidades)'];
+      const wastePercentage = p['Desperdicio (en %)'];
+      totalGoodCount += processedCount * (1 - wastePercentage / 100);
+      totalCount += processedCount;
+    });
+    const quality = (totalCount > 0) ? totalGoodCount / totalCount : 0;
+
+    // --- Performance ---
+    let totalNetRunTime_hours = 0;
+    dailyData.forEach(p => {
+      const productName = p.Producto;
+      const processedCount = p['Cantidades Procesadas (en Unidades)'];
+      const idealCycle_seconds = idealCycleTimes_seconds[productName];
+      if (idealCycle_seconds) {
+        totalNetRunTime_hours += (idealCycle_seconds * processedCount) / 3600;
+      }
+    });
+    const performance = (actualRunTime_hours > 0) ? totalNetRunTime_hours / actualRunTime_hours : 0;
+
+    // --- OEE ---
+    const oee = availability * performance * quality;
+
+    results.datasets.availability.push(availability);
+    results.datasets.performance.push(performance);
+    results.datasets.quality.push(quality);
+    results.datasets.oee.push(oee);
+  });
+
+  return results;
+}
+
 async function renderStage(stage) {
   const fallback = document.getElementById('statsFallback');
   const canvas = document.getElementById('statsCanvas');
-  if (!canvas) return;
-  if (fallback) fallback.style.display = 'none';
+  const ctx = canvas.getContext('2d');
+  const insightsContainer = document.getElementById('insights-container');
+  const insightsList = document.getElementById('insights-list');
+
+  if (!canvas || !insightsContainer || !insightsList) return;
+
+  // Reset view
+  insightsContainer.style.display = 'none';
+  insightsList.innerHTML = '';
+  fallback.style.display = 'none';
   canvas.style.display = 'block';
 
-  if (!supabaseClient) {
-    if (fallback) { fallback.textContent = 'No hay conexión a Supabase.'; fallback.style.display = 'block'; }
-    return;
+  if (statsChartInstance) {
+    statsChartInstance.destroy();
+    statsChartInstance = null;
   }
 
   try {
-    const { data, error } = await supabaseClient
-      .from('estadisticas')
-      .select('fecha,valor,metric')
-      .eq('etapa', stage)
-      .order('fecha', { ascending: true });
+    const response = await fetch('data/statistics.json');
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const allData = await response.json();
 
-    if (error) throw error;
+    let config;
 
-    if (!data || data.length === 0) {
-      if (statsChartInstance) { statsChartInstance.destroy(); statsChartInstance = null; }
-      if (fallback) { fallback.textContent = `No hay datos para ${stage}.`; fallback.style.display = 'block'; }
+    if (stage === 'Indicadores') {
+      const oeeResults = calculateOEE(allData.Procesamiento);
+      const insights = generateInsights(allData, oeeResults);
+      
+      const insightColors = {
+        alert: '#e74c3c', // red
+        warning: '#f39c12', // yellow
+        success: '#27ae60' // green
+      };
+
+      if (insights.length > 0) {
+        insights.forEach(insight => {
+          const card = document.createElement('div');
+          card.className = 'employee-card'; // Re-use existing style
+          card.style.borderLeft = `5px solid ${insightColors[insight.level] || '#3498db'}`;
+          
+          const p = document.createElement('p');
+          p.textContent = insight.text;
+          p.style.margin = '0';
+          
+          card.appendChild(p);
+          insightsList.appendChild(card);
+        });
+        insightsContainer.style.display = 'block';
+      }
+
+      config = {
+        type: 'bar',
+        data: {
+          labels: oeeResults.labels,
+          datasets: [
+            { label: 'Disponibilidad', data: oeeResults.datasets.availability, backgroundColor: 'rgba(54, 162, 235, 0.7)' },
+            { label: 'Rendimiento', data: oeeResults.datasets.performance, backgroundColor: 'rgba(255, 206, 86, 0.7)' },
+            { label: 'Calidad', data: oeeResults.datasets.quality, backgroundColor: 'rgba(75, 192, 192, 0.7)' },
+            { label: 'OEE', data: oeeResults.datasets.oee, backgroundColor: 'rgba(153, 102, 255, 0.7)' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: { display: true, text: 'Indicador OEE por Día' },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) label += ': ';
+                  if (context.parsed.y !== null) label += (context.parsed.y * 100).toFixed(2) + '%';
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 1, ticks: { callback: function(value) { return (value * 100).toFixed(0) + '%'; } } }
+          }
+        }
+      };
+      statsChartInstance = new Chart(ctx, config);
       return;
     }
 
-    const labels = data.map(r => {
-      const d = new Date(r.fecha);
-      return isNaN(d.getTime()) ? String(r.fecha) : d.toLocaleDateString();
-    });
-    const values = data.map(r => Number(r.valor));
-
-    const ctx = document.getElementById('statsCanvas').getContext('2d');
-    const config = {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: stage,
-          data: values,
-          fill: true,
-          tension: 0.25
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: true }, tooltip: { mode: 'index', intersect: false } },
-        scales: { x: { display: true }, y: { display: true, beginAtZero: true } }
-      }
-    };
-
-    if (statsChartInstance) {
-      statsChartInstance.data = config.data;
-      statsChartInstance.options = config.options;
-      statsChartInstance.update();
-    } else {
-      statsChartInstance = new Chart(ctx, config);
+    const stageData = allData[stage];
+    if (!stageData || stageData.length === 0) {
+      fallback.textContent = `No hay datos disponibles para la etapa "${stage}".`;
+      fallback.style.display = 'block';
+      canvas.style.display = 'none';
+      return;
     }
+
+    switch (stage) {
+       case 'Recepcion':
+        const recepcionLabels = [...new Set(stageData.map(item => item.Proveedor))];
+        const recepcionData = recepcionLabels.map(proveedor =>
+          stageData.filter(item => item.Proveedor === proveedor).reduce((sum, item) => sum + item['Cantidad Recibida (en Kg)'], 0)
+        );
+        config = {
+          type: 'bar',
+          data: {
+            labels: recepcionLabels,
+            datasets: [{ label: 'Cantidad Recibida (Kg) por Proveedor', data: recepcionData, backgroundColor: getColors(recepcionLabels.length) }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Recepción de Mercadería' } } }
+        };
+        break;
+
+      case 'Almacenamiento':
+        const almacenamientoLabels = stageData.map(item => item.Tipo);
+        const almacenamientoData = stageData.map(item => item['Cantidad almacenada (en Kg)']);
+        config = {
+          type: 'pie',
+          data: {
+            labels: almacenamientoLabels,
+            datasets: [{ label: 'Distribución de Almacenamiento (Kg)', data: almacenamientoData, backgroundColor: getColors(almacenamientoLabels.length) }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Almacenamiento por Tipo de Producto' } } }
+        };
+        break;
+
+      case 'Procesamiento':
+        const procesamientoLabels = [...new Set(stageData.map(item => item.Producto))];
+        const procesamientoData = procesamientoLabels.map(producto =>
+          stageData.filter(item => item.Producto === producto).reduce((sum, item) => sum + item['Cantidades Procesadas (en Unidades)'], 0)
+        );
+        config = {
+          type: 'bar',
+          data: {
+            labels: procesamientoLabels,
+            datasets: [{ label: 'Unidades Procesadas por Producto', data: procesamientoData, backgroundColor: getColors(procesamientoLabels.length) }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Producción por Tipo de Producto' } } }
+        };
+        break;
+
+      case 'Conservacion':
+        const conservacionLabels = stageData.map(item => item.Producto);
+        const conservacionData = stageData.map(item => item['Cantidad envasada (en Unidades)']);
+        config = {
+          type: 'doughnut',
+          data: {
+            labels: conservacionLabels,
+            datasets: [{ label: 'Unidades Envasadas por Producto', data: conservacionData, backgroundColor: getColors(conservacionLabels.length) }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Conservación de Productos' } } }
+        };
+        break;
+
+      case 'ServicioDespacho':
+        const despachoLabels = [...new Set(stageData.map(item => item.Producto))];
+        const despachoData = despachoLabels.map(producto =>
+          stageData.filter(item => item.Producto === producto).reduce((sum, item) => sum + item['Cantidades despachadas (en unidades)'], 0)
+        );
+        config = {
+          type: 'bar',
+          data: {
+            labels: despachoLabels,
+            datasets: [{ label: 'Unidades Despachadas por Producto', data: despachoData, backgroundColor: getColors(despachoLabels.length) }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Despacho de Productos' } } }
+        };
+        break;
+
+      default:
+        fallback.textContent = `Gráfico para "${stage}" no implementado.`;
+        fallback.style.display = 'block';
+        canvas.style.display = 'none';
+        return;
+    }
+
+    statsChartInstance = new Chart(ctx, config);
+
   } catch (err) {
-    console.error('Error cargando datos de estadisticas', err);
-    if (statsChartInstance) { statsChartInstance.destroy(); statsChartInstance = null; }
-    if (fallback) { fallback.textContent = `Error cargando datos para ${stage}.`; fallback.style.display = 'block'; }
+    console.error(`Error cargando o renderizando datos para ${stage}:`, err);
+    fallback.textContent = `Error al cargar datos para "${stage}". Ver la consola para más detalles.`;
+    fallback.style.display = 'block';
+    canvas.style.display = 'none';
   }
 }
 
