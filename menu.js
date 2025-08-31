@@ -7,7 +7,6 @@ let userDatabase = [];
 let accessRecords = [];
 
 // ------------------- EVENTOS INICIALES ------------------- //
-
 /**document.addEventListener('DOMContentLoaded', () => {
   const isSupervisor = sessionStorage.getItem('isSupervisor');
   console.log('Menu page loaded. isSupervisor flag:', isSupervisor);
@@ -15,7 +14,7 @@ let accessRecords = [];
   if (isSupervisor !== 'true') {
     window.location.href = 'index.html';
     return;
-  } */
+  } 
 
   // Botón salir (esquina superior derecha)
   const logoutBtn = document.querySelector('.logout-btn');
@@ -58,7 +57,55 @@ let accessRecords = [];
   }
 
   init();
-//});
+});
+*/
+    
+// Función de logout
+    function logout() {
+      sessionStorage.removeItem('isSupervisor');
+      window.location.href = 'index.html';
+    }
+
+    // Navegación entre secciones
+    document.addEventListener('DOMContentLoaded', function() {
+      // Configurar navegación
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          // Remover clase active de todos los botones
+          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+          // Agregar clase active al botón clickeado
+          this.classList.add('active');
+          
+          // Obtener la sección a mostrar
+          const section = this.dataset.section;
+          
+          // Ocultar todas las secciones
+          document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+          
+          // Mostrar la sección correspondiente
+          const targetSection = document.getElementById(section);
+          if (targetSection) {
+            targetSection.classList.add('active');
+          }
+          
+          // Actualizar contenido según la sección
+          if (section === 'accesos') {
+            renderRecords();
+          } else if (section === 'empleados') {
+            loadEmployees();
+          } else if (section === 'estadisticas') {
+            loadStatistics();
+          }
+        });
+      });
+
+    document.getElementById('refresh-records')?.addEventListener('click', function() {
+        renderRecords();
+      });
+
+      // Cargar datos iniciales
+      init();
+    });
 
 // ------------------- API ------------------- //
 async function fetchUsers() {
@@ -83,20 +130,17 @@ async function fetchAccessRecords() {
   }
 }
 
-// ------------------- INIT ------------------- //
 async function init() {
   try {
-    // carga inicial (puede venir del cache si ya estaban en memoria)
     userDatabase = await fetchUsers();
     accessRecords = await fetchAccessRecords();
     renderRecords();
   } catch (err) {
-    console.error('Error al inicializar menú:', err);
-    alert('Error al inicializar la página de menú.');
-  }
+      console.error('Error al inicializar:', err);
+    }
 }
 
-// ------------------- REFRESH (FORZAR FETCH) ------------------- //
+// ------------------- REFRESH ------------------- //
 async function refreshRecords() {
   const btn = document.getElementById('refresh-records');
   try {
@@ -180,10 +224,14 @@ function renderRecords() {
   } catch (err) {
     console.error('Error al renderizar registros:', err);
   }
+ console.log('Cargando registros de acceso...');
+  document.getElementById('people-inside-count').textContent = '1';
+  document.getElementById('people-outside-count').textContent = '1';
+
+  
 }
 
 // Función para mostrar lista de empleados
-
 const containerSeccionEmpleados = document.getElementById('empleados-list');
 
 function showEmployeesList(employees) {
@@ -196,25 +244,26 @@ function showEmployeesList(employees) {
     <div class="employee-info">
         <h4>${employee.nombre}</h4>
         <p>Código: ${employee.codigo_empleado} | DNI: ${employee.dni}</p>
-        <p>Estado: <span class="status-${employee.estado}">${employee.estado === 'ingreso' ? 'Dentro' : 'Fuera'}</span></p>
+        <p>Estado: <span class="status-${employee.estado}">${employee.estado === 'inside' ? 'Dentro' : 'Fuera'}</span></p>
     </div>
-    <div class="employee-level level-${employee.nivel_acceso}">
-        ${employee.nivel_acceso === 1 ? 'Empleado' : 'Supervisor'}
+    <div class="employee-level level-${employee.nivel}">
+        ${employee.nivel === 1 ? 'Empleado' : 'Supervisor'}
     </div>
     `;
   containerSeccionEmpleados.appendChild(card);
   });
   }
 
-// Función para cargar los datos y renderizar las tarjetas
+
 async function loadEmployees() {
+  console.log('Cargando empleados...');
   try {
     // Llamar a fetchUsers para obtener los datos
     const employees = await fetchUsers();
 
     if (!employees || employees.length === 0) {
       console.warn('No se encontraron empleados');
-      containerSeccionEmpleados.innerHTML = '<p>No hay empleados para mostrar.</p>';
+      container.innerHTML = '<p>No hay empleados para mostrar.</p>';
       return;
     }
 
@@ -222,8 +271,11 @@ async function loadEmployees() {
     showEmployeesList(employees);
   } catch (err) {
     console.error('Error al cargar los empleados:', err);
-    containerSeccionEmpleados.innerHTML = '<p>Error al cargar los datos.</p>';
+    container.innerHTML = '<p>Error al cargar los datos.</p>';
   }
 }
-// Llamar a la función para cargar los datos al iniciar
-loadEmployees();
+
+    async function loadStatistics() {
+      console.log('Cargando estadísticas...');
+      // Aquí puedes implementar la carga de estadísticas
+    }

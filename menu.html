@@ -5,26 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Supervisor</title>
   <link rel="stylesheet" href="menu.css">
+
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script defer src="menu.js"></script>
+
 </head>
 <body>
-
-  <!-- Botón de salir -->
-  <button class="logout-btn">Salir</button>
+  <button class="logout-btn" onclick="logout()">Salir</button>
 
   <div id="content">
+    <div class="admin-header">
+      <h2>Panel Administrativo</h2>
+    </div>
 
-    <!-- Gestión de empleados -->
-    <section id="empleados" class="content-section">
-      <h2>Gestión de Empleados</h2>
-      <button id="btn-nuevo-empleado" class="btn btn-primary">Registrar Nuevo Empleado</button>
-      <button id="btn-eliminar-empleado" class="btn btn-danger">Eliminar Empleado</button>
-      <div id="empleados-list"></div>
-    </section>
+    <div class="admin-nav">
+      <button class="nav-btn active" data-section="accesos">
+        📊 Historial de Accesos
+      </button>
+      <button class="nav-btn" data-section="empleados">
+        👥 Gestión de Empleados
+      </button>
+      <button class="nav-btn" data-section="estadisticas">
+        📈 Estadísticas
+      </button>
+    </div>
 
-    <!-- Historial -->
-    <section id="accesos" class="content-section">
+    <!-- Historial de Accesos -->
+    <section id="accesos" class="content-section active">
       <h2>Historial de Ingresos/Egresos</h2>
       <button id="refresh-records" class="btn btn-primary">Actualizar Registros</button>
 
@@ -43,16 +50,26 @@
         <thead>
           <tr><th>Fecha</th><th>Nombre</th><th>Código</th><th>Tipo</th><th>Estado</th></tr>
         </thead>
-        <tbody id="records-tbody"></tbody>
+        <tbody id="records-tbody"></tbody> <!-- Registros se cargan aca -->
       </table>
+    </section>
+
+    <!-- Gestión de empleados -->
+    <section id="empleados" class="content-section">
+      <h2>Gestión de Empleados</h2>
+      <button id="btn-nuevo-empleado" class="btn btn-primary">Registrar Nuevo Empleado</button>
+      <button id="btn-eliminar-empleado" class="btn btn-danger">Eliminar Empleado</button>
+      <div id="empleados-list"></div> <!-- Lista de empleados se carga aca -->
     </section>
 
     <!-- Estadísticas -->
     <section id="estadisticas" class="content-section">
       <h2>Estadísticas</h2>
-      <canvas id="statsChart"></canvas>
+      <div id="statsChart">
+        Gráfico de estadísticas se mostraría aquí
+      </div>
     </section>
-
+  </div>
   </div>
 
 </body>
