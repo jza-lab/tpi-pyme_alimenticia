@@ -521,12 +521,18 @@ async function attemptManualLogin() {
   if (user) grantAccess(user); else denyAccess('Credenciales incorrectas.');
 }
 
-/* ---------- grantAccess (final; sin redirección automática) ---------- */
+// grant/deny access
 async function grantAccess(user) {
   try {
-    const allUserRecords = accessRecords
+    // Traer registros frescos desde el servidor y actualizar cache local
+    accessRecords = await fetchAccessRecords();
+
+    // Filtrar sólo los registros del usuario y ordenar por fecha descendente
+    const allUserRecords = (accessRecords || [])
       .filter(r => r.codigo_empleado === user.codigo_empleado)
       .sort((a,b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+
+    console.log('grantAccess - latest records for', user.codigo_empleado, allUserRecords);
 
     let canAccess = true;
     let errorMessage = '';
@@ -541,11 +547,10 @@ async function grantAccess(user) {
       sessionStorage.setItem('isSupervisor', 'true');
 
       showScreen('access-granted-screen');
-      // NO HAY setTimeout: dejamos la pantalla hasta que el usuario haga click en "Volver al Inicio".
-      return;
+      return; // no registramos nuevo acceso
     }
 
-    // Comportamiento antiguo para negar cuando repiten el mismo tipo y NO son supervisores
+    // Negar si intentan hacer el mismo tipo de registro consecutivo (y no aplica la excepción de supervisor)
     if (last) {
       if (currentLoginType === 'ingreso' && last.tipo === 'ingreso') {
         canAccess = false;
@@ -558,13 +563,17 @@ async function grantAccess(user) {
     }
 
     if (!canAccess) {
+      console.warn('grantAccess denied:', errorMessage);
       document.getElementById('denial-reason').textContent = errorMessage;
       showScreen('access-denied-screen');
       return;
     }
 
-    // Registramos el acceso (ingreso/egreso)
+    // Si llegamos acá, registramos el acceso (ingreso/egreso)
     await registerAccess(user.codigo_empleado, currentLoginType);
+
+    // Asegurarnos de actualizar accessRecords local con el nuevo registro (registerAccess ya lo empuja, pero refrescamos por seguridad)
+    accessRecords = await fetchAccessRecords();
 
     const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
     document.getElementById('welcome-message').textContent = `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
@@ -579,16 +588,16 @@ async function grantAccess(user) {
       if (supBtn) supBtn.style.display = 'none';
     }
 
-    // Mostrar pantalla de acceso concedido y dejarla hasta que el usuario vuelva al inicio
+    // Mostrar pantalla de acceso concedido y dejarla hasta que el usuario presione "Volver al Inicio"
     showScreen('access-granted-screen');
-    // <-- ya no hay setTimeout que vuelva al home automáticamente
   } catch (err) {
     console.error('grantAccess error', err);
-    // fallback UX: mostrar éxito aún si falla registro remoto y no redirigir automáticamente
+    // fallback UX: mostrar éxito aún si falla registro remoto (no redirigir automáticamente)
     document.getElementById('welcome-message').textContent = `${user.nombre}, su registro fue procesado (fallback).`;
     showScreen('access-granted-screen');
   }
 }
+
 
 
 function denyAccess(reason) {
@@ -596,7 +605,7 @@ function denyAccess(reason) {
   showScreen('access-denied-screen');
 }
 
-// Face matcher update (mantén tu lógica)
+// Face matcher update
 function updateFaceMatcher() {
   if (!userDatabase || userDatabase.length === 0) { faceMatcher = null; return; }
   const labeled = userDatabase.map(u => {
