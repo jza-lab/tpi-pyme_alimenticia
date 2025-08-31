@@ -174,11 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   document.getElementById('confirm-capture-btn')?.addEventListener('click', function () {
-    // Aquí implementarías la lógica para confirmar y guardar
-    alert('Empleado registrado exitosamente');
-    showEmployeesMainView();
-    // Limpiar formulario
-    clearRegistrationForm();
+    confirmCapture();
   });
 
   document.getElementById('refresh-records')?.addEventListener('click', function () {
@@ -215,14 +211,6 @@ async function fetchAccessRecords() {
     return [];
   }
 }
-
-document.getElementById('confirm-capture-btn')?.addEventListener('click', function () {
-  confirmCapture();
-});
-
-document.getElementById('refresh-records')?.addEventListener('click', function () {
-  refreshRecords();
-});
 
 // ------------------- API FUNCTIONS ------------------- //
 async function fetchUsers() {
@@ -578,7 +566,6 @@ async function uploadPhoto(base64Data, filename) {
 
   return publicUrlData.publicUrl;
 }
-
 
 async function confirmCapture() {
   if (!faceDescriptor) {
