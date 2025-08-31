@@ -12,6 +12,7 @@ let detectionInterval = null;
 let userDatabase = [];
 let accessRecords = [];
 let currentLoginType = 'ingreso';
+let isProcessingAccess = false; // Evita registros duplicados por llamados simultáneos
 
 // ------------------- DOM refs ------------------- //
 const screens = document.querySelectorAll('.screen');
@@ -129,6 +130,13 @@ async function registerAccess(codigoOperario, tipo) {
 
 // Modifica la función grantAccess para evitar duplicados
 async function grantAccess(user) {
+  // Evitar ejecuciones simultáneas
+  if (isProcessingAccess) {
+    console.warn('grantAccess called while another access grant is in progress. Aborting.');
+    return;
+  }
+  isProcessingAccess = true;
+
   try {
     // 1. Traer registros frescos ANTES de procesar
     accessRecords = await fetchAccessRecords();
@@ -151,7 +159,7 @@ async function grantAccess(user) {
       if (supBtn) supBtn.style.display = 'block';
       sessionStorage.setItem('isSupervisor', 'true');
       showScreen('access-granted-screen');
-      return;
+      return; // Sale temprano, pero 'finally' se ejecutará
     }
 
     if (last) {
@@ -169,7 +177,7 @@ async function grantAccess(user) {
       console.warn('grantAccess denied:', errorMessage);
       document.getElementById('denial-reason').textContent = errorMessage;
       showScreen('access-denied-screen');
-      return;
+      return; // Sale temprano, pero 'finally' se ejecutará
     }
 
     // 3. Registrar SOLO en el servidor
@@ -196,6 +204,9 @@ async function grantAccess(user) {
     console.error('grantAccess error', err);
     document.getElementById('welcome-message').textContent = `${user.nombre}, su registro fue procesado (fallback).`;
     showScreen('access-granted-screen');
+  } finally {
+    // Liberar el bloqueo para permitir futuros registros
+    isProcessingAccess = false;
   }
 }
 
