@@ -7,14 +7,15 @@ let userDatabase = [];
 let accessRecords = [];
 
 // ------------------- EVENTOS INICIALES ------------------- //
-document.addEventListener('DOMContentLoaded', () => {
+
+/**document.addEventListener('DOMContentLoaded', () => {
   const isSupervisor = sessionStorage.getItem('isSupervisor');
   console.log('Menu page loaded. isSupervisor flag:', isSupervisor);
 
   if (isSupervisor !== 'true') {
     window.location.href = 'index.html';
     return;
-  }
+  } */
 
   // Botón salir (esquina superior derecha)
   const logoutBtn = document.querySelector('.logout-btn');
