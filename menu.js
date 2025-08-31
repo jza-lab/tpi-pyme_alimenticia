@@ -58,7 +58,7 @@ let accessRecords = [];
   }
 
   init();
-});
+//});
 
 // ------------------- API ------------------- //
 async function fetchUsers() {
