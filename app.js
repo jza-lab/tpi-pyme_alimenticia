@@ -497,28 +497,37 @@ async function attemptManualLogin() {
   if (user) grantAccess(user); else denyAccess('Credenciales incorrectas.');
 }
 
+// grant/deny access (actualizada para permitir uso de menú sin re-registrar ingreso)
 async function grantAccess(user) {
   try {
-    //  Refrescar accesos desde BD para ese usuario
-    const { data: freshRecords, error } = await supabaseClient
-      .from('access')
-      .select('*')
-      .eq('codigo_empleado', user.codigo_empleado)
-      .order('fecha_hora', { ascending: false });
-
-    if (error) throw error;
-
-    const allUserRecords = freshRecords || [];
-
-    let canAccess = true;
-    let errorMessage = '';
+    const allUserRecords = accessRecords.filter(r => r.codigo_empleado === user.codigo_empleado)
+      .sort((a,b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+    let canAccess = true; let errorMessage = '';
 
     if (allUserRecords.length > 0) {
       const last = allUserRecords[0];
+
+      // Si intentan registrar INGRESO pero el último registro ya es INGRESO
       if (currentLoginType === 'ingreso' && last.tipo === 'ingreso') {
-        canAccess = false;
-        errorMessage = `${user.nombre}, ya está dentro.`;
+        // Nuevo comportamiento: si es supervisor (nivel >= 3) permitir usar el menú SIN volver a registrar ingreso
+        if (user.nivel_acceso >= 3) {
+          // No se registra un nuevo "ingreso", sólo mostramos el botón de menú y UX de acceso
+          document.getElementById('welcome-message').textContent = `${user.nombre}, ya está dentro. Puede usar el menú de supervisor.`;
+          const supBtn = document.getElementById('supervisor-menu-btn');
+          if (supBtn) supBtn.style.display = 'block';
+          sessionStorage.setItem('isSupervisor', 'true');
+
+          showScreen('access-granted-screen');
+          // mantener comportamiento anterior de volver a home pasado un tiempo
+          setTimeout(() => showScreen('home-screen'), 8000);
+          return; // importante: salir sin registrar nuevo acceso
+        } else {
+          // No es supervisor => negar como antes
+          canAccess = false;
+          errorMessage = `${user.nombre}, ya está dentro.`;
+        }
       }
+
       if (currentLoginType === 'egreso' && last.tipo === 'egreso') {
         canAccess = false;
         errorMessage = `${user.nombre}, ya está fuera.`;
@@ -531,27 +540,26 @@ async function grantAccess(user) {
       return;
     }
 
-    // registrar el acceso en Supabase
+    // Si llegamos acá, procedemos a registrar el acceso (ingreso o egreso) normalmente
     await registerAccess(user.codigo_empleado, currentLoginType);
-
     const tipoTexto = currentLoginType === 'ingreso' ? 'ingreso' : 'egreso';
-    document.getElementById('welcome-message').textContent =
-      `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
+    document.getElementById('welcome-message').textContent = `${user.nombre}, su ${tipoTexto} ha sido registrado correctamente.`;
 
+    // Si ingresó y tiene nivel >= 3, mostramos botón de supervisor y marcamos sesión
     if (currentLoginType === 'ingreso' && user.nivel_acceso >= 3) {
       document.getElementById('supervisor-menu-btn').style.display = 'block';
       sessionStorage.setItem('isSupervisor', 'true');
     } else {
-      document.getElementById('supervisor-menu-btn').style.display = 'none';
+      const supBtn = document.getElementById('supervisor-menu-btn');
+      if (supBtn) supBtn.style.display = 'none';
     }
 
     showScreen('access-granted-screen');
     setTimeout(() => showScreen('home-screen'), 8000);
-
   } catch (err) {
     console.error('grantAccess error', err);
-    document.getElementById('welcome-message').textContent =
-      `${user.nombre}, su registro fue procesado (fallback).`;
+    // fallback UX: mostrar éxito aún si falla registro remoto
+    document.getElementById('welcome-message').textContent = `${user.nombre}, su registro fue procesado (fallback).`;
     showScreen('access-granted-screen');
     setTimeout(() => showScreen('home-screen'), 8000);
   }
