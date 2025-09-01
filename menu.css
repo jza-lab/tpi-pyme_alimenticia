@@ -247,6 +247,17 @@ table th {
   font-weight: bold;
 }
 
+/* Colores para el estado de Ingreso/Egreso en la tabla de historial */
+.estado-ingreso {
+  color: #27ae60; /* Verde para 'Dentro' */
+  font-weight: bold;
+}
+
+.estado-egreso {
+  color: #e74c3c; /* Rojo para 'Fuera' */
+  font-weight: bold;
+}
+
 /* Gestión de Empleados */
 .employee-card {
   background: white;
