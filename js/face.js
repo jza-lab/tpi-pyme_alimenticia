@@ -17,13 +17,13 @@ export async function loadModels() {
 
     console.log('Cargando modelos de face-api...');
     try {
-        // Usamos la URL del archivo de configuración
-        const modelUrl = FACE_API_CONFIG.MODEL_URL;
+        const modelUrl = FACE_API_CONFIG.MODEL_URL; // Esto será 'models'
+        // La corrección clave está aquí: construimos la ruta completa para CADA modelo
         await Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl),
-            faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl),
-            faceapi.nets.faceRecognitionNet.loadFromUri(modelUrl),
-            faceapi.nets.faceExpressionNet.loadFromUri(modelUrl)
+            faceapi.nets.tinyFaceDetector.loadFromUri(`${modelUrl}/tiny_face_detector`),
+            faceapi.nets.faceLandmark68Net.loadFromUri(`${modelUrl}/face_landmark_68`),
+            faceapi.nets.faceRecognitionNet.loadFromUri(`${modelUrl}/face_recognition`),
+            faceapi.nets.faceExpressionNet.loadFromUri(`${modelUrl}/face_expression`)
         ]);
         modelsLoaded = true;
         console.log('Modelos de face-api cargados exitosamente.');
