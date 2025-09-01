@@ -204,3 +204,42 @@ function resetManualLoginForm() {
   dom.loginStatus.textContent = 'Buscando coincidencias...';
   dom.loginStatus.className = 'status info';
 }
+
+// ------------------- Event Listeners ------------------- //
+function attachListeners() {
+    const el = id => document.getElementById(id);
+
+    el('ingreso-btn')?.addEventListener('click', () => startFacialLogin('ingreso'));
+    el('egreso-btn')?.addEventListener('click', () => startFacialLogin('egreso'));
+    
+    ['back-to-home-from-denied', 'back-to-home-from-denied-2', 'back-after-access'].forEach(id => {
+        el(id)?.addEventListener('click', () => showScreen('home-screen'));
+    });
+
+    el('try-again-btn')?.addEventListener('click', () => startFacialLogin(currentLoginType));
+    el('manual-login-btn')?.addEventListener('click', attemptManualLogin);
+    el('retry-facial-login-btn')?.addEventListener('click', () => startFacialLogin(currentLoginType));
+    el('supervisor-menu-btn')?.addEventListener('click', () => window.location.href = 'menu.html');
+}
+
+// ------------------- Inicialización de la Aplicación ------------------- //
+async function main() {
+    attachListeners();
+    showScreen('home-screen');
+    try {
+        await Promise.all([
+            face.loadModels(),
+            state.initState()
+        ]);
+        console.log('Aplicación principal inicializada.');
+    } catch (error) {
+        console.error('Error crítico durante la inicialización:', error);
+        const homeScreen = document.getElementById('home-screen');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'status error';
+        errorDiv.textContent = `Error al cargar: ${error.message}`;
+        homeScreen.appendChild(errorDiv);
+    }
+}
+
+window.addEventListener('load', main);
