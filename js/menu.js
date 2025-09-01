@@ -1,52 +1,60 @@
-/* -------------------------
-   CONFIG - Supabase client
-   ------------------------- */
-const SUPABASE_URL = 'https://xtruedkvobfabctfmyys.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0cnVlZGt2b2JmYWJjdGZteXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NzkzOTUsImV4cCI6MjA3MjA1NTM5NX0.ViqW5ii4uOpvO48iG3FD6S4eg085GvXr-xKUC4TLrqo';
-let supabaseClient = null;
-if (typeof supabase !== 'undefined' && supabase.createClient) {
-  const { createClient } = supabase;
-  supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} else {
-  console.error('Supabase JS no está disponible. Verificá que el script de supabase se cargue antes de menu.js.');
-}
+import { APP_CONSTANTS } from './config.js';
+import * as api from './api.js';
+import * as face from './face.js';
+import * as state from './state.js';
+import { initializeStatistics } from './statistics.js';
 
-/* -------------------------
-   Estado global
-   ------------------------- */
-let userDatabase = [];
-let accessRecords = [];
-let faceMatcher = null;
-let currentUser = null;
-let faceDescriptor = null;
-let detectionInterval = null;
-let statsChartInstance = null;
+// --- Referencias al DOM (cacheadas para eficiencia) ---
+const dom = {
+    sections: document.querySelectorAll('.content-section'),
+    navButtons: document.querySelectorAll('.nav-btn, .mobile-side-item'),
+    empleadosMainView: document.getElementById('empleados-main-view'),
+    registerScreen: document.getElementById('register-screen'),
+    captureScreen: document.getElementById('capture-screen'),
+    employeesList: document.getElementById('empleados-list'),
+    form: {
+        code: document.getElementById('operator-code'), name: document.getElementById('operator-name'),
+        surname: document.getElementById('operator-surname'), dni: document.getElementById('operator-dni'),
+        role: document.getElementById('operator-role'), captureBtn: document.getElementById('capture-btn'),
+        backToEmployeesBtn: document.getElementById('back-to-employees')
+    },
+    video: document.getElementById('video'),
+    overlay: document.getElementById('overlay'),
+    captureStatus: document.getElementById('capture-status'),
+    confirmCaptureBtn: document.getElementById('confirm-capture-btn'),
+    backToRegisterBtn: document.getElementById('back-to-register'),
+    recordsTbody: document.getElementById('records-tbody'),
+    peopleInsideCount: document.getElementById('people-inside-count'),
+    peopleOutsideCount: document.getElementById('people-outside-count'),
+    refreshRecordsBtn: document.getElementById('refresh-records'),
+    mobile: {
+        openBtn: document.getElementById("mobile-menu-btn"),
+        closeBtn: document.getElementById("mobile-sidebar-close"),
+        overlay: document.getElementById("mobile-sidebar-overlay")
+    }
+};
 
-/* -------------------------
-   Referencias a elementos DOM (se buscan en load)
-   ------------------------- */
-let video, overlay, captureStatus;
 
-/* -------------------------
-   DOMContentLoaded: configuración UI
-   ------------------------- */
-document.addEventListener('DOMContentLoaded', () => {
-  video = document.getElementById('video');
-  overlay = document.getElementById('overlay');
-  captureStatus = document.getElementById('capture-status');
 
-  setupNav();
-  setupButtons();
-  setDefaultView();
-  startAppInit();
-  setupSidebar();
-  // iniciar carga de datos y modelos (no bloqueantes entre sí)
-  startAppInit();
-});
 
-/* -------------------------
-   UI: Navegación y responsive
-   ------------------------- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function setupNav() {
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', function () {
