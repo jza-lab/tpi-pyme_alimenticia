@@ -159,9 +159,20 @@ async function grantAccess(user) {
 
     showScreen('access-granted-screen');
   } catch (error) {
-    console.error('Error en grantAccess:', error);
-    const errorMessage = error.context?.json?.error || error.message || 'El registro falló por un motivo desconocido.';
-    denyAccess(errorMessage);
+    // --- CÓDIGO DE DEPURACIÓN ---
+    console.log("--- INICIO DEL OBJETO DE ERROR COMPLETO ---");
+    console.log(error);
+    console.log("--- FIN DEL OBJETO DE ERROR ---");
+
+    // Intentemos acceder al mensaje de diferentes maneras
+    const specificMessage = error.context?.json?.error || error.details || error.message;
+    
+    denyAccess(specificMessage);
+}
+
+
+
+
   } finally {
     isProcessingAccess = false;
     state.refreshState(); // Refrescar el estado para la próxima operación
