@@ -5,19 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel Administrativo</title>
-
-  <!-- estilos -->
   <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="menu.css">
 
-  <!-- librerías necesarias -->
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <!-- Librerías necesarias -->
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
-  <!-- tu lógica -->
-  <script defer src="menu.js"></script>
+  <script type="module" src="js/menu.js"></script>
 </head>
 
 <body>
@@ -26,7 +22,7 @@
       <h1 class="panel-title">Panel Administrativo</h1>
 
       <div class="header-controls">
-        <button class="logout-btn" onclick="logout()">Salir</button>
+        <button class="logout-btn">Salir</button>
       </div>
 
       <!-- 👇 Botón hamburguesa y sidebar van aquí dentro -->
@@ -65,7 +61,6 @@
     </nav>
   </header>
 
-
   <main class="container">
 
     <!-- ACCESOS -->
@@ -88,7 +83,7 @@
           <thead>
             <tr>
               <th>Fecha</th>
-              <th>Nombre</th>
+              <th>Empleado/a</th>
               <th>Código</th>
               <th>Tipo</th>
               <th>Estado</th>
@@ -109,7 +104,7 @@
       </div>
 
       <!-- Pantalla de registro -->
-      <div id="register-screen" class="screen" hidden>
+      <div id="register-screen" class="screen">
         <h2>Registro de Nuevo Usuario</h2>
         <div class="form-group">
           <label for="operator-code">Código de Operario:</label>
@@ -135,6 +130,18 @@
             <option value="3">Supervisor (Nivel 3)</option>
           </select>
         </div>
+        <div class="form-group">
+          <label for="operator-zone">Zona Asignada:</label>
+          <select id="operator-zone">
+            <option value="">Seleccione una zona...</option>
+            <option value="Recepción">Recepción</option>
+            <option value="Almacenamiento">Almacenamiento</option>
+            <option value="Procesamiento">Procesamiento</option>
+            <option value="Conservación">Conservación</option>
+            <option value="Despacho">Despacho</option>
+          </select>
+        </div>
+
         <div class="action-buttons">
           <button id="capture-btn" class="btn btn-primary">Capturar Rostro</button>
           <button id="back-to-employees" class="btn btn-secondary">Volver</button>
@@ -142,7 +149,7 @@
       </div>
 
       <!-- Pantalla de captura facial -->
-      <div id="capture-screen" class="screen" hidden>
+      <div id="capture-screen" class="screen">
         <h2>Captura de Rostro</h2>
         <p>Por favor, colóquese frente a la cámara y asegúrese de que su rostro esté bien iluminado.</p>
         <div class="video-container">

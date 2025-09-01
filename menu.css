@@ -16,8 +16,8 @@
 
 body {
   margin: 0;
-  font-family: Inter, Arial, sans-serif;
-  background: var(--grey);
+  font-family: "Lexend Deca", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(45deg, #eef4ef, #eef4ef);
   color: var(--dark);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -53,21 +53,19 @@ body {
 }
 
 .logout-btn {
-  background: var(--red);
+  background: linear-gradient(45deg, #c83b3b, #9e2f2f);
   color: #fff;
   border: 0;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 30px;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  position: static;
-  top: auto;
-  right: auto;
-  z-index: auto;
+  transition: transform .15s ease, box-shadow .15s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
 .logout-btn:hover {
-  background: #b63b36;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.10);
 }
 
 /* Hamburger menu */
@@ -125,9 +123,9 @@ body {
 }
 
 .nav-btn.active {
-  background: var(--green);
+  background: linear-gradient(45deg, #0b4730, #2f5b49);
   color: #fff;
-  border-color: var(--green);
+  border-color: transparent;
 }
 
 /* Main container */
@@ -139,10 +137,11 @@ body {
 
 /* Sections/cards */
 .content-section {
-  background: var(--card);
-  border-radius: 12px;
+  background: linear-gradient(180deg, #f6f8f7, #eef4ef);
+  border-radius: 24px;
   padding: 18px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
   margin-bottom: 18px;
   display: none;
 }
@@ -153,40 +152,35 @@ body {
 
 /* Botones generales */
 .btn {
-  padding: 10px 15px;
+  color: #fff;
   border: none;
-  border-radius: 6px;
-  margin: 5px;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-size: 16px;
   cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
+  transition: transform .15s ease, box-shadow .15s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  margin: 5px;
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.10);
 }
 
 .btn-primary {
-  background: var(--green);
+  background: linear-gradient(45deg, #0b4730, #2f5b49);
   color: white;
-}
-
-.btn-primary:hover {
-  background: #2980d1;
 }
 
 .btn-danger {
-  background: var(--danger);
+  background: linear-gradient(45deg, #c83b3b, #9e2f2f);
   color: white;
-}
-
-.btn-danger:hover {
-  background: #c0392b;
 }
 
 .btn-secondary {
-  background: #6c757d;
+  background: linear-gradient(45deg, #0b4730, #4c6659);
   color: white;
-}
-
-.btn-secondary:hover {
-  background: #5a6268;
 }
 
 /* Resumen de accesos */
@@ -250,6 +244,17 @@ table th {
 
 .status-outside {
   color: #e74c3c;
+  font-weight: bold;
+}
+
+/* Colores para el estado de Ingreso/Egreso en la tabla de historial */
+.estado-ingreso {
+  color: #27ae60; /* Verde para 'Dentro' */
+  font-weight: bold;
+}
+
+.estado-egreso {
+  color: #e74c3c; /* Rojo para 'Fuera' */
   font-weight: bold;
 }
 
@@ -329,10 +334,13 @@ table th {
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 14px 16px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+  outline: none;
   box-sizing: border-box;
   transition: border-color 0.3s ease;
 }
@@ -340,7 +348,8 @@ table th {
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--green);
+  border-color: rgba(4, 58, 33, 0.2);
+  box-shadow: 0 0 0 4px rgba(4, 58, 33, 0.06);
 }
 
 .action-buttons {
@@ -584,7 +593,6 @@ body.nav-open .admin-nav {
   border-right: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-/* header inside sidebar */
 .mobile-sidebar-header {
   display: flex;
   align-items: center;
@@ -598,7 +606,6 @@ body.nav-open .admin-nav {
   font-weight: 700;
 }
 
-/* nav items */
 .mobile-sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -626,7 +633,6 @@ body.nav-open .admin-nav {
   color: var(--green);
 }
 
-/* footer inside sidebar */
 .mobile-sidebar-footer {
   margin-top: auto;
   padding-top: 8px;
@@ -636,7 +642,6 @@ body.nav-open .admin-nav {
   justify-content: flex-start;
 }
 
-/* Open state on body */
 body.sidebar-open .mobile-sidebar {
   transform: translateX(0%);
 }
@@ -646,26 +651,21 @@ body.sidebar-open .mobile-sidebar-overlay {
   pointer-events: auto;
 }
 
-/* show hamburger in mobile, hide desktop nav (keeps existing behavior) */
 @media (max-width: 720px) {
   .hamburger {
     display: flex;
   }
 
-  /* show mobile hamburger */
   .admin-nav {
     display: none !important;
   }
 
-  /* ensure top nav hidden on small */
 }
 
-/* prevent scroll when sidebar open */
 body.sidebar-open {
   overflow: hidden;
 }
 
-/* small tweaks for accessibility/focus */
 .mobile-side-item:focus,
 #mobile-sidebar-close:focus,
 #mobile-menu-btn:focus {
