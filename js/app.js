@@ -127,34 +127,36 @@ function runFacialRecognition() {
 
   if (recognitionInterval) clearInterval(recognitionInterval);
   recognitionInterval = setInterval(async () => {
-    // No seguir buscando si ya encontramos a alguien y solo estamos esperando el timer
-    if (recognizedUser || !dom.loginVideo.srcObject) return;
-
+    // Salir solo si el video no está activo
+    if (!dom.loginVideo.srcObject) return;
     const detection = await face.getSingleFaceDetection(dom.loginVideo);
+    // El dibujo SIEMPRE se ejecuta si se detecta una cara.
     if (detection) {
-      // Siempre que se detecte una cara, la dibujamos.
       face.drawDetections(dom.loginVideo, dom.loginOverlay, [detection]);
     } else {
-      // Si no se detecta ninguna cara, limpiamos el canvas.
+      // Si no hay cara, se limpia el canvas.
       const ctx = dom.loginOverlay.getContext('2d');
       ctx.clearRect(0, 0, dom.loginOverlay.width, dom.loginOverlay.height);
     }
+    // Solo intentamos RECONOCER si aún no hemos encontrado a nadie.
+    if (!recognizedUser && detection) {
+      const faceMatcher = state.getFaceMatcher();
+      if (faceMatcher) {
+        const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
 
-    // Ahora, intentamos RECONOCER la cara que detectamos (si es que hubo una)
-    const faceMatcher = state.getFaceMatcher();
-    if (detection && faceMatcher) {
-      const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
-
-      if (bestMatch.label !== 'unknown') {
-        const user = state.getUsers().find(u => u.codigo_empleado === bestMatch.label);
-        if (user) {
-          recognizedUser = user; // Guardamos el usuario para el countdown
-          dom.loginStatus.textContent = `Usuario reconocido: ${user.nombre}. Confirmando en ${countdown}...`;
-          dom.loginStatus.className = 'status success';
+        if (bestMatch.label !== 'unknown') {
+          const user = state.getUsers().find(u => u.codigo_empleado === bestMatch.label);
+          if (user) {
+            recognizedUser = user; // Guardamos el usuario
+            // Actualizamos el estado en la UI solo una vez
+            dom.loginStatus.textContent = `Usuario reconocido: ${user.nombre}. Confirmando...`;
+            dom.loginStatus.className = 'status success';
+          }
         }
       }
     }
-  }, 300); // Intervalo de reconocimiento
+  }, 300);
+
 }
 
 function stopFacialRecognition() {
