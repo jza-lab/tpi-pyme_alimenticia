@@ -208,7 +208,7 @@ async function grantAccess(user) {
 
 function denyAccess(reason, user = null) {
   dom.denialReason.textContent = reason;
-  dom.supervisorMenuBtnDenied.style.display = 'none'; 
+  dom.supervisorMenuBtnDenied.style.display = 'none';
   const isSupervisor = user && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR;
   const isAlreadyInsideError = reason.toLowerCase().includes('ya se encuentra dentro');
   if (currentLoginType === 'ingreso' && isSupervisor && isAlreadyInsideError) {

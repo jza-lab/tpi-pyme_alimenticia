@@ -130,7 +130,7 @@ function handleStartCaptureClick() {
 
   currentUserData = {
     codigo_empleado: code.value, nombre: name.value, apellido: surname.value, dni: dni.value,
-    nivel_acceso: parseInt(role.value), zona: zone.value, descriptor: null, foto: null
+    nivel_acceso: parseInt(role.value), zonas_permitidas: zone.value, descriptor: null, foto: null
   };
   showEmployeeView('capture-screen');
 }
