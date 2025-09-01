@@ -160,7 +160,8 @@ async function grantAccess(user) {
     showScreen('access-granted-screen');
   } catch (error) {
     console.error('Error en grantAccess:', error);
-    denyAccess(error.message || 'El registro falló. Verifique su estado actual (ingreso/egreso).');
+    const errorMessage = error.context?.json?.error || error.message || 'El registro falló por un motivo desconocido.';
+    denyAccess(errorMessage);
   } finally {
     isProcessingAccess = false;
     state.refreshState(); // Refrescar el estado para la próxima operación
