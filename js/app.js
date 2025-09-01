@@ -1,5 +1,5 @@
 // Importar todos los módulos necesarios
-import { APP_CONSTANTS } from '/config.js';
+import { APP_CONSTANTS } from './config.js';
 import * as api from './api.js';
 import * as face from './face.js';
 import * as state from './state.js';
