@@ -36,6 +36,7 @@ let countdownInterval = null;
 function showScreen(screenId) {
   if (screenId === 'home-screen') {
     sessionStorage.removeItem('isSupervisor');
+    sessionStorage.removeItem('supervisorCode'); // Limpiar el código también
   }
   dom.screens.forEach(s => s.classList.remove('active'));
   const screenToShow = document.getElementById(screenId);
@@ -180,6 +181,7 @@ async function grantAccess(user) {
     if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
       dom.supervisorMenuBtn.style.display = 'block';
       sessionStorage.setItem('isSupervisor', 'true');
+      sessionStorage.setItem('supervisorCode', user.codigo_empleado); // Guardar código
     } else {
       dom.supervisorMenuBtn.style.display = 'none';
     }
@@ -213,6 +215,7 @@ function denyAccess(reason, user = null) {
   const isAlreadyInsideError = reason.toLowerCase().includes('ya se encuentra dentro');
   if (currentLoginType === 'ingreso' && isSupervisor && isAlreadyInsideError) {
     sessionStorage.setItem('isSupervisor', 'true');
+    sessionStorage.setItem('supervisorCode', user.codigo_empleado); // Guardar código
     dom.supervisorMenuBtnDenied.style.display = 'block';
   }
 
@@ -252,6 +255,27 @@ function resetManualLoginForm() {
   dom.loginStatus.className = 'status info';
 }
 
+// ------------------- Navegación Segura al Menú Supervisor ------------------- //
+function handleSupervisorMenuClick() {
+  const storedCode = sessionStorage.getItem('supervisorCode');
+  if (!storedCode) {
+    alert('Error de seguridad: No se encontró el código de supervisor.');
+    return;
+  }
+
+  const enteredCode = prompt('Para continuar, por favor ingrese su código de operario:');
+
+  if (enteredCode === null) { // El usuario presionó "Cancelar"
+    return;
+  }
+
+  if (enteredCode === storedCode) {
+    window.location.href = 'menu.html';
+  } else {
+    alert('Código incorrecto. Acceso denegado.');
+  }
+}
+
 // ------------------- Event Listeners ------------------- //
 function attachListeners() {
   const el = id => document.getElementById(id);
@@ -266,8 +290,8 @@ function attachListeners() {
   el('try-again-btn')?.addEventListener('click', () => startFacialLogin(currentLoginType));
   el('manual-login-btn')?.addEventListener('click', attemptManualLogin);
   el('retry-facial-login-btn')?.addEventListener('click', () => startFacialLogin(currentLoginType));
-  el('supervisor-menu-btn')?.addEventListener('click', () => window.location.href = 'menu.html');
-  el('supervisor-menu-btn-denied')?.addEventListener('click', () => window.location.href = 'menu.html');
+  el('supervisor-menu-btn')?.addEventListener('click', handleSupervisorMenuClick);
+  el('supervisor-menu-btn-denied')?.addEventListener('click', handleSupervisorMenuClick);
 }
 
 // ------------------- Inicialización de la Aplicación ------------------- //
