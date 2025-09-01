@@ -1,13 +1,13 @@
-// --- Seguridad---
-if (sessionStorage.getItem('isSupervisor') !== 'true') {
-  window.location.replace('index.html');
-}
-
 import { APP_CONSTANTS } from './config.js';
 import * as api from './api.js';
 import * as face from './face.js';
 import * as state from './state.js';
 import { initializeStatistics } from './statistics.js';
+
+// --- Seguridad---
+if (sessionStorage.getItem('isSupervisor') !== 'true') {
+  window.location.replace('index.html');
+}
 
 // --- Referencias al DOM (cacheadas para eficiencia) ---
 const dom = {

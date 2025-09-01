@@ -15,6 +15,7 @@ const dom = {
   welcomeMessage: document.getElementById('welcome-message'),
   denialReason: document.getElementById('denial-reason'),
   supervisorMenuBtn: document.getElementById('supervisor-menu-btn'),
+  supervisorMenuBtnDenied: document.getElementById('supervisor-menu-btn-denied'),
   manualLogin: {
     container: document.getElementById('manual-login'),
     code: document.getElementById('manual-operator-code'),
@@ -186,24 +187,35 @@ async function grantAccess(user) {
     showScreen('access-granted-screen');
   } catch (error) {
     console.error("Error en grantAccess:", error);
+    // Extraer el mensaje de error de la respuesta de la API
+    let errorMessage = "Error desconocido al registrar el acceso.";
     if (error.context && typeof error.context.json === 'function') {
-      error.context.json().then(jsonError => {
-        const specificMessage = jsonError.error || 'Error desconocido desde el backend.';
-        denyAccess(specificMessage);
-      }).catch(() => {
-        denyAccess(error.message);
-      });
+      try {
+        const jsonError = await error.context.json();
+        errorMessage = jsonError.error || errorMessage;
+      } catch (e) {
+        errorMessage = error.message;
+      }
     } else {
-      denyAccess(error.message);
+      errorMessage = error.message;
     }
+    denyAccess(errorMessage, user);
   } finally {
     isProcessingAccess = false;
     state.refreshState(); // Refrescar el estado para la próxima operación
   }
 }
 
-function denyAccess(reason) {
+function denyAccess(reason, user = null) {
   dom.denialReason.textContent = reason;
+  dom.supervisorMenuBtnDenied.style.display = 'none'; 
+  const isSupervisor = user && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR;
+  const isAlreadyInsideError = reason.toLowerCase().includes('ya se encuentra dentro');
+  if (currentLoginType === 'ingreso' && isSupervisor && isAlreadyInsideError) {
+    sessionStorage.setItem('isSupervisor', 'true');
+    dom.supervisorMenuBtnDenied.style.display = 'block';
+  }
+
   showScreen('access-denied-screen');
 }
 
@@ -255,6 +267,7 @@ function attachListeners() {
   el('manual-login-btn')?.addEventListener('click', attemptManualLogin);
   el('retry-facial-login-btn')?.addEventListener('click', () => startFacialLogin(currentLoginType));
   el('supervisor-menu-btn')?.addEventListener('click', () => window.location.href = 'menu.html');
+  el('supervisor-menu-btn-denied')?.addEventListener('click', () => window.location.href = 'menu.html');
 }
 
 // ------------------- Inicialización de la Aplicación ------------------- //
