@@ -185,6 +185,55 @@ function stopVideoStream() {
   }
 }
 
+// --- Inicialización y Event Listeners ---
+function attachListeners() {
+  dom.navButtons.forEach(btn => btn.addEventListener('click', (e) => {
+    const sectionId = e.currentTarget.dataset.section;
+    showSection(sectionId);
+    // Cierra el menú responsive si se hace clic en un item
+    if (document.body.classList.contains('sidebar-open')) {
+      document.body.classList.remove("sidebar-open");
+    }
+  }));
+
+  document.getElementById('btn-nuevo-empleado')?.addEventListener('click', () => showEmployeeView('register-screen'));
+  dom.form.captureBtn.addEventListener('click', handleStartCaptureClick);
+  dom.confirmCaptureBtn.addEventListener('click', confirmCapture);
+  dom.form.backToEmployeesBtn.addEventListener('click', () => showEmployeeView('empleados-main-view'));
+  dom.backToRegisterBtn.addEventListener('click', () => showEmployeeView('register-screen'));
+  dom.refreshRecordsBtn.addEventListener('click', async () => {
+    await state.refreshState();
+    renderRecords();
+  });
+
+  // Añadir listener para el botón de logout
+  document.querySelector('.logout-btn')?.addEventListener('click', () => {
+    sessionStorage.removeItem('isSupervisor');
+    window.location.href = 'index.html';
+  });
+
+  // Menu responsive
+  dom.mobile.openBtn?.addEventListener("click", () => document.body.classList.add("sidebar-open"));
+  dom.mobile.closeBtn?.addEventListener("click", () => document.body.classList.remove("sidebar-open"));
+  dom.mobile.overlay?.addEventListener("click", () => document.body.classList.remove("sidebar-open"));
+}
+
+async function main() {
+  attachListeners();
+  showSection('accesos');
+  try {
+    await Promise.all([face.loadModels(), state.initState()]);
+    console.log('Panel de administración inicializado.');
+    renderRecords();
+    renderEmployees();
+    initializeStatistics();
+  } catch (error) {
+    alert("No se pudo cargar la información del panel: " + error.message);
+  }
+}
+
+window.addEventListener('load', main);
+
 
 
 
