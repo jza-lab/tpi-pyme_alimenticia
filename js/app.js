@@ -131,25 +131,28 @@ function runFacialRecognition() {
     if (recognizedUser || !dom.loginVideo.srcObject) return;
 
     const detection = await face.getSingleFaceDetection(dom.loginVideo);
-    const faceMatcher = state.getFaceMatcher();
-
-    if (detection && faceMatcher) {
+    if (detection) {
+      // Siempre que se detecte una cara, la dibujamos.
       face.drawDetections(dom.loginVideo, dom.loginOverlay, [detection]);
+    } else {
+      // Si no se detecta ninguna cara, limpiamos el canvas.
+      const ctx = dom.loginOverlay.getContext('2d');
+      ctx.clearRect(0, 0, dom.loginOverlay.width, dom.loginOverlay.height);
+    }
+
+    // Ahora, intentamos RECONOCER la cara que detectamos (si es que hubo una)
+    const faceMatcher = state.getFaceMatcher();
+    if (detection && faceMatcher) {
       const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
 
       if (bestMatch.label !== 'unknown') {
         const user = state.getUsers().find(u => u.codigo_empleado === bestMatch.label);
         if (user) {
-          recognizedUser = user; // Guardamos el usuario reconocido
-          // Actualizamos la UI para notificar al usuario la primera vez
+          recognizedUser = user; // Guardamos el usuario para el countdown
           dom.loginStatus.textContent = `Usuario reconocido: ${user.nombre}. Confirmando en ${countdown}...`;
           dom.loginStatus.className = 'status success';
         }
       }
-    } else {
-      // Si no se detecta cara, limpiar el recuadro
-      const ctx = dom.loginOverlay.getContext('2d');
-      ctx.clearRect(0, 0, dom.loginOverlay.width, dom.loginOverlay.height);
     }
   }, 300); // Intervalo de reconocimiento
 }
