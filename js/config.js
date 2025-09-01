@@ -16,7 +16,7 @@ export const FACE_API_CONFIG = {
     inputSize: 320,
     scoreThreshold: 0.5
   },
-  MATCH_THRESHOLD: 0.6
+  MATCH_THRESHOLD: 0.45
 };
 
 /**
