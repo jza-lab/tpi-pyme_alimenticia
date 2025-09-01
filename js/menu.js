@@ -1,3 +1,8 @@
+// --- Seguridad---
+if (sessionStorage.getItem('isSupervisor') !== 'true') {
+  window.location.replace('index.html');
+}
+
 import { APP_CONSTANTS } from './config.js';
 import * as api from './api.js';
 import * as face from './face.js';
