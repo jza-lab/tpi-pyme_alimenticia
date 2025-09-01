@@ -140,8 +140,74 @@ function stopFacialRecognition() {
     recognitionInterval = null;
 }
 
+// ------------------- Lógica de Acceso ------------------- //
+async function grantAccess(user) {
+    if (isProcessingAccess) return;
+    isProcessingAccess = true;
 
-// ------------------- Init ------------------- //
+    try {
+        await api.registerAccess(user.codigo_empleado, currentLoginType);
+        
+        dom.welcomeMessage.textContent = `${user.nombre}, su ${currentLoginType} ha sido registrado.`;
+        
+        if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
+            dom.supervisorMenuBtn.style.display = 'block';
+            sessionStorage.setItem('isSupervisor', 'true');
+        } else {
+            dom.supervisorMenuBtn.style.display = 'none';
+        }
+        
+        showScreen('access-granted-screen');
+    } catch (error) {
+        console.error('Error en grantAccess:', error);
+        denyAccess(error.message || 'El registro falló. Verifique su estado actual (ingreso/egreso).');
+    } finally {
+        isProcessingAccess = false;
+        state.refreshState(); // Refrescar el estado para la próxima operación
+    }
+}
+
+function denyAccess(reason) {
+    dom.denialReason.textContent = reason;
+    showScreen('access-denied-screen');
+}
+
+// ------------------- Acceso Manual ------------------- //
+async function attemptManualLogin() {
+    const code = dom.manualLogin.code.value;
+    const dni = dom.manualLogin.dni.value;
+    if (!code || !dni) return alert('Por favor, complete ambos campos.');
+
+    const user = state.getUsers().find(u => u.codigo_empleado === code && u.dni === dni);
+    if (user) {
+        grantAccess(user);
+    } else {
+        denyAccess('Credenciales incorrectas.');
+    }
+}
+
+function showManualLoginOption() {
+    const { container, title, loginBtn, retryBtn } = dom.manualLogin;
+    dom.loginStatus.textContent = 'Reconocimiento fallido. Pruebe el acceso manual.';
+    dom.loginStatus.className = 'status error';
+    title.textContent = `Acceso Manual de ${currentLoginType}`;
+    loginBtn.textContent = `Registrar ${currentLoginType}`;
+    container.style.display = 'block';
+    container.scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetManualLoginForm() {
+    const { container, code, dni } = dom.manualLogin;
+    container.style.display = 'none';
+    code.value = '';
+    dni.value = '';
+    dom.loginStatus.textContent = 'Buscando coincidencias...';
+    dom.loginStatus.className = 'status info';
+}
+
+
+
+// 13123213123------------------- Init ------------------- //
 async function init() {
   try {
     console.log('Cargando modelos face-api...');
