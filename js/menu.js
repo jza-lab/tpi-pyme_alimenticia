@@ -123,13 +123,13 @@ function renderEmployees() {
 
 // --- Flujo de Registro de Empleados ---
 function handleStartCaptureClick() {
-  const { code, name, surname, dni, role } = dom.form;
-  if (!code.value || !name.value || !surname.value || !dni.value || !role.value) return alert('Complete todos los campos.');
+  const { code, name, surname, dni, role, zone } = dom.form;
+  if (!code.value || !name.value || !surname.value || !dni.value || !role.value || !zone.value) return alert('Complete todos los campos.');
   if (state.getUsers().some(u => u.codigo_empleado === code.value)) return alert('El código de empleado ya existe.');
 
   currentUserData = {
     codigo_empleado: code.value, nombre: name.value, apellido: surname.value, dni: dni.value,
-    nivel_acceso: parseInt(role.value), descriptor: null, foto: null
+    nivel_acceso: parseInt(role.value), zona: zone.value, descriptor: null, foto: null
   };
   showEmployeeView('capture-screen');
 }
