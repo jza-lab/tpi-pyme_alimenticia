@@ -1,69 +1,53 @@
-const API_BASE_URL = 'https://xtruedkvobfabctfmyys.supabase.co/functions/v1';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0cnVlZGt2b2JmYWJjdGZteXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NzkzOTUsImV4cCI6MjA3MjA1NTM5NX0.ViqW5ii4uOpvO48iG3FD6S4eg085GvXr-xKUC4TLrqo';
-const { createClient } = supabase;
-const supabaseClient = createClient('https://xtruedkvobfabctfmyys.supabase.co', SUPABASE_ANON_KEY);
+// Importar todos los módulos necesarios
+import { APP_CONSTANTS } from '/config.js';
+import * as api from './api.js';
+import * as face from './face.js';
+import * as state from './state.js';
 
-// ------------------- Globals ------------------- //
-let currentUser = null;
-let faceDescriptor = null;
-let faceMatcher = null;
-let countdownInterval = null;
-let detectionInterval = null;
-let userDatabase = [];
-let accessRecords = [];
+// ------------------- DOM Refs ------------------- //
+// Cachear referencias a elementos del DOM para mayor eficiencia
+const dom = {
+    screens: document.querySelectorAll('.screen'),
+    loginVideo: document.getElementById('login-video'),
+    loginOverlay: document.getElementById('login-overlay'),
+    countdown: document.getElementById('countdown'),
+    loginStatus: document.getElementById('login-status'),
+    welcomeMessage: document.getElementById('welcome-message'),
+    denialReason: document.getElementById('denial-reason'),
+    supervisorMenuBtn: document.getElementById('supervisor-menu-btn'),
+    manualLogin: {
+        container: document.getElementById('manual-login'),
+        code: document.getElementById('manual-operator-code'),
+        dni: document.getElementById('manual-operator-dni'),
+        title: document.querySelector('#manual-login h3'),
+        loginBtn: document.getElementById('manual-login-btn'),
+        retryBtn: document.getElementById('retry-facial-login-btn')
+    }
+};
+
+// ------------------- Estado de la App (específico de esta página) ------------------- //
 let currentLoginType = 'ingreso';
-let isProcessingAccess = false; // Evita registros duplicados por llamados simultáneos
+let isProcessingAccess = false;
+let recognitionInterval = null;
+let countdownInterval = null;
 
-// ------------------- DOM refs ------------------- //
-const screens = document.querySelectorAll('.screen');
-const video = document.getElementById('video');
-const loginVideo = document.getElementById('login-video');
-const overlay = document.getElementById('overlay');
-const loginOverlay = document.getElementById('login-overlay');
-const countdownElement = document.getElementById('countdown');
-const captureStatus = document.getElementById('capture-status');
-const loginStatus = document.getElementById('login-status');
+// ------------------- Gestión de Pantallas ------------------- //
+function showScreen(screenId) {
+    if (screenId === 'home-screen') {
+        sessionStorage.removeItem('isSupervisor');
+    }
+    dom.screens.forEach(s => s.classList.remove('active'));
+    const screenToShow = document.getElementById(screenId);
+    if (screenToShow) {
+        screenToShow.classList.add('active');
+    }
 
-// ------------------- Event listeners ------------------- //
-(function attachListeners() {
-  const el = id => document.getElementById(id);
+    if (screenId !== 'login-screen') {
+        stopFacialRecognition();
+        stopVideoStream(dom.loginVideo);
+    }
+}
 
-  const ingresoBtn = el('ingreso-btn');
-  if (ingresoBtn) ingresoBtn.addEventListener('click', () => startFacialLogin('ingreso'));
-
-  const egresoBtn = el('egreso-btn');
-  if (egresoBtn) egresoBtn.addEventListener('click', () => startFacialLogin('egreso'));
-
-  // 🔹 FIX: cubrir ambos botones "volver"
-  ['back-to-home-from-denied', 'back-to-home-from-denied-2'].forEach(id => {
-    const btn = document.getElementById(id);
-    if (btn) btn.addEventListener('click', () => showScreen('home-screen'));
-  });
-
-  const backAfterAccess = el('back-after-access');
-  if (backAfterAccess) backAfterAccess.addEventListener('click', () => showScreen('home-screen'));
-
-  const tryAgainBtn = el('try-again-btn');
-  if (tryAgainBtn) tryAgainBtn.addEventListener('click', () => startFacialLogin(currentLoginType));
-
-  const confirmCaptureBtn = el('confirm-capture-btn');
-  if (confirmCaptureBtn) confirmCaptureBtn.addEventListener('click', confirmCapture);
-
-  const retryCaptureBtn = el('retry-capture-btn');
-  if (retryCaptureBtn) retryCaptureBtn.addEventListener('click', restartFaceCapture);
-
-  const manualLoginBtn = el('manual-login-btn');
-  if (manualLoginBtn) manualLoginBtn.addEventListener('click', attemptManualLogin);
-
-  const retryFacialLoginBtn = el('retry-facial-login-btn');
-  if (retryFacialLoginBtn) retryFacialLoginBtn.addEventListener('click', () => startFacialLogin(currentLoginType));
-
-  const supervisorMenuBtn = el('supervisor-menu-btn');
-  if (supervisorMenuBtn) supervisorMenuBtn.addEventListener('click', () => window.location.href = 'menu.html');
-
-  const refreshRecordsBtn = el('refresh-records');
-  if (refreshRecordsBtn) refreshRecordsBtn.addEventListener('click', () => loadRecords());
-})();
 
 // ------------------- API helpers ------------------- //
 async function fetchUsers() {
