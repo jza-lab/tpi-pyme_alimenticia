@@ -15,7 +15,7 @@ const dom = {
   form: {
     code: document.getElementById('operator-code'), name: document.getElementById('operator-name'),
     surname: document.getElementById('operator-surname'), dni: document.getElementById('operator-dni'),
-    role: document.getElementById('operator-role'), 
+    role: document.getElementById('operator-role'),
     zone: document.getElementById('operator-zone'),
     captureBtn: document.getElementById('capture-btn'),
     backToEmployeesBtn: document.getElementById('back-to-employees')
@@ -53,10 +53,22 @@ function showSection(sectionId) {
 }
 
 function showEmployeeView(view) {
-  ['empleados-main-view', 'register-screen', 'capture-screen'].forEach(id => document.getElementById(id)?.classList.remove('active'));
-  stopVideoStream();
-  document.getElementById(view)?.classList.add('active');
-
+  const views = {
+    'empleados-main-view': dom.empleadosMainView,
+    'register-screen': dom.registerScreen,
+    'capture-screen': dom.captureScreen
+  };
+  // Ocultar todas las vistas de empleados
+  Object.values(views).forEach(v => v.hidden = true);
+  // Detener video si no estamos en la pantalla de captura
+  if (view !== 'capture-screen') {
+    stopVideoStream();
+  }
+  // Mostrar la vista solicitada
+  if (views[view]) {
+    views[view].hidden = false;
+  }
+  // Iniciar captura de cara si es la pantalla de captura
   if (view === 'capture-screen') {
     startFaceCapture();
   }
