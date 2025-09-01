@@ -48,6 +48,97 @@ function showScreen(screenId) {
     }
 }
 
+// ------------------- Video / Cámara ------------------- //
+async function startVideoStream(videoEl) {
+    try {
+        if (videoEl.srcObject) return;
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        videoEl.srcObject = stream;
+        await new Promise(resolve => {
+            videoEl.onloadedmetadata = () => {
+                videoEl.play();
+                resolve();
+            };
+        });
+    } catch (err) {
+        console.error('Error al acceder a la cámara:', err);
+        throw new Error('No se pudo acceder a la cámara.');
+    }
+}
+
+function stopVideoStream(videoEl) {
+    if (videoEl && videoEl.srcObject) {
+        videoEl.srcObject.getTracks().forEach(track => track.stop());
+        videoEl.srcObject = null;
+    }
+}
+
+// ------------------- Flujo de Reconocimiento Facial ------------------- //
+async function startFacialLogin(type) {
+    currentLoginType = type;
+    showScreen('login-screen');
+    resetManualLoginForm();
+
+    const title = document.getElementById('login-title');
+    const desc = document.getElementById('login-description');
+    title.textContent = `Registro de ${type === 'ingreso' ? 'Ingreso' : 'Egreso'}`;
+    desc.textContent = `Por favor, colóquese frente a la cámara para registrar su ${type}.`;
+
+    try {
+        await startVideoStream(dom.loginVideo);
+        runFacialRecognition();
+    } catch (error) {
+        dom.loginStatus.textContent = error.message;
+        dom.loginStatus.className = 'status error';
+        showManualLoginOption();
+    }
+}
+
+function runFacialRecognition() {
+    let recognized = false;
+    let countdown = 5;
+    dom.countdown.textContent = countdown;
+
+    if (countdownInterval) clearInterval(countdownInterval);
+    countdownInterval = setInterval(() => {
+        countdown--;
+        dom.countdown.textContent = Math.max(0, countdown);
+        if (countdown <= 0 && !recognized) {
+            stopFacialRecognition();
+            showManualLoginOption();
+        }
+    }, 1000);
+
+    if (recognitionInterval) clearInterval(recognitionInterval);
+    recognitionInterval = setInterval(async () => {
+        if (!dom.loginVideo.srcObject) return;
+
+        const detection = await face.getSingleFaceDetection(dom.loginVideo);
+        const faceMatcher = state.getFaceMatcher();
+
+        if (detection && faceMatcher) {
+            face.drawDetections(dom.loginVideo, dom.loginOverlay, [detection]);
+            const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+            
+            if (bestMatch.label !== 'unknown') {
+                recognized = true;
+                stopFacialRecognition();
+                const user = state.getUsers().find(u => u.codigo_empleado === bestMatch.label);
+                if (user) grantAccess(user);
+            }
+        } else {
+            const ctx = dom.loginOverlay.getContext('2d');
+            ctx.clearRect(0, 0, dom.loginOverlay.width, dom.loginOverlay.height);
+        }
+    }, 300);
+}
+
+function stopFacialRecognition() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    if (recognitionInterval) clearInterval(recognitionInterval);
+    countdownInterval = null;
+    recognitionInterval = null;
+}
 
 
 // ------------------- Init ------------------- //
