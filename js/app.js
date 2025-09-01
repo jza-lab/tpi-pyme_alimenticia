@@ -263,7 +263,7 @@ function handleSupervisorMenuClick() {
     return;
   }
 
-  const enteredCode = prompt('Para continuar, por favor ingrese su código de operario:');
+  const enteredCode = prompt('Para continuar, por favor ingrese su código:');
 
   if (enteredCode === null) { // El usuario presionó "Cancelar"
     return;
