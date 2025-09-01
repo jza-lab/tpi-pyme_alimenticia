@@ -76,6 +76,10 @@ function stopVideoStream(videoEl) {
 // ------------------- Flujo de Reconocimiento Facial ------------------- //
 async function startFacialLogin(type) {
   currentLoginType = type;
+  if (dom.loginOverlay) {
+    const ctx = dom.loginOverlay.getContext('2d');
+    ctx.clearRect(0, 0, dom.loginOverlay.width, dom.loginOverlay.height);
+  }
   showScreen('login-screen');
   resetManualLoginForm();
 
