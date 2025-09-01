@@ -1,10 +1,14 @@
-//import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js/+esm';
 import { SUPABASE_CONFIG } from './config.js';
 
 // Inicializar el cliente de Supabase una sola vez
 const supabase = createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.ANON_KEY);
 
+/**
+ * Convierte una URL de datos (data URL) a un objeto Blob.
+ * @param {string} dataURL La data URL a convertir.
+ * @returns {Blob}
+ */
 function dataURLtoBlob(dataURL) {
     const arr = dataURL.split(',');
     const mime = arr[0].match(/:(.*?);/)[1];
@@ -17,6 +21,12 @@ function dataURLtoBlob(dataURL) {
     return new Blob([u8arr], { type: mime });
 }
 
+/**
+ * Sube la foto de un usuario a Supabase Storage.
+ * @param {string} base64Data La foto codificada como data URL en base64.
+ * @param {string} employeeCode El código del empleado, usado como nombre de archivo.
+ * @returns {Promise<string>} La URL pública de la foto subida.
+ */
 async function uploadPhoto(base64Data, employeeCode) {
     const blob = dataURLtoBlob(base64Data);
     const filePath = `empleados/${employeeCode}.png`;
@@ -42,6 +52,10 @@ async function uploadPhoto(base64Data, employeeCode) {
     return data.publicUrl;
 }
 
+/**
+ * Obtiene todos los usuarios de la base de datos.
+ * @returns {Promise<Array>} Una lista de usuarios.
+ */
 export async function fetchUsers() {
     const { data, error } = await supabase.from('users').select('*');
     if (error) {
@@ -51,6 +65,10 @@ export async function fetchUsers() {
     return data || [];
 }
 
+/**
+ * Obtiene todos los registros de acceso de la base de datos.
+ * @returns {Promise<Array>} Una lista de registros de acceso.
+ */
 export async function fetchAccessRecords() {
     const { data, error } = await supabase.from('access').select('*');
     if (error) {
@@ -60,6 +78,11 @@ export async function fetchAccessRecords() {
     return data || [];
 }
 
+/**
+ * Registra un nuevo usuario, incluyendo su foto.
+ * @param {object} userData - Los datos del usuario a registrar.
+ * @returns {Promise<object>} Los datos del usuario recién creado.
+ */
 export async function registerUser(userData) {
     if (userData.foto) {
         try {
@@ -85,6 +108,12 @@ export async function registerUser(userData) {
     return data;
 }
 
+/**
+ * Registra un evento de acceso (ingreso/egreso) usando una Edge Function.
+ * @param {string} employeeCode - El código del empleado.
+ * @param {'ingreso' | 'egreso'} type - El tipo de evento de acceso.
+ * @returns {Promise<object>} El resultado de la función del servidor.
+ */
 export async function registerAccess(employeeCode, type) {
     const { data, error } = await supabase.functions.invoke('access', {
         body: { codigo_empleado: employeeCode, tipo: type }
