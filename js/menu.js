@@ -15,7 +15,9 @@ const dom = {
   form: {
     code: document.getElementById('operator-code'), name: document.getElementById('operator-name'),
     surname: document.getElementById('operator-surname'), dni: document.getElementById('operator-dni'),
-    role: document.getElementById('operator-role'), captureBtn: document.getElementById('capture-btn'),
+    role: document.getElementById('operator-role'), 
+    zone: document.getElementById('operator-zone'),
+    captureBtn: document.getElementById('capture-btn'),
     backToEmployeesBtn: document.getElementById('back-to-employees')
   },
   video: document.getElementById('video'),
