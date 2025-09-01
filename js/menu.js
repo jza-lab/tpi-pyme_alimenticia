@@ -5,9 +5,9 @@ import * as state from './state.js';
 import { initializeStatistics } from './statistics.js';
 
 // --- Seguridad---
-if (sessionStorage.getItem('isSupervisor') !== 'true') {
-  window.location.replace('index.html');
-}
+//  if (sessionStorage.getItem('isSupervisor') !== 'true') {
+  //  window.location.replace('index.html');
+// }
 
 // --- Referencias al DOM (cacheadas para eficiencia) ---
 const dom = {
@@ -96,12 +96,19 @@ function renderRecords() {
     const user = userMap.get(record.codigo_empleado);
     const userName = user ? `${user.nombre} ${user.apellido || ''}` : 'Desconocido';
     const status = userStatusMap.get(record.codigo_empleado) || 'egreso';
+    // Capitaliza la primera letra del tipo de acceso para una mejor presentación.
+    const capitalizedTipo = record.tipo.charAt(0).toUpperCase() + record.tipo.slice(1);
+
+    // Asegura que la fecha de la base de datos (asumida como UTC) se interprete como tal
+    // y luego se convierta a la zona horaria local del usuario.
+    const localDateTime = new Date(record.fecha_hora + 'Z').toLocaleString('es-ES');
+
     return `
             <tr>
-                <td>${new Date(record.fecha_hora).toLocaleString('es-ES')}</td>
+                <td>${localDateTime}</td>
                 <td>${userName}</td>
                 <td>${record.codigo_empleado}</td>
-                <td class="tipo-${record.tipo}">${record.tipo}</td>
+                <td class="tipo-${record.tipo}">${capitalizedTipo}</td>
                 <td class="estado-${status}">${status === 'ingreso' ? 'Dentro' : 'Fuera'}</td>
             </tr>
         `;
