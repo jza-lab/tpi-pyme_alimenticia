@@ -168,10 +168,6 @@ async function grantAccess(user) {
     const specificMessage = error.context?.json?.error || error.details || error.message;
     
     denyAccess(specificMessage);
-}
-
-
-
 
   } finally {
     isProcessingAccess = false;
