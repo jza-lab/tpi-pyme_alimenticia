@@ -34,7 +34,31 @@ const dom = {
     }
 };
 
+// --- Estado local del menú ---
+let currentUserData = null;
+let faceDescriptor = null;
+let detectionInterval = null;
 
+// --- Gestión de Vistas y Navegación ---
+function showSection(sectionId) {
+    dom.sections.forEach(s => s.classList.remove('active'));
+    document.getElementById(sectionId)?.classList.add('active');
+
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.section === sectionId));
+    
+    if (sectionId === 'accesos') renderRecords();
+    if (sectionId === 'empleados') renderEmployees();
+}
+
+function showEmployeeView(view) {
+    ['empleados-main-view', 'register-screen', 'capture-screen'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+    stopVideoStream();
+    document.getElementById(view)?.classList.add('active');
+
+    if (view === 'capture-screen') {
+        startFaceCapture();
+    }
+}
 
 
 
