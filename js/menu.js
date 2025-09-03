@@ -21,6 +21,7 @@ const dom = {
     code: document.getElementById('operator-code'), name: document.getElementById('operator-name'),
     surname: document.getElementById('operator-surname'), dni: document.getElementById('operator-dni'),
     role: document.getElementById('operator-role'), zone: document.getElementById('operator-zone'),
+    shift: document.getElementById('operator-shift'),
     captureBtn: document.getElementById('capture-btn'),
     backToEmployeesBtn: document.getElementById('back-to-employees')
   },
@@ -54,6 +55,78 @@ function showSection(sectionId) {
 
   if (sectionId === 'accesos') renderRecords();
   if (sectionId === 'empleados') renderEmployees();
+  if (sectionId === 'autorizaciones') renderAuthorizations();
+}
+
+async function renderAuthorizations() {
+  const authorizationsList = document.getElementById('authorizations-list');
+  if (!authorizationsList) return;
+
+  try {
+    const pendingRecords = await api.fetchPendingAuthorizations();
+    const users = state.getUsers();
+    const userMap = new Map(users.map(u => [u.codigo_empleado, u]));
+
+    if (pendingRecords.length === 0) {
+      authorizationsList.innerHTML = '<p>No hay autorizaciones pendientes.</p>';
+      return;
+    }
+
+    authorizationsList.innerHTML = pendingRecords.map(record => {
+      const user = userMap.get(record.codigo_empleado);
+      const userName = user ? `${user.nombre} ${user.apellido || ''}` : 'Desconocido';
+      const localDateTime = new Date(record.fecha_hora + 'Z').toLocaleString('es-ES');
+
+      return `
+        <div class="authorization-card" id="auth-card-${record.id}">
+          <h4>${userName}</h4>
+          <p>
+            Solicitó <strong class="access-type ${record.tipo}">${record.tipo}</strong>
+            <br>
+            Fecha: ${localDateTime}
+          </p>
+          <div class="authorization-actions">
+            <button class="btn btn-success" data-record-id="${record.id}" data-action="aprobado">Autorizar</button>
+            <button class="btn btn-danger" data-record-id="${record.id}" data-action="rechazado">Rechazar</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Add event listeners after rendering
+    authorizationsList.querySelectorAll('.authorization-actions .btn').forEach(button => {
+      button.addEventListener('click', handleAuthorizationAction);
+    });
+
+  } catch (error) {
+    authorizationsList.innerHTML = '<p class="status error">Error al cargar las autorizaciones.</p>';
+    console.error('Error rendering authorizations:', error);
+  }
+}
+
+async function handleAuthorizationAction(event) {
+  const button = event.currentTarget;
+  const recordId = button.dataset.recordId;
+  const action = button.dataset.action;
+
+  if (!confirm(`¿Está seguro de que desea ${action === 'aprobado' ? 'aprobar' : 'rechazar'} esta solicitud?`)) {
+    return;
+  }
+
+  try {
+    await api.updateAccessStatus(recordId, action);
+    const card = document.getElementById(`auth-card-${recordId}`);
+    if (card) {
+      card.style.transition = 'opacity 0.5s ease';
+      card.style.opacity = '0';
+      setTimeout(() => card.remove(), 500);
+    }
+    // Opcional: refrescar el estado general para que los cambios se reflejen en otras vistas
+    await state.refreshState();
+  } catch (error) {
+    alert(`Error al ${action === 'aprobado' ? 'aprobar' : 'rechazar'} la solicitud.`);
+    console.error('Authorization action failed:', error);
+  }
 }
 
 function showEmployeeView(view) {
@@ -95,13 +168,34 @@ function renderRecords() {
   dom.recordsTbody.innerHTML = records.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora)).map(record => {
     const user = userMap.get(record.codigo_empleado);
     const userName = user ? `${user.nombre} ${user.apellido || ''}` : 'Desconocido';
-    const status = userStatusMap.get(record.codigo_empleado) || 'egreso';
-    // Capitaliza la primera letra del tipo de acceso para una mejor presentación.
+    
     const capitalizedTipo = record.tipo.charAt(0).toUpperCase() + record.tipo.slice(1);
-
-    // Asegura que la fecha de la base de datos (asumida como UTC) se interprete como tal
-    // y luego se convierta a la zona horaria local del usuario.
     const localDateTime = new Date(record.fecha_hora + 'Z').toLocaleString('es-ES');
+
+    let estadoDisplay;
+    let estadoClass;
+
+    switch (record.estado) {
+      case 'aprobado':
+        // El estado "aprobado" se traduce al estado actual del empleado (Dentro/Fuera)
+        const status = userStatusMap.get(record.codigo_empleado) || 'egreso';
+        estadoDisplay = status === 'ingreso' ? 'Dentro' : 'Fuera';
+        estadoClass = `estado-${status}`;
+        break;
+      case 'rechazado':
+        estadoDisplay = 'Rechazado';
+        estadoClass = 'estado-rechazado'; // Necesitará CSS
+        break;
+      case 'pendiente_autorizacion':
+        estadoDisplay = 'Pendiente';
+        estadoClass = 'estado-pendiente_autorizacion';
+        break;
+      default:
+        // Lógica fallback para registros sin el campo 'estado'
+        const fallbackStatus = userStatusMap.get(record.codigo_empleado) || 'egreso';
+        estadoDisplay = fallbackStatus === 'ingreso' ? 'Dentro' : 'Fuera';
+        estadoClass = `estado-${fallbackStatus}`;
+    }
 
     return `
             <tr>
@@ -109,7 +203,7 @@ function renderRecords() {
                 <td>${userName}</td>
                 <td>${record.codigo_empleado}</td>
                 <td class="tipo-${record.tipo}">${capitalizedTipo}</td>
-                <td class="estado-${status}">${status === 'ingreso' ? 'Dentro' : 'Fuera'}</td>
+                <td class="${estadoClass}">${estadoDisplay}</td>
             </tr>
         `;
   }).join('');
@@ -131,13 +225,13 @@ function renderEmployees() {
 
 // --- Flujo de Registro de Empleados ---
 function handleStartCaptureClick() {
-  const { code, name, surname, dni, role, zone } = dom.form;
-  if (!code.value || !name.value || !surname.value || !dni.value || !role.value || !zone.value) return alert('Complete todos los campos.');
+  const { code, name, surname, dni, role, zone, shift } = dom.form;
+  if (!code.value || !name.value || !surname.value || !dni.value || !role.value || !zone.value || !shift.value) return alert('Complete todos los campos.');
   if (state.getUsers().some(u => u.codigo_empleado === code.value)) return alert('El código de empleado ya existe.');
 
   currentUserData = {
     codigo_empleado: code.value, nombre: name.value, apellido: surname.value, dni: dni.value,
-    nivel_acceso: parseInt(role.value), zonas_permitidas: zone.value, descriptor: null, foto: null
+    nivel_acceso: parseInt(role.value), zonas_permitidas: zone.value, turno: shift.value, descriptor: null, foto: null
   };
   showEmployeeView('capture-screen');
 }

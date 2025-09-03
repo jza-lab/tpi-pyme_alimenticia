@@ -42,6 +42,7 @@
         <nav class="mobile-sidebar-nav" role="navigation" aria-label="Navegación móvil">
           <button class="mobile-side-item" data-section="accesos">📊 Historial de Accesos</button>
           <button class="mobile-side-item" data-section="empleados">👥 Gestión de Empleados</button>
+          <button class="mobile-side-item" data-section="autorizaciones">🔔 Autorizaciones</button>
           <button class="mobile-side-item" data-section="estadisticas">📈 Estadísticas</button>
         </nav>
         <div class="mobile-sidebar-footer">
@@ -57,6 +58,7 @@
     <nav class="admin-nav" role="navigation" aria-label="Panel principal">
       <button class="nav-btn active" data-section="accesos" aria-controls="accesos">📊 Historial de Accesos</button>
       <button class="nav-btn" data-section="empleados" aria-controls="empleados">👥 Gestión de Empleados</button>
+      <button class="nav-btn" data-section="autorizaciones" aria-controls="autorizaciones">🔔 Autorizaciones</button>
       <button class="nav-btn" data-section="estadisticas" aria-controls="estadisticas">📈 Estadísticas</button>
     </nav>
   </header>
@@ -142,6 +144,16 @@
           </select>
         </div>
 
+        <div class="form-group">
+          <label for="operator-shift">Turno:</label>
+          <select id="operator-shift">
+            <option value="">Seleccione un turno...</option>
+            <option value="Mañana">Mañana</option>
+            <option value="Tarde">Tarde</option>
+            <option value="Noche">Noche</option>
+          </select>
+        </div>
+
         <div class="action-buttons">
           <button id="capture-btn" class="btn btn-primary">Capturar Rostro</button>
           <button id="back-to-employees" class="btn btn-secondary">Volver</button>
@@ -162,6 +174,14 @@
           <button id="retry-capture-btn" class="btn btn-secondary">Reintentar</button>
           <button id="back-to-register" class="btn btn-secondary">Volver al Registro</button>
         </div>
+      </div>
+    </section>
+
+    <!-- AUTORIZACIONES -->
+    <section id="autorizaciones" class="content-section">
+      <h2>Autorizaciones Pendientes</h2>
+      <div id="authorizations-list" class="authorizations-container">
+        <!-- Las tarjetas de autorización se cargarán aquí -->
       </div>
     </section>
 

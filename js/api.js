@@ -125,3 +125,38 @@ export async function registerAccess(employeeCode, type) {
     }
     return data;
 }
+
+/**
+ * Obtiene todos los registros de acceso que están pendientes de autorización.
+ * @returns {Promise<Array>} Una lista de registros de acceso pendientes.
+ */
+export async function fetchPendingAuthorizations() {
+    const { data, error } = await supabase
+        .from('access')
+        .select('*')
+        .eq('estado', 'pendiente_autorizacion');
+
+    if (error) {
+        console.error('Error al obtener autorizaciones pendientes:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+/**
+ * Actualiza el estado de un registro de acceso (ej. para aprobar o rechazar).
+ * @param {number} recordId - El ID del registro de acceso.
+ * @param {'aprobado' | 'rechazado'} newStatus - El nuevo estado.
+ * @returns {Promise<object>} El resultado de la función del servidor.
+ */
+export async function updateAccessStatus(recordId, newStatus) {
+    const { data, error } = await supabase.functions.invoke('update-access', {
+        body: { record_id: recordId, status: newStatus }
+    });
+
+    if (error) {
+        console.error('Error al actualizar el estado del acceso:', error);
+        throw error;
+    }
+    return data;
+}
