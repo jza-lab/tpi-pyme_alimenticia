@@ -127,14 +127,38 @@ export async function registerAccess(employeeCode, type) {
 }
 
 /**
+ * Crea una solicitud de autorización de acceso en la tabla 'pending_authorizations'.
+ * @param {string} employeeCode - El código del empleado.
+ * @param {'ingreso' | 'egreso'} type - El tipo de evento de acceso.
+ * @returns {Promise<object>} El registro de autorización pendiente recién creado.
+ */
+export async function requestAccessAuthorization(employeeCode, type) {
+    const { data, error } = await supabase
+        .from('pending_authorizations')
+        .insert([
+            {
+                codigo_empleado: employeeCode,
+                tipo: type,
+            },
+        ])
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error al solicitar autorización de acceso:', error);
+        throw error;
+    }
+    return data;
+}
+
+/**
  * Obtiene todos los registros de acceso que están pendientes de autorización.
  * @returns {Promise<Array>} Una lista de registros de acceso pendientes.
  */
 export async function fetchPendingAuthorizations() {
     const { data, error } = await supabase
-        .from('access')
-        .select('*')
-        .eq('estado', 'pendiente_autorizacion');
+        .from('pending_authorizations')
+        .select('*');
 
     if (error) {
         console.error('Error al obtener autorizaciones pendientes:', error);
@@ -144,19 +168,52 @@ export async function fetchPendingAuthorizations() {
 }
 
 /**
- * Actualiza el estado de un registro de acceso (ej. para aprobar o rechazar).
- * @param {number} recordId - El ID del registro de acceso.
- * @param {'aprobado' | 'rechazado'} newStatus - El nuevo estado.
- * @returns {Promise<object>} El resultado de la función del servidor.
+ * Resuelve una solicitud de autorización pendiente.
+ * Si se aprueba, registra el acceso y elimina la solicitud pendiente.
+ * Si se rechaza, simplemente elimina la solicitud pendiente.
+ * @param {number} recordId - El ID del registro en `pending_authorizations`.
+ * @param {'aprobado' | 'rechazado'} status - La acción a tomar.
+ * @returns {Promise<object>} El resultado de la operación.
  */
-export async function updateAccessStatus(recordId, newStatus) {
-    const { data, error } = await supabase.functions.invoke('update-access', {
-        body: { record_id: recordId, status: newStatus }
-    });
+export async function updateAccessStatus(recordId, status) {
+    // 1. Obtener los detalles de la solicitud pendiente
+    const { data: pendingRecord, error: fetchError } = await supabase
+        .from('pending_authorizations')
+        .select('*')
+        .eq('id', recordId)
+        .single();
 
-    if (error) {
-        console.error('Error al actualizar el estado del acceso:', error);
-        throw error;
+    if (fetchError) {
+        console.error('Error al buscar la autorización pendiente:', fetchError);
+        throw fetchError;
     }
-    return data;
+
+    if (!pendingRecord) {
+        throw new Error('La solicitud de autorización no fue encontrada.');
+    }
+
+    // 2. Si se aprueba, registrar el acceso usando la Edge Function existente
+    if (status === 'aprobado') {
+        try {
+            await registerAccess(pendingRecord.codigo_empleado, pendingRecord.tipo);
+        } catch (registerError) {
+            // Incluso si el registro falla (ej. el estado del empleado cambió de nuevo),
+            // se debe intentar eliminar la solicitud para evitar que quede bloqueada.
+            console.error('Error al registrar el acceso aprobado:', registerError);
+            // No relanzamos el error para permitir que la limpieza continúe.
+        }
+    }
+
+    // 3. Eliminar la solicitud de la tabla de pendientes
+    const { error: deleteError } = await supabase
+        .from('pending_authorizations')
+        .delete()
+        .eq('id', recordId);
+
+    if (deleteError) {
+        console.error('Error al eliminar la autorización pendiente:', deleteError);
+        throw deleteError;
+    }
+
+    return { success: true, message: `Solicitud ${status} con éxito.` };
 }

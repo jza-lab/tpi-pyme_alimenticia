@@ -16,6 +16,10 @@ const dom = {
   denialReason: document.getElementById('denial-reason'),
   supervisorMenuBtn: document.getElementById('supervisor-menu-btn'),
   supervisorMenuBtnDenied: document.getElementById('supervisor-menu-btn-denied'),
+  pendingAuth: {
+    message: document.getElementById('pending-auth-message'),
+    backBtn: document.getElementById('back-to-home-from-pending'),
+  },
   manualLogin: {
     container: document.getElementById('manual-login'),
     code: document.getElementById('manual-operator-code'),
@@ -188,20 +192,37 @@ async function grantAccess(user) {
 
     showScreen('access-granted-screen');
   } catch (error) {
-    console.error("Error en grantAccess:", error);
-    // Extraer el mensaje de error de la respuesta de la API
+    console.error("Error en grantAccess, evaluando fallback de autorización:", error);
+    
+    // Extraer mensaje de error para decidir si se pide autorización
     let errorMessage = "Error desconocido al registrar el acceso.";
     if (error.context && typeof error.context.json === 'function') {
-      try {
-        const jsonError = await error.context.json();
-        errorMessage = jsonError.error || errorMessage;
-      } catch (e) {
-        errorMessage = error.message;
-      }
+        try {
+            const jsonError = await error.context.json();
+            errorMessage = jsonError.error || errorMessage;
+        } catch (e) {
+            errorMessage = error.message;
+        }
     } else {
-      errorMessage = error.message;
+        errorMessage = error.message;
     }
-    denyAccess(errorMessage, user);
+
+    // Si el error indica una restricción de acceso, se solicita autorización
+    const isAuthorizationError = errorMessage.includes('ya se encuentra dentro') || errorMessage.includes('no se encuentra dentro');
+
+    if (isAuthorizationError) {
+        try {
+            await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType);
+            showPendingAuthorizationScreen(user, currentLoginType);
+        } catch (authError) {
+            console.error("Error al solicitar autorización:", authError);
+            denyAccess("No se pudo enviar la solicitud de autorización.", user);
+        }
+    } else {
+        // Si es otro tipo de error, se deniega el acceso directamente
+        denyAccess(errorMessage, user);
+    }
+
   } finally {
     isProcessingAccess = false;
     state.refreshState(); // Refrescar el estado para la próxima operación
@@ -220,6 +241,12 @@ function denyAccess(reason, user = null) {
   }
 
   showScreen('access-denied-screen');
+}
+
+function showPendingAuthorizationScreen(user, type) {
+    const message = `Su solicitud de ${type} ha sido enviada a un supervisor para su aprobación.`;
+    dom.pendingAuth.message.textContent = message;
+    showScreen('pending-authorization-screen');
 }
 
 // ------------------- Acceso Manual ------------------- //
@@ -283,7 +310,7 @@ function attachListeners() {
   el('ingreso-btn')?.addEventListener('click', () => startFacialLogin('ingreso'));
   el('egreso-btn')?.addEventListener('click', () => startFacialLogin('egreso'));
 
-  ['back-to-home-from-denied', 'back-to-home-from-denied-2', 'back-after-access'].forEach(id => {
+  ['back-to-home-from-denied', 'back-to-home-from-denied-2', 'back-after-access', 'back-to-home-from-pending'].forEach(id => {
     el(id)?.addEventListener('click', () => showScreen('home-screen'));
   });
 
