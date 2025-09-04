@@ -76,15 +76,28 @@ async function renderAuthorizations() {
       const user = userMap.get(record.codigo_empleado);
       const userName = user ? `${user.nombre} ${user.apellido || ''}` : 'Desconocido';
       const localDateTime = new Date(record.created_at).toLocaleString('es-ES');
+      
+      let detailsHtml = `<p>Motivo: ${record.details?.motivo || 'No especificado'}</p>`;
+
+      if (record.details && record.details.turno_correspondiente) {
+        detailsHtml = `
+          <div class="authorization-details">
+            <p><strong>Turno Asignado:</strong> ${record.details.turno_correspondiente}</p>
+            <p><strong>Intento de Ingreso:</strong> ${record.details.turno_intento}</p>
+          </div>
+        `;
+      }
 
       return `
         <div class="authorization-card" id="auth-card-${record.id}">
-          <h4>${userName}</h4>
-          <p>
-            Solicitó <strong class="access-type ${record.tipo}">${record.tipo}</strong>
-            <br>
-            Fecha: ${localDateTime}
-          </p>
+          <div class="auth-card-header">
+            <h4>${userName}</h4>
+            <span class="auth-card-time">${localDateTime}</span>
+          </div>
+          <div class="auth-card-body">
+            <p>Solicitó: <strong class="access-type ${record.tipo}">${record.tipo}</strong></p>
+            ${detailsHtml}
+          </div>
           <div class="authorization-actions">
             <button class="btn btn-success" data-record-id="${record.id}" data-action="aprobado">Autorizar</button>
             <button class="btn btn-danger" data-record-id="${record.id}" data-action="rechazado">Rechazar</button>
@@ -225,13 +238,13 @@ function renderEmployees() {
 
 // --- Flujo de Registro de Empleados ---
 function handleStartCaptureClick() {
-  const { code, name, surname, dni, role, zone } = dom.form;
-  if (!code.value || !name.value || !surname.value || !dni.value || !role.value || !zone.value) return alert('Complete todos los campos.');
+  const { code, name, surname, dni, role, zone, shift } = dom.form;
+  if (!code.value || !name.value || !surname.value || !dni.value || !role.value || !zone.value || !shift.value) return alert('Complete todos los campos.');
   if (state.getUsers().some(u => u.codigo_empleado === code.value)) return alert('El código de empleado ya existe.');
 
   currentUserData = {
     codigo_empleado: code.value, nombre: name.value, apellido: surname.value, dni: dni.value,
-    nivel_acceso: parseInt(role.value), zonas_permitidas: zone.value, descriptor: null, foto: null
+    nivel_acceso: parseInt(role.value), zonas_permitidas: zone.value, turno: shift.value, descriptor: null, foto: null
   };
   showEmployeeView('capture-screen');
 }

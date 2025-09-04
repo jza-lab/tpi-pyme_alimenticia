@@ -172,11 +172,51 @@ function stopFacialRecognition() {
   recognitionInterval = null;
 }
 
-// ------------------- Lógica de Acceso ------------------- //
+// ------------------- Lógica de Turnos y Acceso ------------------- //
+
+/**
+ * Determina el turno actual basado en la hora.
+ * @returns {'Mañana' | 'Tarde' | 'Noche'}
+ */
+function getCurrentShift() {
+  const currentHour = new Date().getHours();
+  if (currentHour >= 6 && currentHour < 14) {
+    return 'Mañana';
+  } else if (currentHour >= 14 && currentHour < 22) {
+    return 'Tarde';
+  } else {
+    return 'Noche';
+  }
+}
+
 async function grantAccess(user) {
   if (isProcessingAccess) return;
   isProcessingAccess = true;
 
+  // --- Verificación de Turno ---
+  if (currentLoginType === 'ingreso' && user.turno) {
+    const currentShift = getCurrentShift();
+    if (user.turno !== currentShift) {
+      try {
+        const details = {
+          turno_correspondiente: user.turno,
+          turno_intento: currentShift,
+          motivo: 'Intento de ingreso fuera del turno asignado.'
+        };
+        await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
+        showPendingAuthorizationScreen(user, currentLoginType);
+      } catch (authError) {
+        console.error("Error al solicitar autorización por turno incorrecto:", authError);
+        denyAccess("No se pudo enviar la solicitud de autorización.", user);
+      } finally {
+        isProcessingAccess = false;
+        state.refreshState();
+      }
+      return; // Detener la ejecución para no registrar el acceso normal
+    }
+  }
+
+  // --- Lógica de Acceso Normal (si el turno es correcto o es un egreso) ---
   try {
     await api.registerAccess(user.codigo_empleado, currentLoginType);
 
@@ -185,7 +225,7 @@ async function grantAccess(user) {
     if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
       dom.supervisorMenuBtn.style.display = 'block';
       sessionStorage.setItem('isSupervisor', 'true');
-      sessionStorage.setItem('supervisorCode', user.codigo_empleado); // Guardar código
+      sessionStorage.setItem('supervisorCode', user.codigo_empleado);
     } else {
       dom.supervisorMenuBtn.style.display = 'none';
     }
@@ -193,39 +233,37 @@ async function grantAccess(user) {
     showScreen('access-granted-screen');
   } catch (error) {
     console.error("Error en grantAccess, evaluando fallback de autorización:", error);
-    
-    // Extraer mensaje de error para decidir si se pide autorización
+
     let errorMessage = "Error desconocido al registrar el acceso.";
+    // ... (código de manejo de errores existente)
     if (error.context && typeof error.context.json === 'function') {
         try {
             const jsonError = await error.context.json();
             errorMessage = jsonError.error || errorMessage;
-        } catch (e) {
-            errorMessage = error.message;
-        }
+        } catch (e) { errorMessage = error.message; }
     } else {
         errorMessage = error.message;
     }
-
-    // Si el error indica una restricción de acceso, se solicita autorización
+    
     const isAuthorizationError = errorMessage.includes('ya se encuentra dentro') || errorMessage.includes('no se encuentra dentro');
 
     if (isAuthorizationError) {
-        try {
-            await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType);
-            showPendingAuthorizationScreen(user, currentLoginType);
-        } catch (authError) {
-            console.error("Error al solicitar autorización:", authError);
-            denyAccess("No se pudo enviar la solicitud de autorización.", user);
-        }
+      try {
+        // Se solicita autorización por un motivo que no es el turno (ej. ya está dentro)
+        const details = { motivo: errorMessage };
+        await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
+        showPendingAuthorizationScreen(user, currentLoginType);
+      } catch (authError) {
+        console.error("Error al solicitar autorización:", authError);
+        denyAccess("No se pudo enviar la solicitud de autorización.", user);
+      }
     } else {
-        // Si es otro tipo de error, se deniega el acceso directamente
-        denyAccess(errorMessage, user);
+      denyAccess(errorMessage, user);
     }
 
   } finally {
     isProcessingAccess = false;
-    state.refreshState(); // Refrescar el estado para la próxima operación
+    state.refreshState();
   }
 }
 

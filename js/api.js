@@ -130,17 +130,19 @@ export async function registerAccess(employeeCode, type) {
  * Crea una solicitud de autorización de acceso en la tabla 'pending_authorizations'.
  * @param {string} employeeCode - El código del empleado.
  * @param {'ingreso' | 'egreso'} type - El tipo de evento de acceso.
+ * @param {object} [details={}] - Detalles adicionales para la autorización.
  * @returns {Promise<object>} El registro de autorización pendiente recién creado.
  */
-export async function requestAccessAuthorization(employeeCode, type) {
+export async function requestAccessAuthorization(employeeCode, type, details = {}) {
+    const payload = {
+        codigo_empleado: employeeCode,
+        tipo: type,
+        details: details, // Campo 'details' de tipo JSONB en Supabase
+    };
+
     const { data, error } = await supabase
         .from('pending_authorizations')
-        .insert([
-            {
-                codigo_empleado: employeeCode,
-                tipo: type,
-            },
-        ])
+        .insert([payload])
         .select()
         .single();
 
