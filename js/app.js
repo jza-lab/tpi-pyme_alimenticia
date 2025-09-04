@@ -363,6 +363,13 @@ function attachListeners() {
 async function main() {
   attachListeners();
   showScreen('home-screen');
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
+      .catch(err => console.log('ServiceWorker registration failed: ', err));
+  }
+
   try {
     await Promise.all([
       face.loadModels(),
