@@ -415,16 +415,6 @@ function denyAccess(reason, user = null) {
   showScreen('access-denied-screen');
 }
 
-function showPendingAuthorizationScreen(user, type) {
-    const translatedType = t(type);
-    const message = t('pending_authorization_message_dynamic', { type: translatedType });
-    dom.pendingAuth.message.textContent = message;
-    showScreen('pending-authorization-screen');
-
-    if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
-    authorizationCheckInterval = setInterval(() => checkAuthorizationStatus(user.codigo_empleado, type), 5000);
-}
-
 async function checkAuthorizationStatus(employeeCode, type) {
     try {
         // Forzar refresh completo del estado para evitar problemas de caché
