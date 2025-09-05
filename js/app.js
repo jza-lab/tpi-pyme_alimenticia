@@ -53,6 +53,7 @@ const dom = {
   loginOverlay: document.getElementById('login-overlay'),
   loginStatus: document.getElementById('login-status'),
   welcomeMessage: document.getElementById('welcome-message'),
+  denialTitle: document.getElementById('denial-title'),
   denialReason: document.getElementById('denial-reason'),
   supervisorMenuBtn: document.getElementById('supervisor-menu-btn'),
   supervisorMenuBtnDenied: document.getElementById('supervisor-menu-btn-denied'),
@@ -296,13 +297,27 @@ async function grantAccess(user) {
 }
 
 function denyAccess(reason, user = null) {
-  dom.denialReason.textContent = reason;
+  // Reset to default title first
+  dom.denialTitle.textContent = t('access_denied_title');
+  
+  // Handle specific denial reasons
+  if (reason.toLowerCase().includes('dentro')) {
+    dom.denialTitle.textContent = t('denial_title_entry');
+    dom.denialReason.textContent = t('denial_reason_entry', { name: user?.nombre || 'El usuario' });
+  } else if (reason.toLowerCase().includes('fuera')) {
+    dom.denialTitle.textContent = t('denial_title_exit');
+    dom.denialReason.textContent = t('denial_reason_exit', { name: user?.nombre || 'El usuario' });
+  } else {
+    dom.denialReason.textContent = reason;
+  }
+
+  // Handle supervisor re-entry logic
   dom.supervisorMenuBtnDenied.style.display = 'none';
   const isSupervisor = user && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR;
-  const isAlreadyInsideError = reason.toLowerCase().includes('ya se encuentra dentro');
+  const isAlreadyInsideError = reason.toLowerCase().includes('dentro');
   if (currentLoginType === 'ingreso' && isSupervisor && isAlreadyInsideError) {
     sessionStorage.setItem('isSupervisor', 'true');
-    sessionStorage.setItem('supervisorCode', user.codigo_empleado); // Guardar legajo
+    sessionStorage.setItem('supervisorCode', user.codigo_empleado);
     dom.supervisorMenuBtnDenied.style.display = 'block';
   }
 
