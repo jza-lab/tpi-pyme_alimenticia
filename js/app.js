@@ -3,6 +3,7 @@ import { APP_CONSTANTS } from './config.js';
 import * as api from './api.js';
 import * as face from './face.js';
 import * as state from './state.js';
+import { t } from './i18n-logic.js';
 
 // ------------------- DOM Refs ------------------- //
 // Cachear referencias a elementos del DOM para mayor eficiencia
@@ -40,7 +41,7 @@ let countdownInterval = null;
 function showScreen(screenId) {
   if (screenId === 'home-screen') {
     sessionStorage.removeItem('isSupervisor');
-    sessionStorage.removeItem('supervisorCode'); // Limpiar el código también
+    sessionStorage.removeItem('supervisorCode'); // Limpiar el legajo también
   }
   dom.screens.forEach(s => s.classList.remove('active'));
   const screenToShow = document.getElementById(screenId);
@@ -91,14 +92,15 @@ async function startFacialLogin(type) {
 
   const title = document.getElementById('login-title');
   const desc = document.getElementById('login-description');
-  title.textContent = `Registro de ${type === 'ingreso' ? 'Ingreso' : 'Egreso'}`;
-  desc.textContent = `Por favor, colóquese frente a la cámara para registrar su ${type}.`;
+  title.textContent = t('register_type', { type });
+  desc.textContent = t('position_for_scan', { type });
+
 
   try {
     await startVideoStream(dom.loginVideo);
     runFacialRecognition();
   } catch (error) {
-    dom.loginStatus.textContent = error.message;
+    dom.loginStatus.textContent = t('camera_access_error');
     dom.loginStatus.className = 'status error';
     showManualLoginOption();
   }
@@ -108,7 +110,7 @@ function runFacialRecognition() {
   let recognizedUser = null; // Variable para guardar el usuario reconocido
   let countdown = 5;
   dom.countdown.textContent = countdown;
-  dom.loginStatus.textContent = 'Buscando coincidencias...';
+  dom.loginStatus.textContent = t('searching_for_match');
   dom.loginStatus.className = 'status info';
 
   if (countdownInterval) clearInterval(countdownInterval);
@@ -118,7 +120,7 @@ function runFacialRecognition() {
 
     // Actualizar el mensaje si ya hemos reconocido a alguien
     if (recognizedUser) {
-      dom.loginStatus.textContent = `Usuario reconocido: ${recognizedUser.nombre}. Confirmando en ${countdown}...`;
+      dom.loginStatus.textContent = t('user_recognized_confirming', { name: recognizedUser.nombre, countdown });
     }
 
     if (countdown <= 0) {
@@ -155,7 +157,7 @@ function runFacialRecognition() {
           if (user) {
             recognizedUser = user; // Guardamos el usuario
             // Actualizamos el estado en la UI solo una vez
-            dom.loginStatus.textContent = `Usuario reconocido: ${user.nombre}. Confirmando...`;
+            dom.loginStatus.textContent = t('user_recognized', { name: user.nombre });
             dom.loginStatus.className = 'status success';
           }
         }
@@ -193,7 +195,18 @@ async function grantAccess(user) {
   if (isProcessingAccess) return;
   isProcessingAccess = true;
 
-  // --- Verificación de Turno ---
+  // --- Verificación de Turno y Autorizaciones Pendientes ---
+  const pendingAuths = state.getPendingAuthorizations();
+  const hasPendingAuth = pendingAuths.some(
+    auth => auth.codigo_empleado === user.codigo_empleado && auth.tipo === currentLoginType
+  );
+
+  if (hasPendingAuth) {
+    denyAccess(t('authorization_already_pending'), user);
+    isProcessingAccess = false;
+    return;
+  }
+  
   if (currentLoginType === 'ingreso' && user.turno) {
     const currentShift = getCurrentShift();
     if (user.turno !== currentShift) {
@@ -201,18 +214,18 @@ async function grantAccess(user) {
         const details = {
           turno_correspondiente: user.turno,
           turno_intento: currentShift,
-          motivo: 'Intento de ingreso fuera del turno asignado.'
+          motivo: t('out_of_shift_attempt')
         };
         await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
         showPendingAuthorizationScreen(user, currentLoginType);
       } catch (authError) {
         console.error("Error al solicitar autorización por turno incorrecto:", authError);
-        denyAccess("No se pudo enviar la solicitud de autorización.", user);
+        denyAccess(t('authorization_request_error'), user);
       } finally {
         isProcessingAccess = false;
         state.refreshState();
       }
-      return; // Detener la ejecución para no registrar el acceso normal
+      return;
     }
   }
 
@@ -220,7 +233,7 @@ async function grantAccess(user) {
   try {
     await api.registerAccess(user.codigo_empleado, currentLoginType);
 
-    dom.welcomeMessage.textContent = `${user.nombre}, su ${currentLoginType} ha sido registrado.`;
+    dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: currentLoginType });
 
     if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
       dom.supervisorMenuBtn.style.display = 'block';
@@ -232,9 +245,9 @@ async function grantAccess(user) {
 
     showScreen('access-granted-screen');
   } catch (error) {
-    console.error("Error en grantAccess, evaluando fallback de autorización:", error);
+    console.error(t('grant_access_error'), error);
 
-    let errorMessage = "Error desconocido al registrar el acceso.";
+    let errorMessage = t('unknown_registration_error');
     // ... (código de manejo de errores existente)
     if (error.context && typeof error.context.json === 'function') {
         try {
@@ -249,13 +262,21 @@ async function grantAccess(user) {
 
     if (isAuthorizationError) {
       try {
-        // Se solicita autorización por un motivo que no es el turno (ej. ya está dentro)
-        const details = { motivo: errorMessage };
-        await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
-        showPendingAuthorizationScreen(user, currentLoginType);
+        const pendingAuths = state.getPendingAuthorizations();
+        const hasPendingAuth = pendingAuths.some(
+          auth => auth.codigo_empleado === user.codigo_empleado && auth.tipo === currentLoginType
+        );
+
+        if (hasPendingAuth) {
+          denyAccess(t('authorization_already_pending'), user);
+        } else {
+          const details = { motivo: errorMessage };
+          await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
+          showPendingAuthorizationScreen(user, currentLoginType);
+        }
       } catch (authError) {
         console.error("Error al solicitar autorización:", authError);
-        denyAccess("No se pudo enviar la solicitud de autorización.", user);
+        denyAccess(t('authorization_request_error'), user);
       }
     } else {
       denyAccess(errorMessage, user);
@@ -274,7 +295,7 @@ function denyAccess(reason, user = null) {
   const isAlreadyInsideError = reason.toLowerCase().includes('ya se encuentra dentro');
   if (currentLoginType === 'ingreso' && isSupervisor && isAlreadyInsideError) {
     sessionStorage.setItem('isSupervisor', 'true');
-    sessionStorage.setItem('supervisorCode', user.codigo_empleado); // Guardar código
+    sessionStorage.setItem('supervisorCode', user.codigo_empleado); // Guardar legajo
     dom.supervisorMenuBtnDenied.style.display = 'block';
   }
 
@@ -282,7 +303,7 @@ function denyAccess(reason, user = null) {
 }
 
 function showPendingAuthorizationScreen(user, type) {
-    const message = `Su solicitud de ${type} ha sido enviada a un supervisor para su aprobación.`;
+    const message = t('pending_authorization_message_dynamic', { type });
     dom.pendingAuth.message.textContent = message;
     showScreen('pending-authorization-screen');
 }
@@ -291,22 +312,23 @@ function showPendingAuthorizationScreen(user, type) {
 async function attemptManualLogin() {
   const code = dom.manualLogin.code.value;
   const dni = dom.manualLogin.dni.value;
-  if (!code || !dni) return alert('Por favor, complete ambos campos.');
+  if (!code || !dni) return alert(t('fill_both_fields'));
 
   const user = state.getUsers().find(u => u.codigo_empleado === code && u.dni === dni);
   if (user) {
     grantAccess(user);
   } else {
-    denyAccess('Credenciales incorrectas.');
+    denyAccess(t('incorrect_credentials'));
   }
 }
 
 function showManualLoginOption() {
+  stopVideoStream(dom.loginVideo); // Detener el stream de la cámara
   const { container, title, loginBtn, retryBtn } = dom.manualLogin;
-  dom.loginStatus.textContent = 'Reconocimiento fallido. Pruebe el acceso manual.';
+  dom.loginStatus.textContent = t('recognition_failed_manual_prompt');
   dom.loginStatus.className = 'status error';
-  title.textContent = `Acceso Manual de ${currentLoginType}`;
-  loginBtn.textContent = `Registrar ${currentLoginType}`;
+  title.textContent = t('manual_access_type', { type: currentLoginType });
+  loginBtn.textContent = t('register_type_manual_button', { type: currentLoginType });
   container.style.display = 'block';
   container.scrollIntoView({ behavior: 'smooth' });
 }
@@ -316,7 +338,7 @@ function resetManualLoginForm() {
   container.style.display = 'none';
   code.value = '';
   dni.value = '';
-  dom.loginStatus.textContent = 'Buscando coincidencias...';
+  dom.loginStatus.textContent = t('searching_for_match');
   dom.loginStatus.className = 'status info';
 }
 
@@ -324,11 +346,11 @@ function resetManualLoginForm() {
 function handleSupervisorMenuClick() {
   const storedCode = sessionStorage.getItem('supervisorCode');
   if (!storedCode) {
-    alert('Error de seguridad: No se encontró el código de supervisor.');
+    alert(t('security_error_supervisor_code'));
     return;
   }
 
-  const enteredCode = prompt('Para continuar, por favor ingrese su código:');
+  const enteredCode = prompt(t('prompt_supervisor_code'));
 
   if (enteredCode === null) { // El usuario presionó "Cancelar"
     return;
@@ -337,7 +359,7 @@ function handleSupervisorMenuClick() {
   if (enteredCode === storedCode) {
     window.location.href = 'menu.html';
   } else {
-    alert('Código incorrecto. Acceso denegado.');
+    alert(t('incorrect_code_denied'));
   }
 }
 

@@ -24,7 +24,7 @@ function dataURLtoBlob(dataURL) {
 /**
  * Sube la foto de un usuario a Supabase Storage.
  * @param {string} base64Data La foto codificada como data URL en base64.
- * @param {string} employeeCode El código del empleado, usado como nombre de archivo.
+ * @param {string} employeeCode El legajo del empleado, usado como nombre de archivo.
  * @returns {Promise<string>} La URL pública de la foto subida.
  */
 async function uploadPhoto(base64Data, employeeCode) {
@@ -110,7 +110,7 @@ export async function registerUser(userData) {
 
 /**
  * Registra un evento de acceso (ingreso/egreso) usando una Edge Function.
- * @param {string} employeeCode - El código del empleado.
+ * @param {string} employeeCode - El legajo del empleado.
  * @param {'ingreso' | 'egreso'} type - El tipo de evento de acceso.
  * @returns {Promise<object>} El resultado de la función del servidor.
  */
@@ -128,7 +128,7 @@ export async function registerAccess(employeeCode, type) {
 
 /**
  * Crea una solicitud de autorización de acceso en la tabla 'pending_authorizations'.
- * @param {string} employeeCode - El código del empleado.
+ * @param {string} employeeCode - El legajo del empleado.
  * @param {'ingreso' | 'egreso'} type - El tipo de evento de acceso.
  * @param {object} [details={}] - Detalles adicionales para la autorización.
  * @returns {Promise<object>} El registro de autorización pendiente recién creado.

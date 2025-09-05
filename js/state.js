@@ -1,43 +1,39 @@
-import { fetchUsers, fetchAccessRecords } from './api.js';
+import { fetchUsers, fetchAccessRecords, fetchPendingAuthorizations } from './api.js';
 import { createFaceMatcher } from './face.js';
 
-// El estado en sí no se exporta para protegerlo de modificaciones directas.
 const state = {
     users: [],
     accessRecords: [],
+    pendingAuthorizations: [],
     faceMatcher: null,
     isInitialized: false,
 };
 
-/**
- * Inicializa el estado de la aplicación cargando todos los datos necesarios desde la API.
- * Es seguro llamar a esta función varias veces; los datos solo se cargarán una vez.
- */
 export async function initState() {
     if (state.isInitialized) return;
 
     console.log('Inicializando estado de la aplicación...');
     try {
-        // Cargar datos iniciales en paralelo para mayor eficiencia
-        const [users, records] = await Promise.all([
+        const [users, records, authorizations] = await Promise.all([
             fetchUsers(),
-            fetchAccessRecords()
+            fetchAccessRecords(),
+            fetchPendingAuthorizations()
         ]);
 
         state.users = users;
         state.accessRecords = records;
-        // Crear el face matcher a partir de los usuarios cargados
+        state.pendingAuthorizations = authorizations;
         state.faceMatcher = createFaceMatcher(users);
         state.isInitialized = true;
 
         console.log('Estado inicializado:', {
             users: state.users.length,
             records: state.accessRecords.length,
+            authorizations: state.pendingAuthorizations.length,
             hasFaceMatcher: !!state.faceMatcher
         });
     } catch (error) {
         console.error("Falló la inicialización del estado:", error);
-        // Volver a lanzar el error para que la UI pueda reaccionar
         throw error;
     }
 }
@@ -66,5 +62,6 @@ export async function refreshState() {
 // Se devuelven copias de los arrays para promover la inmutabilidad y evitar efectos secundarios.
 export const getUsers = () => [...state.users];
 export const getAccessRecords = () => [...state.accessRecords];
+export const getPendingAuthorizations = () => [...state.pendingAuthorizations];
 export const getFaceMatcher = () => state.faceMatcher;
 export const isInitialized = () => state.isInitialized;
