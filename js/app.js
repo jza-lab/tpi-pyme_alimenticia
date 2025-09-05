@@ -234,55 +234,54 @@ async function grantAccess(user) {
   isProcessingAccess = true;
 
   try {
-    // --- Check for exit attempt after a rejected entry ---
+    // --- Logic for EGRESO (Exit) ---
     if (currentLoginType === 'egreso') {
       const lastRecord = await api.fetchLastAccessRecord(user.codigo_empleado);
-      // If the last record was an 'ingreso' and it was 'rechazado', prevent exit.
+      // Block exit if the last entry was rejected
       if (lastRecord && lastRecord.tipo === 'ingreso' && lastRecord.estado === 'rechazado') {
         denyAccess(t('exit_denied_due_to_rejection'), user);
-        return; // Stop the flow here
+        return; // Halt execution
       }
+      // Otherwise, proceed with normal exit and show success screen.
+      await api.registerAccess(user.codigo_empleado, currentLoginType);
+      await state.refreshState();
+      dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: t(currentLoginType) });
+      showScreen('access-granted-screen');
+      return; // IMPORTANT: Halt execution after handling exit.
     }
-    // --- End of new check ---
-
+    
+    // --- Logic for INGRESO (Entry) ---
     const currentShift = getCurrentShift();
-    const isOutOfShift = (currentLoginType === 'ingreso' && user.turno && user.turno !== currentShift);
+    const isOutOfShift = (user.turno && user.turno !== currentShift);
 
+    // Block entry if out of shift and has a recent rejection
     if (isOutOfShift) {
-      // --- Client-side check for recent rejection ---
       const hasRecentRejection = await api.checkRecentRejection(user.codigo_empleado);
       if (hasRecentRejection) {
-        // If rejected, deny access directly without contacting the backend function
         denyAccess(t('access_recently_rejected'), user);
-        return; // Stop the execution flow here
+        return; // Halt execution
       }
-      // --- End of client-side check ---
-
-      // --- Lógica para Ingreso Fuera de Turno (con acceso inmediato) ---
-      const details = {
-        turno_correspondiente: user.turno,
-        turno_intento: currentShift,
-        motivo: t('out_of_shift_attempt')
-      };
-      // Esta función ahora maneja el bloqueo, el registro de acceso y la solicitud de autorización.
-      await api.requestImmediateAccess(user.codigo_empleado, currentLoginType, details);
-
-    } else {
-      // --- Lógica de Acceso Normal (en turno, o cualquier egreso) ---
-      // La función 'access' original sigue siendo válida para registros simples.
-      await api.registerAccess(user.codigo_empleado, currentLoginType);
     }
 
-    // --- Flujo de Éxito (diferenciado por caso) ---
-    await state.refreshState(); // Refrescar el estado para obtener el nuevo registro
-
+    // Use the modern 'requestImmediateAccess' for ALL entries.
+    // This avoids the legacy 'registerAccess' function which is buggy for in-shift entries after rejection.
+    const details = {
+      turno_correspondiente: user.turno,
+      turno_intento: currentShift,
+      motivo: isOutOfShift ? t('out_of_shift_attempt') : t('in_shift_entry_reason')
+    };
+    await api.requestImmediateAccess(user.codigo_empleado, currentLoginType, details);
+    
+    // --- Success Flow for INGRESO ---
+    await state.refreshState();
+    
     if (isOutOfShift) {
-      // Si fue fuera de turno, mostrar la pantalla de aviso especial.
+      // If entry was out of shift, show pending review screen
       showScreen('access-pending-review-screen');
     } else {
-      // Si fue un acceso normal, mostrar la pantalla de éxito estándar.
-      dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: currentLoginType });
-      if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
+      // If entry was in-shift, show normal success screen
+      dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: t(currentLoginType) });
+      if (user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
         dom.supervisorMenuBtn.style.display = 'block';
         sessionStorage.setItem('isSupervisor', 'true');
         sessionStorage.setItem('supervisorCode', user.codigo_empleado);
