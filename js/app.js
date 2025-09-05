@@ -234,6 +234,17 @@ async function grantAccess(user) {
   isProcessingAccess = true;
 
   try {
+    // --- Check for exit attempt after a rejected entry ---
+    if (currentLoginType === 'egreso') {
+      const lastRecord = await api.fetchLastAccessRecord(user.codigo_empleado);
+      // If the last record was an 'ingreso' and it was 'rechazado', prevent exit.
+      if (lastRecord && lastRecord.tipo === 'ingreso' && lastRecord.estado === 'rechazado') {
+        denyAccess(t('exit_denied_due_to_rejection'), user);
+        return; // Stop the flow here
+      }
+    }
+    // --- End of new check ---
+
     const currentShift = getCurrentShift();
     const isOutOfShift = (currentLoginType === 'ingreso' && user.turno && user.turno !== currentShift);
 

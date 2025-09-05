@@ -178,7 +178,32 @@ export async function checkRecentRejection(employeeCode) {
     }
 
     // Si data no es nulo y tiene al menos un elemento, significa que hay un rechazo reciente.
+    // Si data no es nulo y tiene al menos un elemento, significa que hay un rechazo reciente.
     return data && data.length > 0;
+}
+
+/**
+ * Obtiene el último registro de acceso de un empleado.
+ * @param {string} employeeCode - El legajo del empleado.
+ * @returns {Promise<object|null>} El último registro de acceso, o null si no se encuentra.
+ */
+export async function fetchLastAccessRecord(employeeCode) {
+    const { data, error } = await supabase
+        .from('access')
+        .select('*')
+        .eq('codigo_empleado', employeeCode)
+        .order('fecha_hora', { ascending: false })
+        .limit(1)
+        .single();
+
+    // PGRST116: "exact one row was not returned". Esto es normal si un empleado es nuevo y no tiene registros.
+    // No lo tratamos como un error, simplemente devolvemos null.
+    if (error && error.code !== 'PGRST116') {
+        console.error('Error al obtener el último registro de acceso:', error);
+        return null;
+    }
+
+    return data;
 }
 
 

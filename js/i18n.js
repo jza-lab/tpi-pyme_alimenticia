@@ -59,6 +59,7 @@ export const translations = {
     "access_granted_pending_title": "Ingreso Registrado",
     "access_granted_pending_message": "Su ingreso ha sido registrado, pero está fuera de su turno y será revisado por un supervisor.",
     "access_recently_rejected": "Su solicitud de acceso fue rechazada recientemente. Por favor, espere a su turno.",
+    "exit_denied_due_to_rejection": "Egreso no registrado. Su autorización de ingreso anterior fue rechazada.",
 
     // menu.html
     "admin_panel_title": "Panel Administrativo",
@@ -207,6 +208,7 @@ export const translations = {
     "access_granted_pending_title": "Entry Logged",
     "access_granted_pending_message": "Your entry has been logged, but it is outside of your shift and will be reviewed by a supervisor.",
     "access_recently_rejected": "Your access request was recently rejected. Please wait for your shift.",
+    "exit_denied_due_to_rejection": "Exit not registered. Your previous entry authorization was rejected.",
 
     // menu.html
     "admin_panel_title": "Admin Panel",
