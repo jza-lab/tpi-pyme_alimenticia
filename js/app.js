@@ -156,6 +156,39 @@ function stopFacialRecognition() {
   recognitionInterval = null;
 }
 
+// ------------------- Lógica de Autorización de Acceso ------------------- //
+
+const AUTH_ATTEMPTS_KEY_PREFIX = 'auth_attempts_';
+const MAX_AUTH_ATTEMPTS = 2;
+
+/**
+ * Obtiene el número de intentos de autorización para un empleado.
+ * @param {string} employeeCode - El legajo del empleado.
+ * @returns {number} - El número de intentos.
+ */
+function getAuthorizationAttempts(employeeCode) {
+    const attempts = sessionStorage.getItem(`${AUTH_ATTEMPTS_KEY_PREFIX}${employeeCode}`);
+    return attempts ? parseInt(attempts, 10) : 0;
+}
+
+/**
+ * Incrementa el contador de intentos de autorización para un empleado.
+ * @param {string} employeeCode - El legajo del empleado.
+ */
+function incrementAuthorizationAttempts(employeeCode) {
+    const attempts = getAuthorizationAttempts(employeeCode);
+    sessionStorage.setItem(`${AUTH_ATTEMPTS_KEY_PREFIX}${employeeCode}`, attempts + 1);
+}
+
+/**
+ * Limpia el contador de intentos de autorización para un empleado.
+ * @param {string} employeeCode - El legajo del empleado.
+ */
+function clearAuthorizationAttempts(employeeCode) {
+    sessionStorage.removeItem(`${AUTH_ATTEMPTS_KEY_PREFIX}${employeeCode}`);
+}
+
+
 // ------------------- Lógica de Turnos y Acceso ------------------- //
 
 /**
@@ -189,9 +222,19 @@ async function grantAccess(user) {
     return;
   }
   
+  // --- Lógica para Ingreso Fuera de Turno ---
   if (currentLoginType === 'ingreso' && user.turno) {
     const currentShift = getCurrentShift();
     if (user.turno !== currentShift) {
+      const attempts = getAuthorizationAttempts(user.codigo_empleado);
+      
+      if (attempts >= MAX_AUTH_ATTEMPTS) {
+        const reason = t('max_authorization_attempts_exceeded', { max: MAX_AUTH_ATTEMPTS });
+        denyAccess(reason, user);
+        isProcessingAccess = false;
+        return;
+      }
+
       try {
         const details = {
           turno_correspondiente: user.turno,
@@ -199,6 +242,7 @@ async function grantAccess(user) {
           motivo: t('out_of_shift_attempt')
         };
         await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
+        incrementAuthorizationAttempts(user.codigo_empleado); // Incrementar después de una solicitud exitosa
         showPendingAuthorizationScreen(user, currentLoginType);
       } catch (authError) {
         console.error("Error al solicitar autorización por turno incorrecto:", authError);
@@ -207,13 +251,16 @@ async function grantAccess(user) {
         isProcessingAccess = false;
         state.refreshState();
       }
-      return;
+      return; // Detener la ejecución aquí para esperar la autorización
     }
   }
 
   // --- Lógica de Acceso Normal (si el turno es correcto o es un egreso) ---
   try {
     await api.registerAccess(user.codigo_empleado, currentLoginType);
+
+    // Si el acceso fue exitoso, limpiar los intentos de autorización
+    clearAuthorizationAttempts(user.codigo_empleado);
 
     dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: currentLoginType });
 
@@ -230,7 +277,6 @@ async function grantAccess(user) {
     console.error(t('grant_access_error'), error);
 
     let errorMessage = t('unknown_registration_error');
-    // ... (código de manejo de errores existente)
     if (error.context && typeof error.context.json === 'function') {
         try {
             const jsonError = await error.context.json();
@@ -314,10 +360,23 @@ async function checkAuthorizationStatus(employeeCode, type) {
         const user = state.getUsers().find(u => u.codigo_empleado === employeeCode);
 
         if (recentAccess) {
+            // Si el acceso fue exitoso, limpiar los intentos de autorización
+            clearAuthorizationAttempts(employeeCode);
             dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: type });
             showScreen('access-granted-screen');
         } else {
-            denyAccess(t('authorization_rejected'), user); // Asumir que fue rechazada
+            // La solicitud ya no está pendiente, pero no hay registro de acceso.
+            // Asumimos que fue rechazada.
+            const attempts = getAuthorizationAttempts(employeeCode);
+            let reason = t('authorization_rejected');
+
+            if (attempts < MAX_AUTH_ATTEMPTS) {
+                const remaining = MAX_AUTH_ATTEMPTS - attempts;
+                reason += ` ${t('you_have_x_attempts_left', { count: remaining })}`;
+            } else {
+                reason += ` ${t('no_more_attempts_left')}`;
+            }
+            denyAccess(reason, user);
         }
     }
 }
