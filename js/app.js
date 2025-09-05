@@ -41,7 +41,7 @@ let countdownInterval = null;
 function showScreen(screenId) {
   if (screenId === 'home-screen') {
     sessionStorage.removeItem('isSupervisor');
-    sessionStorage.removeItem('supervisorCode'); // Limpiar el código también
+    sessionStorage.removeItem('supervisorCode'); // Limpiar el legajo también
   }
   dom.screens.forEach(s => s.classList.remove('active'));
   const screenToShow = document.getElementById(screenId);
@@ -195,7 +195,18 @@ async function grantAccess(user) {
   if (isProcessingAccess) return;
   isProcessingAccess = true;
 
-  // --- Verificación de Turno ---
+  // --- Verificación de Turno y Autorizaciones Pendientes ---
+  const pendingAuths = state.getPendingAuthorizations();
+  const hasPendingAuth = pendingAuths.some(
+    auth => auth.codigo_empleado === user.codigo_empleado && auth.tipo === currentLoginType
+  );
+
+  if (hasPendingAuth) {
+    denyAccess(t('authorization_already_pending'), user);
+    isProcessingAccess = false;
+    return;
+  }
+  
   if (currentLoginType === 'ingreso' && user.turno) {
     const currentShift = getCurrentShift();
     if (user.turno !== currentShift) {
@@ -214,7 +225,7 @@ async function grantAccess(user) {
         isProcessingAccess = false;
         state.refreshState();
       }
-      return; // Detener la ejecución para no registrar el acceso normal
+      return;
     }
   }
 
@@ -251,10 +262,18 @@ async function grantAccess(user) {
 
     if (isAuthorizationError) {
       try {
-        // Se solicita autorización por un motivo que no es el turno (ej. ya está dentro)
-        const details = { motivo: errorMessage };
-        await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
-        showPendingAuthorizationScreen(user, currentLoginType);
+        const pendingAuths = state.getPendingAuthorizations();
+        const hasPendingAuth = pendingAuths.some(
+          auth => auth.codigo_empleado === user.codigo_empleado && auth.tipo === currentLoginType
+        );
+
+        if (hasPendingAuth) {
+          denyAccess(t('authorization_already_pending'), user);
+        } else {
+          const details = { motivo: errorMessage };
+          await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
+          showPendingAuthorizationScreen(user, currentLoginType);
+        }
       } catch (authError) {
         console.error("Error al solicitar autorización:", authError);
         denyAccess(t('authorization_request_error'), user);
@@ -276,7 +295,7 @@ function denyAccess(reason, user = null) {
   const isAlreadyInsideError = reason.toLowerCase().includes('ya se encuentra dentro');
   if (currentLoginType === 'ingreso' && isSupervisor && isAlreadyInsideError) {
     sessionStorage.setItem('isSupervisor', 'true');
-    sessionStorage.setItem('supervisorCode', user.codigo_empleado); // Guardar código
+    sessionStorage.setItem('supervisorCode', user.codigo_empleado); // Guardar legajo
     dom.supervisorMenuBtnDenied.style.display = 'block';
   }
 
@@ -304,6 +323,7 @@ async function attemptManualLogin() {
 }
 
 function showManualLoginOption() {
+  stopVideoStream(dom.loginVideo); // Detener el stream de la cámara
   const { container, title, loginBtn, retryBtn } = dom.manualLogin;
   dom.loginStatus.textContent = t('recognition_failed_manual_prompt');
   dom.loginStatus.className = 'status error';
