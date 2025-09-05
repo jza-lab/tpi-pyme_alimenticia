@@ -80,6 +80,19 @@
       <h2 data-i18n="access_history_title">Historial de Ingresos/Egresos</h2>
       <button id="refresh-records" class="btn btn-primary" data-i18n="refresh_records">Actualizar Registros</button>
 
+      <div class="filter-container">
+        <input type="text" id="filter-by-name" placeholder="Filtrar por nombre..." data-i18n-placeholder="filter_by_name_placeholder">
+        <input type="text" id="filter-by-id" placeholder="Filtrar por legajo..." data-i18n-placeholder="filter_by_id_placeholder">
+        <select id="filter-by-shift">
+          <option value="" data-i18n="all_shifts">Todos los turnos</option>
+          <option value="Mañana" data-i18n="shift_morning">Mañana</option>
+          <option value="Tarde" data-i18n="shift_afternoon">Tarde</option>
+          <option value="Noche" data-i18n="shift_night">Noche</option>
+        </select>
+        <input type="date" id="filter-by-date">
+        <button id="clear-filters-btn" class="btn btn-secondary" data-i18n="clear_filters">Limpiar Filtros</button>
+      </div>
+
       <div class="records-summary">
         <div class="summary-card">
           <h3 data-i18n="inside">Dentro</h3>

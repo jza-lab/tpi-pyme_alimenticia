@@ -39,6 +39,13 @@ const dom = {
     openBtn: document.getElementById("mobile-menu-btn"),
     closeBtn: document.getElementById("mobile-sidebar-close"),
     overlay: document.getElementById("mobile-sidebar-overlay")
+  },
+  filters: {
+    name: document.getElementById('filter-by-name'),
+    id: document.getElementById('filter-by-id'),
+    shift: document.getElementById('filter-by-shift'),
+    date: document.getElementById('filter-by-date'),
+    clearBtn: document.getElementById('clear-filters-btn')
   }
 };
 
@@ -164,22 +171,49 @@ function showEmployeeView(view) {
 
 // --- Renderizado de Datos ---
 function renderRecords() {
-  const records = state.getAccessRecords();
+  const allRecords = state.getAccessRecords();
   const users = state.getUsers();
   const userMap = new Map(users.map(u => [u.codigo_empleado, u]));
-  const userStatusMap = new Map();
-  let peopleInside = 0;
 
-  users.forEach(user => {
-    const lastRecord = records.filter(r => r.codigo_empleado === user.codigo_empleado).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora))[0];
-    const status = lastRecord ? lastRecord.tipo : 'egreso';
-    userStatusMap.set(user.codigo_empleado, status);
-    if (status === 'ingreso') peopleInside++;
+  // Lógica de filtrado
+  const nameFilter = dom.filters.name.value.toLowerCase();
+  const idFilter = dom.filters.id.value.toLowerCase();
+  const shiftFilter = dom.filters.shift.value;
+  const dateFilter = dom.filters.date.value;
+
+  const filteredRecords = allRecords.filter(record => {
+    const user = userMap.get(record.codigo_empleado);
+    if (!user) return false; // Ocultar registros de usuarios desconocidos
+
+    const userName = `${user.nombre} ${user.apellido || ''}`.toLowerCase();
+    const recordDate = record.fecha_hora.split('T')[0]; // Formato YYYY-MM-DD
+
+    const nameMatch = !nameFilter || userName.includes(nameFilter);
+    const idMatch = !idFilter || user.codigo_empleado.toLowerCase().includes(idFilter);
+    const shiftMatch = !shiftFilter || user.turno === shiftFilter;
+    const dateMatch = !dateFilter || recordDate === dateFilter;
+
+    return nameMatch && idMatch && shiftMatch && dateMatch;
   });
 
+
+  const userStatusMap = new Map();
+  let peopleInside = 0;
+  
+  // Base status on all records, not filtered ones
+  users.forEach(user => {
+    const lastRecord = allRecords.filter(r => r.codigo_empleado === user.codigo_empleado).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora))[0];
+    const status = lastRecord ? lastRecord.tipo : 'egreso';
+    userStatusMap.set(user.codigo_empleado, status);
+    if (status === 'ingreso') {
+      peopleInside++;
+    }
+  });
+  
+  // Update counts based on the *original* state, not the filters
   dom.peopleInsideCount.textContent = peopleInside;
   dom.peopleOutsideCount.textContent = users.length - peopleInside;
-  dom.recordsTbody.innerHTML = records.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora)).map(record => {
+  dom.recordsTbody.innerHTML = filteredRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora)).map(record => {
     const user = userMap.get(record.codigo_empleado);
     const userName = user ? `${user.nombre} ${user.apellido || ''}` : t('unknown_employee');
     
@@ -345,6 +379,19 @@ function attachListeners() {
 
   document.getElementById('refresh-authorizations-btn')?.addEventListener('click', () => {
     renderAuthorizations();
+  });
+
+  // Listeners para los filtros del historial de accesos
+  dom.filters.name.addEventListener('input', renderRecords);
+  dom.filters.id.addEventListener('input', renderRecords);
+  dom.filters.shift.addEventListener('change', renderRecords);
+  dom.filters.date.addEventListener('change', renderRecords);
+  dom.filters.clearBtn.addEventListener('click', () => {
+    dom.filters.name.value = '';
+    dom.filters.id.value = '';
+    dom.filters.shift.value = '';
+    dom.filters.date.value = '';
+    renderRecords();
   });
 
   // Añadir listener para el botón de logout

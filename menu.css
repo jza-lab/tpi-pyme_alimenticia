@@ -828,3 +828,27 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
+.filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.filter-container input,
+.filter-container select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  flex-grow: 1;
+}
+
+.filter-container button {
+  flex-grow: 0;
+}
