@@ -1,17 +1,13 @@
-// service-worker.js mejorado para evitar problemas de caché
+// service-worker.js corregido para evitar problemas de caché
 
-const CACHE_NAME = 'control-acceso-cache-v7'; // Incrementar versión
+const CACHE_NAME = 'control-acceso-cache-v8'; // Subir versión
 const urlsToCache = [
   'index.html',
   'menu.html',
   'styles.css',
   'menu.css',
-  'js/app.js',
-  'js/menu.js',
-  'js/api.js',
-  'js/config.js',
   'js/face.js',
-  'js/state.js',
+  'js/config.js',
   'js/i18n.js',
   'js/i18n-logic.js',
   'js/statistics.js',
@@ -24,13 +20,10 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Opened cache');
+        console.log('Cache inicial cargado');
         return cache.addAll(urlsToCache);
       })
-      .then(() => {
-        console.log('Cache populated, skipping waiting...');
-        return self.skipWaiting();
-      })
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -38,68 +31,46 @@ self.addEventListener('fetch', event => {
   const requestUrl = new URL(event.request.url);
   const supabaseUrl = 'https://xtruedkvobfabctfmyys.supabase.co';
 
-  // Network-only para Supabase API y datos críticos
+  // --- Siempre red desde Supabase (API y funciones)
   if (requestUrl.origin === supabaseUrl || 
-      requestUrl.pathname.includes('/functions/') ||
-      requestUrl.searchParams.has('no-cache')) {
+      requestUrl.pathname.includes('/functions/')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Para archivos JS críticos, usar network-first para evitar problemas de lógica desactualizada
+  // --- Siempre red para JS críticos
   if (requestUrl.pathname.includes('js/app.js') || 
       requestUrl.pathname.includes('js/api.js') || 
       requestUrl.pathname.includes('js/state.js')) {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Si la red funciona, actualizar caché y devolver respuesta
-          if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // Si falla la red, usar caché como fallback
-          return caches.match(event.request);
-        })
-    );
+    event.respondWith(fetch(event.request));
     return;
   }
 
-  // Cache-first para otros recursos estáticos
+  // --- Cache-first para otros recursos estáticos
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          // Actualizar en background sin bloquear
-          fetch(event.request)
-            .then(networkResponse => {
-              if (networkResponse.ok) {
-                caches.open(CACHE_NAME).then(cache => {
-                  cache.put(event.request, networkResponse);
-                });
-              }
-            })
-            .catch(() => {}); // Ignorar errores de red en background
-          return response;
-        }
-        
-        // Si no está en caché, ir a la red
-        return fetch(event.request)
-          .then(networkResponse => {
-            if (networkResponse.ok) {
-              const responseClone = networkResponse.clone();
-              caches.open(CACHE_NAME).then(cache => {
-                cache.put(event.request, responseClone);
-              });
-            }
-            return networkResponse;
+    caches.match(event.request).then(response => {
+      if (response) {
+        // Actualizar en background sin bloquear
+        fetch(event.request).then(networkResponse => {
+          if (networkResponse.ok) {
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, networkResponse);
+            });
+          }
+        }).catch(() => {}); 
+        return response;
+      }
+      // Si no está en caché, ir a la red y guardar
+      return fetch(event.request).then(networkResponse => {
+        if (networkResponse.ok) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
           });
-      })
+        }
+        return networkResponse;
+      });
+    })
   );
 });
 
@@ -110,27 +81,24 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (!cacheWhitelist.includes(cacheName)) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => {
-      console.log('Service Worker activated, claiming clients...');
-      return self.clients.claim();
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
-// Manejar mensajes para forzar actualización de caché
+// Mensajes desde la app
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
   if (event.data && event.data.type === 'CLEAR_CACHE') {
     caches.delete(CACHE_NAME).then(() => {
-      console.log('Cache cleared by request');
+      console.log('Cache limpiada manualmente');
     });
   }
 });
