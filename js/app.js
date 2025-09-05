@@ -252,20 +252,24 @@ async function grantAccess(user) {
       await api.registerAccess(user.codigo_empleado, currentLoginType);
     }
 
-    // --- Flujo de Éxito (común para ambos casos) ---
+    // --- Flujo de Éxito (diferenciado por caso) ---
     await state.refreshState(); // Refrescar el estado para obtener el nuevo registro
-    
-    dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: currentLoginType });
 
-    if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
-      dom.supervisorMenuBtn.style.display = 'block';
-      sessionStorage.setItem('isSupervisor', 'true');
-      sessionStorage.setItem('supervisorCode', user.codigo_empleado);
+    if (isOutOfShift) {
+      // Si fue fuera de turno, mostrar la pantalla de aviso especial.
+      showScreen('access-pending-review-screen');
     } else {
-      dom.supervisorMenuBtn.style.display = 'none';
+      // Si fue un acceso normal, mostrar la pantalla de éxito estándar.
+      dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: currentLoginType });
+      if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
+        dom.supervisorMenuBtn.style.display = 'block';
+        sessionStorage.setItem('isSupervisor', 'true');
+        sessionStorage.setItem('supervisorCode', user.codigo_empleado);
+      } else {
+        dom.supervisorMenuBtn.style.display = 'none';
+      }
+      showScreen('access-granted-screen');
     }
-
-    showScreen('access-granted-screen');
 
   } catch (error) {
     // --- Manejo de Errores (común para ambos casos) ---
@@ -369,7 +373,7 @@ function attachListeners() {
   el('ingreso-btn')?.addEventListener('click', () => startFacialLogin('ingreso'));
   el('egreso-btn')?.addEventListener('click', () => startFacialLogin('egreso'));
 
-  ['back-to-home-from-denied', 'back-to-home-from-denied-2', 'back-after-access', 'back-to-home-from-pending'].forEach(id => {
+  ['back-to-home-from-denied', 'back-to-home-from-denied-2', 'back-after-access', 'back-to-home-from-pending', 'back-after-pending-review'].forEach(id => {
     el(id)?.addEventListener('click', () => showScreen('home-screen'));
   });
 
