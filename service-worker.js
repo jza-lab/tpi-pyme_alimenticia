@@ -1,4 +1,6 @@
-const CACHE_NAME = 'control-acceso-cache-v6';
+// service-worker.js mejorado para evitar problemas de caché
+
+const CACHE_NAME = 'control-acceso-cache-v7'; // Incrementar versión
 const urlsToCache = [
   'index.html',
   'menu.html',
@@ -18,12 +20,17 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
+  console.log('Service Worker installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
-      }).then(() => self.skipWaiting())
+      })
+      .then(() => {
+        console.log('Cache populated, skipping waiting...');
+        return self.skipWaiting();
+      })
   );
 });
 
@@ -31,38 +38,99 @@ self.addEventListener('fetch', event => {
   const requestUrl = new URL(event.request.url);
   const supabaseUrl = 'https://xtruedkvobfabctfmyys.supabase.co';
 
-  // Network-only for Supabase API
-  if (requestUrl.origin === supabaseUrl) {
+  // Network-only para Supabase API y datos críticos
+  if (requestUrl.origin === supabaseUrl || 
+      requestUrl.pathname.includes('/functions/') ||
+      requestUrl.searchParams.has('no-cache')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Stale-while-revalidate for other assets
+  // Para archivos JS críticos, usar network-first para evitar problemas de lógica desactualizada
+  if (requestUrl.pathname.includes('js/app.js') || 
+      requestUrl.pathname.includes('js/api.js') || 
+      requestUrl.pathname.includes('js/state.js')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Si la red funciona, actualizar caché y devolver respuesta
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Si falla la red, usar caché como fallback
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Cache-first para otros recursos estáticos
   event.respondWith(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.match(event.request).then(response => {
-        const fetchPromise = fetch(event.request).then(networkResponse => {
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        });
-        // Return cached response if available, otherwise wait for network
-        return response || fetchPromise;
-      });
-    })
+    caches.match(event.request)
+      .then(response => {
+        if (response) {
+          // Actualizar en background sin bloquear
+          fetch(event.request)
+            .then(networkResponse => {
+              if (networkResponse.ok) {
+                caches.open(CACHE_NAME).then(cache => {
+                  cache.put(event.request, networkResponse);
+                });
+              }
+            })
+            .catch(() => {}); // Ignorar errores de red en background
+          return response;
+        }
+        
+        // Si no está en caché, ir a la red
+        return fetch(event.request)
+          .then(networkResponse => {
+            if (networkResponse.ok) {
+              const responseClone = networkResponse.clone();
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, responseClone);
+              });
+            }
+            return networkResponse;
+          });
+      })
   );
 });
 
 self.addEventListener('activate', event => {
+  console.log('Service Worker activating...');
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      console.log('Service Worker activated, claiming clients...');
+      return self.clients.claim();
+    })
   );
+});
+
+// Manejar mensajes para forzar actualización de caché
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    caches.delete(CACHE_NAME).then(() => {
+      console.log('Cache cleared by request');
+    });
+  }
 });
