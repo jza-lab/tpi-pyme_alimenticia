@@ -60,11 +60,10 @@
             <canvas id="login-overlay"></canvas>
           </div>
 
-          <div id="countdown" class="countdown">5</div>
           <div id="login-status" class="status info">Buscando coincidencias...</div>
 
           <div class="action-buttons">
-            <button id="back-to-home-from-denied" class="btn btn-secondary">Volver al Inicio</button>
+            <button id="back-to-home-from-denied" class="btn btn-secondary" data-i18n="back_to_home">Volver al Inicio</button>
           </div>
 
           <div id="manual-login" class="manual-login" style="display:none;">
@@ -89,8 +88,8 @@
             <p id="welcome-message"></p>
           </div>
           <div class="action-buttons-small">
-            <button id="back-after-access" class="btn">Volver al Inicio</button>
-            <button id="supervisor-menu-btn" class="btn btn-info" style="display:none;">Menú Supervisor</button>
+            <button id="back-after-access" class="btn" data-i18n="back_to_home">Volver al Inicio</button>
+            <button id="supervisor-menu-btn" class="btn btn-info" style="display:none;" data-i18n="supervisor_menu">Menú Supervisor</button>
           </div>
         </section>
 
@@ -101,8 +100,8 @@
             <p id="denial-reason"></p>
           </div>
           <div class="action-buttons-small">
-            <button id="try-again-btn" class="btn">Intentar Nuevamente</button>
-            <button id="back-to-home-from-denied-2" class="btn btn-secondary">Volver al Inicio</button>
+            <button id="try-again-btn" class="btn" data-i18n="try_again">Intentar Nuevamente</button>
+            <button id="back-to-home-from-denied-2" class="btn btn-secondary" data-i18n="back_to_home">Volver al Inicio</button>
           </div>
           <button id="supervisor-menu-btn-denied" class="btn btn-info" style="display:none;">Menú Supervisor</button>
         </section>
@@ -110,9 +109,9 @@
         <!-- Pantalla de Autorización Pendiente -->
         <section id="pending-authorization-screen" class="screen">
           <div class="status-icon pending">⏳</div>
-          <h2>Solicitud Enviada</h2>
-          <p id="pending-auth-message">Su solicitud de acceso ha sido enviada a un supervisor para su aprobación.</p>
-          <button id="back-to-home-from-pending" class="btn btn-primary">Entendido</button>
+          <h2 data-i18n="pending_authorization_title">Solicitud Enviada</h2>
+          <p id="pending-auth-message" data-i18n="pending_authorization_message">Su solicitud de acceso ha sido enviada a un supervisor para su aprobación.</p>
+          <button id="back-to-home-from-pending" class="btn btn-primary" data-i18n="understood">Entendido</button>
         </section>
 
       </div>

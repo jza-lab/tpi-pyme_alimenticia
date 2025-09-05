@@ -22,10 +22,17 @@ export const setLanguage = (lang) => {
   updateToggle(lang);
 };
 
-const updateUI = () => {
+export const updateUI = () => {
   document.querySelectorAll('[data-i18n]').forEach(element => {
     const key = element.getAttribute('data-i18n');
-    element.textContent = getTranslation(key);
+    const translation = getTranslation(key);
+    // Si el elemento es un botón o un span, se usa textContent
+    if (element.tagName === 'BUTTON' || element.tagName === 'SPAN' || element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3' || element.tagName === 'P' || element.tagName === 'STRONG' || element.tagName === 'LABEL' || element.tagName === 'SMALL' || element.tagName === 'TH' || element.tagName === 'TD' || element.tagName === 'OPTION') {
+      element.textContent = translation;
+    } else if (element.hasAttribute('aria-label')) {
+      // Si tiene aria-label, se actualiza
+      element.setAttribute('aria-label', translation);
+    }
   });
 };
 

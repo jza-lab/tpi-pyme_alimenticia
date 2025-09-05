@@ -3,7 +3,7 @@ import * as api from './api.js';
 import * as face from './face.js';
 import * as state from './state.js';
 import { initializeStatistics } from './statistics.js';
-import { t } from './i18n-logic.js';
+import { t, updateUI } from './i18n-logic.js';
 
 // --- Seguridad---
 //  if (sessionStorage.getItem('isSupervisor') !== 'true') {
@@ -365,6 +365,7 @@ async function main() {
     renderRecords();
     renderEmployees();
     initializeStatistics();
+    updateUI();
   } catch (error) {
     alert(t('panel_load_error', { error: error.message }));
   }

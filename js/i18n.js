@@ -23,6 +23,8 @@ export const translations = {
     "pending_authorization_title": "Solicitud Enviada",
     "pending_authorization_message": "Su solicitud de acceso ha sido enviada a un supervisor para su aprobación.",
     "understood": "Entendido",
+    "ingreso": "Ingreso",
+    "egreso": "Egreso",
 
     // app.js dynamic strings
     "register_type": "Registro de {{type}}",
@@ -34,6 +36,7 @@ export const translations = {
     "authorization_request_error": "No se pudo enviar la solicitud de autorización.",
     "unknown_registration_error": "Error desconocido al registrar el acceso.",
     "authorization_already_pending": "Ya existe una solicitud de autorización pendiente.",
+    "authorization_rejected": "La solicitud de autorización fue rechazada.",
     "access_registered_message": "{{name}}, su {{type}} ha sido registrado.",
     "grant_access_error": "Error en grantAccess, evaluando fallback de autorización:",
     "pending_authorization_message_dynamic": "Su solicitud de {{type}} ha sido enviada a un supervisor para su aprobación.",
@@ -157,6 +160,8 @@ export const translations = {
     "pending_authorization_title": "Request Sent",
     "pending_authorization_message": "Your access request has been sent to a supervisor for approval.",
     "understood": "Understood",
+    "ingreso": "Entry",
+    "egreso": "Exit",
 
     // app.js dynamic strings
     "register_type": "{{type}} Registration",
@@ -168,6 +173,7 @@ export const translations = {
     "authorization_request_error": "Could not send authorization request.",
     "unknown_registration_error": "Unknown error when registering access.",
     "authorization_already_pending": "An authorization request is already pending.",
+    "authorization_rejected": "The authorization request was rejected.",
     "access_registered_message": "{{name}}, your {{type}} has been registered.",
     "grant_access_error": "Error in grantAccess, evaluating authorization fallback:",
     "pending_authorization_message_dynamic": "Your {{type}} request has been sent to a supervisor for approval.",

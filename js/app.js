@@ -11,7 +11,6 @@ const dom = {
   screens: document.querySelectorAll('.screen'),
   loginVideo: document.getElementById('login-video'),
   loginOverlay: document.getElementById('login-overlay'),
-  countdown: document.getElementById('countdown'),
   loginStatus: document.getElementById('login-status'),
   welcomeMessage: document.getElementById('welcome-message'),
   denialReason: document.getElementById('denial-reason'),
@@ -35,10 +34,15 @@ const dom = {
 let currentLoginType = 'ingreso';
 let isProcessingAccess = false;
 let recognitionInterval = null;
-let countdownInterval = null;
+let authorizationCheckInterval = null;
 
 // ------------------- Gestión de Pantallas ------------------- //
 function showScreen(screenId) {
+    if (screenId !== 'pending-authorization-screen') {
+        if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
+        authorizationCheckInterval = null;
+    }
+
   if (screenId === 'home-screen') {
     sessionStorage.removeItem('isSupervisor');
     sessionStorage.removeItem('supervisorCode'); // Limpiar el legajo también
@@ -92,8 +96,9 @@ async function startFacialLogin(type) {
 
   const title = document.getElementById('login-title');
   const desc = document.getElementById('login-description');
-  title.textContent = t('register_type', { type });
-  desc.textContent = t('position_for_scan', { type });
+  const translatedType = t(type);
+  title.textContent = t('register_type', { type: translatedType });
+  desc.textContent = t('position_for_scan', { type: translatedType });
 
 
   try {
@@ -107,70 +112,47 @@ async function startFacialLogin(type) {
 }
 
 function runFacialRecognition() {
-  let recognizedUser = null; // Variable para guardar el usuario reconocido
-  let countdown = 5;
-  dom.countdown.textContent = countdown;
-  dom.loginStatus.textContent = t('searching_for_match');
-  dom.loginStatus.className = 'status info';
+    dom.loginStatus.textContent = t('searching_for_match');
+    dom.loginStatus.className = 'status info';
 
-  if (countdownInterval) clearInterval(countdownInterval);
-  countdownInterval = setInterval(() => {
-    countdown--;
-    dom.countdown.textContent = Math.max(0, countdown);
+    let recognitionAttempts = 0;
+    const maxAttempts = 15; // Intentar durante ~5 segundos (15 * 300ms)
 
-    // Actualizar el mensaje si ya hemos reconocido a alguien
-    if (recognizedUser) {
-      dom.loginStatus.textContent = t('user_recognized_confirming', { name: recognizedUser.nombre, countdown });
-    }
-
-    if (countdown <= 0) {
-      stopFacialRecognition(); // Detener todo
-      if (recognizedUser) {
-        grantAccess(recognizedUser); // Conceder acceso AHORA
-      } else {
-        showManualLoginOption(); // Si no, mostrar opción manual
-      }
-    }
-  }, 1000);
-
-  if (recognitionInterval) clearInterval(recognitionInterval);
-  recognitionInterval = setInterval(async () => {
-    // Salir solo si el video no está activo
-    if (!dom.loginVideo.srcObject) return;
-    const detection = await face.getSingleFaceDetection(dom.loginVideo);
-    // El dibujo SIEMPRE se ejecuta si se detecta una cara.
-    if (detection) {
-      face.drawDetections(dom.loginVideo, dom.loginOverlay, [detection]);
-    } else {
-      // Si no hay cara, se limpia el canvas.
-      const ctx = dom.loginOverlay.getContext('2d');
-      ctx.clearRect(0, 0, dom.loginOverlay.width, dom.loginOverlay.height);
-    }
-    // Solo intentamos RECONOCER si aún no hemos encontrado a nadie.
-    if (!recognizedUser && detection) {
-      const faceMatcher = state.getFaceMatcher();
-      if (faceMatcher) {
-        const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
-
-        if (bestMatch.label !== 'unknown') {
-          const user = state.getUsers().find(u => u.codigo_empleado === bestMatch.label);
-          if (user) {
-            recognizedUser = user; // Guardamos el usuario
-            // Actualizamos el estado en la UI solo una vez
-            dom.loginStatus.textContent = t('user_recognized', { name: user.nombre });
-            dom.loginStatus.className = 'status success';
-          }
+    if (recognitionInterval) clearInterval(recognitionInterval);
+    recognitionInterval = setInterval(async () => {
+        if (!dom.loginVideo.srcObject || recognitionAttempts >= maxAttempts) {
+            stopFacialRecognition();
+            showManualLoginOption();
+            return;
         }
-      }
-    }
-  }, 300);
 
+        recognitionAttempts++;
+        const detection = await face.getSingleFaceDetection(dom.loginVideo);
+
+        if (detection) {
+            face.drawDetections(dom.loginVideo, dom.loginOverlay, [detection]);
+            const faceMatcher = state.getFaceMatcher();
+            if (faceMatcher) {
+                const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+                if (bestMatch.label !== 'unknown') {
+                    const user = state.getUsers().find(u => u.codigo_empleado === bestMatch.label);
+                    if (user) {
+                        stopFacialRecognition();
+                        dom.loginStatus.textContent = t('user_recognized', { name: user.nombre });
+                        dom.loginStatus.className = 'status success';
+                        grantAccess(user);
+                    }
+                }
+            }
+        } else {
+            const ctx = dom.loginOverlay.getContext('2d');
+            ctx.clearRect(0, 0, dom.loginOverlay.width, dom.loginOverlay.height);
+        }
+    }, 300);
 }
 
 function stopFacialRecognition() {
-  if (countdownInterval) clearInterval(countdownInterval);
   if (recognitionInterval) clearInterval(recognitionInterval);
-  countdownInterval = null;
   recognitionInterval = null;
 }
 
@@ -303,9 +285,41 @@ function denyAccess(reason, user = null) {
 }
 
 function showPendingAuthorizationScreen(user, type) {
-    const message = t('pending_authorization_message_dynamic', { type });
+    const translatedType = t(type);
+    const message = t('pending_authorization_message_dynamic', { type: translatedType });
     dom.pendingAuth.message.textContent = message;
     showScreen('pending-authorization-screen');
+
+    if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
+    authorizationCheckInterval = setInterval(() => checkAuthorizationStatus(user.codigo_empleado, type), 5000);
+}
+
+async function checkAuthorizationStatus(employeeCode, type) {
+    await state.refreshState(); // Actualizar todo el estado
+    const pendingAuths = state.getPendingAuthorizations();
+    const accessRecords = state.getAccessRecords();
+
+    const isStillPending = pendingAuths.some(auth => auth.codigo_empleado === employeeCode && auth.tipo === type);
+
+    if (!isStillPending) {
+        if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
+        
+        // Verificar si el acceso fue aprobado (si existe un registro reciente)
+        const recentAccess = accessRecords.find(record => 
+            record.codigo_empleado === employeeCode && 
+            record.tipo === type &&
+            (new Date() - new Date(record.fecha_hora + 'Z')) < 60000 // Aprobado en el último minuto
+        );
+
+        const user = state.getUsers().find(u => u.codigo_empleado === employeeCode);
+
+        if (recentAccess) {
+            dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: type });
+            showScreen('access-granted-screen');
+        } else {
+            denyAccess(t('authorization_rejected'), user); // Asumir que fue rechazada
+        }
+    }
 }
 
 // ------------------- Acceso Manual ------------------- //
@@ -327,8 +341,9 @@ function showManualLoginOption() {
   const { container, title, loginBtn, retryBtn } = dom.manualLogin;
   dom.loginStatus.textContent = t('recognition_failed_manual_prompt');
   dom.loginStatus.className = 'status error';
-  title.textContent = t('manual_access_type', { type: currentLoginType });
-  loginBtn.textContent = t('register_type_manual_button', { type: currentLoginType });
+  const translatedType = t(currentLoginType);
+  title.textContent = t('manual_access_type', { type: translatedType });
+  loginBtn.textContent = t('register_type_manual_button', { type: translatedType });
   container.style.display = 'block';
   container.scrollIntoView({ behavior: 'smooth' });
 }
