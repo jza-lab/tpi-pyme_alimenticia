@@ -1,4 +1,4 @@
-const CACHE_NAME = 'control-acceso-cache-v3';
+const CACHE_NAME = 'control-acceso-cache-v5';
 const urlsToCache = [
   'index.html',
   'menu.html',
@@ -23,7 +23,7 @@ self.addEventListener('install', event => {
       .then(cache => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
-      })
+      }).then(() => self.skipWaiting())
   );
 });
 
@@ -31,43 +31,24 @@ self.addEventListener('fetch', event => {
   const requestUrl = new URL(event.request.url);
   const supabaseUrl = 'https://xtruedkvobfabctfmyys.supabase.co';
 
-  // Si la petición es a la API de Supabase, ir directamente a la red.
+  // Network-only for Supabase API
   if (requestUrl.origin === supabaseUrl) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Para todos los demás recursos, usar la estrategia "cache-first".
+  // Stale-while-revalidate for other assets
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-
-        // Clone the request because it's a stream and can only be consumed once.
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then(
-          response => {
-            // Check if we received a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response because it's a stream and can only be consumed once.
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          }
-        );
-      })
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.match(event.request).then(response => {
+        const fetchPromise = fetch(event.request).then(networkResponse => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+        // Return cached response if available, otherwise wait for network
+        return response || fetchPromise;
+      });
+    })
   );
 });
 
@@ -82,6 +63,6 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
