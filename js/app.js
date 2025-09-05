@@ -192,25 +192,33 @@ function clearAuthorizationAttempts(employeeCode) {
 // ------------------- Lógica de Turnos y Acceso ------------------- //
 
 /**
- * Determina el turno actual basado en la hora.
+ * Determina el turno para una hora específica.
+ * @param {number} hour - La hora (0-23).
  * @returns {'Mañana' | 'Tarde' | 'Noche'}
  */
-function getCurrentShift() {
-  const currentHour = new Date().getHours();
-  if (currentHour >= 6 && currentHour < 14) {
+function getShiftForHour(hour) {
+  if (hour >= 6 && hour < 14) {
     return 'Mañana';
-  } else if (currentHour >= 14 && currentHour < 22) {
+  } else if (hour >= 14 && hour < 22) {
     return 'Tarde';
   } else {
     return 'Noche';
   }
 }
 
+/**
+ * Determina el turno actual basado en la hora.
+ * @returns {'Mañana' | 'Tarde' | 'Noche'}
+ */
+function getCurrentShift() {
+  return getShiftForHour(new Date().getHours());
+}
+
 async function grantAccess(user) {
   if (isProcessingAccess) return;
   isProcessingAccess = true;
 
-  // --- Verificación de Turno y Autorizaciones Pendientes ---
+  // --- Verificación de Autorizaciones Pendientes ---
   const pendingAuths = state.getPendingAuthorizations();
   const hasPendingAuth = pendingAuths.some(
     auth => auth.codigo_empleado === user.codigo_empleado && auth.tipo === currentLoginType
@@ -221,41 +229,61 @@ async function grantAccess(user) {
     isProcessingAccess = false;
     return;
   }
-  
-  // --- Lógica para Ingreso Fuera de Turno ---
-  if (currentLoginType === 'ingreso' && user.turno) {
-    const currentShift = getCurrentShift();
-    if (user.turno !== currentShift) {
-      const attempts = getAuthorizationAttempts(user.codigo_empleado);
-      
-      if (attempts >= MAX_AUTH_ATTEMPTS) {
-        const reason = t('max_authorization_attempts_exceeded', { max: MAX_AUTH_ATTEMPTS });
-        denyAccess(reason, user);
-        isProcessingAccess = false;
-        return;
-      }
 
-      try {
-        const details = {
-          turno_correspondiente: user.turno,
-          turno_intento: currentShift,
-          motivo: t('out_of_shift_attempt')
-        };
-        await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
-        incrementAuthorizationAttempts(user.codigo_empleado); // Incrementar después de una solicitud exitosa
-        showPendingAuthorizationScreen(user, currentLoginType);
-      } catch (authError) {
-        console.error("Error al solicitar autorización por turno incorrecto:", authError);
-        denyAccess(t('authorization_request_error'), user);
-      } finally {
-        isProcessingAccess = false;
-        state.refreshState();
+  // --- Lógica para Ingreso Fuera de Turno ---
+  const currentShift = getCurrentShift();
+  const isOutOfShift = (currentLoginType === 'ingreso' && user.turno && user.turno !== currentShift);
+  
+  let wasAlreadyApprovedForThisShift = false;
+  if (isOutOfShift) {
+      const lastRecord = state.getAccessRecords()
+          .filter(r => r.codigo_empleado === user.codigo_empleado)
+          .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora))[0];
+
+      if (lastRecord && lastRecord.tipo === 'ingreso') {
+          const recordDate = new Date(lastRecord.fecha_hora + 'Z');
+          const recordShift = getShiftForHour(recordDate.getUTCHours());
+          if (recordShift === currentShift) {
+              wasAlreadyApprovedForThisShift = true;
+          }
       }
-      return; // Detener la ejecución aquí para esperar la autorización
-    }
   }
 
-  // --- Lógica de Acceso Normal (si el turno es correcto o es un egreso) ---
+  // Si es un intento fuera de turno y NO fue aprobado previamente para este turno...
+  if (isOutOfShift && !wasAlreadyApprovedForThisShift) {
+    const attempts = getAuthorizationAttempts(user.codigo_empleado);
+    
+    if (attempts >= MAX_AUTH_ATTEMPTS) {
+      const reason = t('max_authorization_attempts_exceeded', { max: MAX_AUTH_ATTEMPTS });
+      denyAccess(reason, user);
+      isProcessingAccess = false;
+      return;
+    }
+
+    try {
+      const details = {
+        turno_correspondiente: user.turno,
+        turno_intento: currentShift,
+        motivo: t('out_of_shift_attempt')
+      };
+      await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
+      incrementAuthorizationAttempts(user.codigo_empleado);
+      showPendingAuthorizationScreen(user, currentLoginType);
+    } catch (authError) {
+      console.error("Error al solicitar autorización por turno incorrecto:", authError);
+      denyAccess(t('authorization_request_error'), user);
+    } finally {
+      isProcessingAccess = false;
+      state.refreshState();
+    }
+    return; // Detener la ejecución para esperar la autorización
+  }
+
+  // --- Lógica de Acceso Normal ---
+  // Se ejecuta si:
+  // 1. Es un egreso.
+  // 2. Es un ingreso en el turno correcto.
+  // 3. Es un ingreso fuera de turno, pero ya fue aprobado para este turno.
   try {
     await api.registerAccess(user.codigo_empleado, currentLoginType);
 
@@ -286,24 +314,15 @@ async function grantAccess(user) {
         errorMessage = error.message;
     }
     
+    // Fallback de autorización para errores como "ya se encuentra dentro"
     const isAuthorizationError = errorMessage.includes('ya se encuentra dentro') || errorMessage.includes('no se encuentra dentro');
-
     if (isAuthorizationError) {
       try {
-        const pendingAuths = state.getPendingAuthorizations();
-        const hasPendingAuth = pendingAuths.some(
-          auth => auth.codigo_empleado === user.codigo_empleado && auth.tipo === currentLoginType
-        );
-
-        if (hasPendingAuth) {
-          denyAccess(t('authorization_already_pending'), user);
-        } else {
-          const details = { motivo: errorMessage };
-          await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
-          showPendingAuthorizationScreen(user, currentLoginType);
-        }
+        const details = { motivo: errorMessage };
+        await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
+        showPendingAuthorizationScreen(user, currentLoginType);
       } catch (authError) {
-        console.error("Error al solicitar autorización:", authError);
+        console.error("Error al solicitar autorización por error:", authError);
         denyAccess(t('authorization_request_error'), user);
       }
     } else {
