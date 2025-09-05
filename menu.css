@@ -294,36 +294,27 @@ table th {
   font-weight: bold;
 }
 
-.level-1 {
-  background: #d1ecf1;
-  color: #0c5460;
-}
-
-.level-3 {
-  background: #d4edda;
-  color: #155724;
-}
 
 /* Colores para roles específicos */
-.role-operario {
-  background-color: #e0e0e0;
-  color: #333;
-}
-.role-analista {
-  background-color: #cce5ff;
-  color: #004085;
-}
 .role-gerente {
-  background-color: #fff3cd;
-  color: #856404;
+  background-color: #f8d7da; /* Rojo */
+  color: #721c24;
 }
 .role-supervisor {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: #d1ecf1; /* Celeste */
+  color: #0c5460;
+}
+.role-analista {
+  background-color: #e2d9f3; /* Violeta */
+  color: #49247A;
+}
+.role-operario {
+  background-color: #ffe8d1; /* Naranja */
+  color: #854A0E;
 }
 .role-default {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: #e9ecef; /* Gris */
+  color: #495057;
 }
 
 /* Pantallas de registro y captura */
