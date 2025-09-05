@@ -127,6 +127,10 @@ function stopVideoStream(videoEl) {
 
 // ------------------- Flujo de Reconocimiento Facial ------------------- //
 async function startFacialLogin(type) {
+  // Forzar la actualización del estado al iniciar un nuevo flujo de login
+  // para asegurar que los datos del usuario (ej: turno) están actualizados.
+  await state.refreshState();
+  
   currentLoginType = type;
   if (dom.loginOverlay) {
     const ctx = dom.loginOverlay.getContext('2d');
@@ -237,7 +241,7 @@ async function grantAccess(user) {
     // --- Logic for EGRESO (Exit) ---
     if (currentLoginType === 'egreso') {
       const lastRecord = await api.fetchLastAccessRecord(user.codigo_empleado);
-      // Block exit if the last entry was rejected
+      // Block exit if the last entry was rejected, which means the user isn't actually inside.
       if (lastRecord && lastRecord.tipo === 'ingreso' && lastRecord.estado === 'rechazado') {
         denyAccess(t('exit_denied_due_to_rejection'), user);
         return; // Halt execution
@@ -254,32 +258,41 @@ async function grantAccess(user) {
     const currentShift = getCurrentShift();
     const isOutOfShift = (user.turno && user.turno !== currentShift);
 
-    // Block entry if out of shift and has a recent rejection
     if (isOutOfShift) {
+      // --- Out-of-shift entry logic ---
       const hasRecentRejection = await api.checkRecentRejection(user.codigo_empleado);
       if (hasRecentRejection) {
         denyAccess(t('access_recently_rejected'), user);
-        return; // Halt execution
+        return;
       }
-    }
+      // If no recent rejection, request supervisor approval.
+      const details = {
+        turno_correspondiente: user.turno,
+        turno_intento: currentShift,
+        motivo: t('out_of_shift_attempt')
+      };
+      await api.requestImmediateAccess(user.codigo_empleado, currentLoginType, details);
 
-    // Use the modern 'requestImmediateAccess' for ALL entries.
-    // This avoids the legacy 'registerAccess' function which is buggy for in-shift entries after rejection.
-    const details = {
-      turno_correspondiente: user.turno,
-      turno_intento: currentShift,
-      motivo: isOutOfShift ? t('out_of_shift_attempt') : t('in_shift_entry_reason')
-    };
-    await api.requestImmediateAccess(user.codigo_empleado, currentLoginType, details);
+    } else {
+      // --- In-shift entry logic ---
+      const lastRecord = await api.fetchLastAccessRecord(user.codigo_empleado);
+      // Client-side check to see if user is already inside, preventing backend bug.
+      if (lastRecord && lastRecord.tipo === 'ingreso' && lastRecord.estado !== 'rechazado') {
+          denyAccess(t('denial_reason_entry', { name: user.nombre }), user);
+          return;
+      }
+      // If not already inside, proceed with a normal entry.
+      await api.registerAccess(user.codigo_empleado, currentLoginType);
+    }
     
     // --- Success Flow for INGRESO ---
     await state.refreshState();
     
     if (isOutOfShift) {
-      // If entry was out of shift, show pending review screen
+      // If entry was out of shift, show the pending review screen.
       showScreen('access-pending-review-screen');
     } else {
-      // If entry was in-shift, show normal success screen
+      // If entry was in-shift, show the normal success screen.
       dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: t(currentLoginType) });
       if (user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
         dom.supervisorMenuBtn.style.display = 'block';
@@ -292,11 +305,10 @@ async function grantAccess(user) {
     }
 
   } catch (error) {
-    // --- Manejo de Errores (común para ambos casos) ---
+    // --- Common Error Handling ---
     console.error(t('grant_access_error'), error);
 
     let errorMessage = t('unknown_registration_error');
-    // Extraer el mensaje de error de la respuesta de la Edge Function
     if (error.context && typeof error.context.json === 'function') {
         try {
             const jsonError = await error.context.json();
