@@ -16,8 +16,8 @@
 
 body {
   margin: 0;
-  font-family: Inter, Arial, sans-serif;
-  background: var(--grey);
+  font-family: "Lexend Deca", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(45deg, #eef4ef, #eef4ef);
   color: var(--dark);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -53,21 +53,19 @@ body {
 }
 
 .logout-btn {
-  background: var(--red);
+  background: linear-gradient(45deg, #c83b3b, #9e2f2f);
   color: #fff;
   border: 0;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 30px;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  position: static;
-  top: auto;
-  right: auto;
-  z-index: auto;
+  transition: transform .15s ease, box-shadow .15s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
 .logout-btn:hover {
-  background: #b63b36;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.10);
 }
 
 /* Hamburger menu */
@@ -125,9 +123,9 @@ body {
 }
 
 .nav-btn.active {
-  background: var(--green);
+  background: linear-gradient(45deg, #0b4730, #2f5b49);
   color: #fff;
-  border-color: var(--green);
+  border-color: transparent;
 }
 
 /* Main container */
@@ -139,10 +137,11 @@ body {
 
 /* Sections/cards */
 .content-section {
-  background: var(--card);
-  border-radius: 12px;
+  background: linear-gradient(180deg, #f6f8f7, #eef4ef);
+  border-radius: 24px;
   padding: 18px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
   margin-bottom: 18px;
   display: none;
 }
@@ -153,40 +152,40 @@ body {
 
 /* Botones generales */
 .btn {
-  padding: 10px 15px;
+  color: #fff;
   border: none;
-  border-radius: 6px;
-  margin: 5px;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-size: 16px;
   cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
+  transition: transform .15s ease, box-shadow .15s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  margin: 5px;
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.10);
 }
 
 .btn-primary {
-  background: var(--green);
+  background: linear-gradient(45deg, #0b4730, #2f5b49);
   color: white;
 }
 
-.btn-primary:hover {
-  background: #2980d1;
+.btn-success {
+  background: linear-gradient(45deg, #28a745, #218838);
+  color: white;
 }
 
 .btn-danger {
-  background: var(--danger);
+  background: linear-gradient(45deg, #c83b3b, #9e2f2f);
   color: white;
-}
-
-.btn-danger:hover {
-  background: #c0392b;
 }
 
 .btn-secondary {
-  background: #6c757d;
+  background: linear-gradient(45deg, #0b4730, #4c6659);
   color: white;
-}
-
-.btn-secondary:hover {
-  background: #5a6268;
 }
 
 /* Resumen de accesos */
@@ -253,6 +252,17 @@ table th {
   font-weight: bold;
 }
 
+/* Colores para el estado de Ingreso/Egreso en la tabla de historial */
+.estado-ingreso {
+  color: #27ae60; /* Verde para 'Dentro' */
+  font-weight: bold;
+}
+
+.estado-egreso {
+  color: #e74c3c; /* Rojo para 'Fuera' */
+  font-weight: bold;
+}
+
 /* Gestión de Empleados */
 .employee-card {
   background: white;
@@ -284,14 +294,27 @@ table th {
   font-weight: bold;
 }
 
-.level-1 {
-  background: #d1ecf1;
+
+/* Colores para roles específicos */
+.role-gerente {
+  background-color: #f8d7da; /* Rojo */
+  color: #721c24;
+}
+.role-supervisor {
+  background-color: #d1ecf1; /* Celeste */
   color: #0c5460;
 }
-
-.level-3 {
-  background: #d4edda;
-  color: #155724;
+.role-analista {
+  background-color: #e2d9f3; /* Violeta */
+  color: #49247A;
+}
+.role-operario {
+  background-color: #ffe8d1; /* Naranja */
+  color: #854A0E;
+}
+.role-default {
+  background-color: #e9ecef; /* Gris */
+  color: #495057;
 }
 
 /* Pantallas de registro y captura */
@@ -329,10 +352,13 @@ table th {
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 14px 16px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+  outline: none;
   box-sizing: border-box;
   transition: border-color 0.3s ease;
 }
@@ -340,7 +366,8 @@ table th {
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--green);
+  border-color: rgba(4, 58, 33, 0.2);
+  box-shadow: 0 0 0 4px rgba(4, 58, 33, 0.06);
 }
 
 .action-buttons {
@@ -584,7 +611,6 @@ body.nav-open .admin-nav {
   border-right: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-/* header inside sidebar */
 .mobile-sidebar-header {
   display: flex;
   align-items: center;
@@ -598,7 +624,6 @@ body.nav-open .admin-nav {
   font-weight: 700;
 }
 
-/* nav items */
 .mobile-sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -626,7 +651,6 @@ body.nav-open .admin-nav {
   color: var(--green);
 }
 
-/* footer inside sidebar */
 .mobile-sidebar-footer {
   margin-top: auto;
   padding-top: 8px;
@@ -636,7 +660,6 @@ body.nav-open .admin-nav {
   justify-content: flex-start;
 }
 
-/* Open state on body */
 body.sidebar-open .mobile-sidebar {
   transform: translateX(0%);
 }
@@ -646,30 +669,162 @@ body.sidebar-open .mobile-sidebar-overlay {
   pointer-events: auto;
 }
 
-/* show hamburger in mobile, hide desktop nav (keeps existing behavior) */
 @media (max-width: 720px) {
   .hamburger {
     display: flex;
   }
 
-  /* show mobile hamburger */
   .admin-nav {
     display: none !important;
   }
 
-  /* ensure top nav hidden on small */
 }
 
-/* prevent scroll when sidebar open */
 body.sidebar-open {
   overflow: hidden;
 }
 
-/* small tweaks for accessibility/focus */
 .mobile-side-item:focus,
 #mobile-sidebar-close:focus,
 #mobile-menu-btn:focus {
   outline: 3px solid rgba(6, 59, 36, 0.12);
   outline-offset: 2px;
   border-radius: 8px;
+}
+
+/* --- Autorizaciones --- */
+.authorizations-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.authorization-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.authorization-card h4 {
+  margin-top: 0;
+  color: var(--dark-green);
+}
+
+.authorization-card p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #555;
+  flex-grow: 1;
+}
+
+.authorization-card .access-type {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.authorization-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.authorization-actions .btn {
+  padding: 8px 15px;
+  font-size: 14px;
+}
+
+/* --- Estado Pendiente --- */
+.estado-pendiente_autorizacion {
+    font-style: italic;
+    color: #888;
+}
+
+.estado-rechazado {
+    text-decoration: line-through;
+    color: var(--danger);
+}
+
+.tipo-ingreso.pendiente {
+  color: #e67e22; /* Naranja para pendiente de ingreso */
+}
+
+.tipo-egreso.pendiente {
+  color: #95a5a6; /* Gris para pendiente de egreso */
+}
+
+/* Language Switcher */
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #fff;
+  padding: 5px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  z-index: 100;
+}
+
+.language-switcher .lang-es,
+.language-switcher .lang-en {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.slider.round {
+  border-radius: 20px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
 }

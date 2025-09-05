@@ -1,255 +1,75 @@
-# 🏭 Sistema de Control de Acceso - PyME Alimenticia
+# 🏭 Sistema de Control de Acceso para PyMEs del Sector Alimenticio
 
-**Proyecto Profesional 1 (PP1) / Laboratorio de Construcción de Software (LCS)**
+**Proyecto Profesional | Valor Académico y Aplicación Empresarial**
 
-Sistema web de control de acceso mediante reconocimiento facial diseñado específicamente para pequeñas y medianas empresas del sector alimenticio, enfocado en el control de personal en áreas de producción, almacenamiento y despacho.
+Este sistema de control de acceso mediante reconocimiento facial es una solución tecnológica robusta, desarrollada en un marco académico, y diseñada para satisfacer las necesidades operativas y de seguridad de las Pequeñas y Medianas Empresas (PyMEs) del sector alimenticio.
 
-## 🎯 Contexto Académico
+## 🌟 Beneficios para su Empresa
 
-Este proyecto forma parte del **Proyecto Profesional 1 (PP1)** y **Laboratorio de Construcción de Software (LCS)**, desarrollado como solución tecnológica para una PyME del sector alimenticio que requiere:
+La implementación de este sistema en su empresa se traduce en ventajas competitivas y mejoras operativas tangibles:
 
-### 🎯 Objetivos del Proyecto
+-   **Optimización de la Seguridad:** Reemplace los sistemas de tarjetas o llaves por una identificación biométrica que previene el acceso de personal no autorizado y reduce el riesgo de suplantación de identidad.
+-   **Aumento de la Productividad:** Automatice el registro de ingresos y egresos, eliminando procesos manuales y permitiendo que su personal se enfoque en tareas de mayor valor.
+-   **Trazabilidad y Cumplimiento:** Mantenga un registro digital y auditable de quién accede a cada área y cuándo, facilitando el cumplimiento de normativas de seguridad alimentaria y control de calidad.
+-   **Decisiones Basadas en Datos:** Acceda a un panel de control con estadísticas clave sobre la ocupación de áreas y flujos de personal, permitiendo una mejor planificación de los recursos.
+-   **Reducción de Costos:** Disminuya los costos asociados a la pérdida, reposición y gestión de tarjetas o llaves de acceso.
 
-- Control de acceso automatizado para diferentes áreas de trabajo
-- Trazabilidad de personal en zonas críticas de producción
-- Gestión de niveles de acceso según roles (Empleado/Supervisor)
-- Historial completo de ingresos y egresos
-- Dashboard administrativo para supervisión
+## ✨ Funcionalidades Principales
 
-## 🌟 Características Principales
+-   **Reconocimiento Facial Preciso:** Utiliza tecnología de IA para una identificación rápida y confiable.
+-   **Modalidad Dual:** Ofrece un método de acceso manual (legajo + DNI) como respaldo, garantizando la continuidad operativa.
+-   **Gestión por Roles:** Asigne diferentes niveles de acceso (Empleado, Supervisor) para proteger áreas restringidas.
+-   **Panel de Supervisión Centralizado:**
+    -   Administración de empleados (altas, bajas y modificaciones).
+    -   Visualización del historial de accesos en tiempo real.
+    -   Estadísticas de personal y ocupación de áreas.
+-   **Seguridad Reforzada:** El acceso al menú de supervisor requiere una doble verificación (autenticación facial/manual + legajo de operario).
 
-### 🔐 Control de Acceso Inteligente
-- **Reconocimiento facial** con Face-API.js y TensorFlow.js
-- **Doble modalidad**: Facial automático + Manual de respaldo
-- **Niveles de acceso** diferenciados (Empleado nivel 1, Supervisor nivel 3)
-- **Validación de estado** - previene registros duplicados
+## 🚀 Guía de Uso Rápido
 
-### 📊 Gestión Administrativa
-- **Panel de supervisor** con estadísticas en tiempo real
-- **Historial completo** de accesos con filtros por fecha
-- **Contadores dinámicos** de personal dentro/fuera
-- **Gestión de empleados** con registro facial
+El sistema está diseñado para ser intuitivo y fácil de usar.
 
-### 📈 Estadísticas Operativas
-- **Indicadores OEE** (Overall Equipment Effectiveness) 
-- **Análisis por etapas** del proceso productivo:
-  - Recepción de materias primas
-  - Almacenamiento
-  - Procesamiento
-  - Conservación
-  - Servicio y Despacho
-- **Insights automáticos** con alertas de producción
+### Control de Acceso Diario
 
-## 🛠️ Stack Tecnológico
+1.  **Mirar a la Cámara:** El empleado se posiciona frente al dispositivo. El sistema lo reconoce y registra su ingreso o egreso automáticamente.
+2.  **Acceso Manual (si es necesario):** Si el reconocimiento facial falla, el empleado puede ingresar su legajo de operario y DNI para registrarse.
+3.  **Confirmación Instantánea:** El sistema muestra un mensaje de bienvenida y confirma que el registro fue exitoso.
 
-### Frontend
-- **HTML5** - Estructura semántica moderna
-- **CSS3** - Diseño responsive con gradientes corporativos
-- **JavaScript ES6+** - Lógica de aplicación modular
+### Tareas del Supervisor
 
-### Reconocimiento facial
-- **Face-API.js v0.22.2** - Reconocimiento facial en tiempo real
-- **TensorFlow.js v2.0.0** - Motor de machine learning
-- **Modelos pre-entrenados**: 
-  - Tiny Face Detector (detección facial)
-  - Face Landmark (puntos de referencia)
-  - Face Recognition (reconocimiento de características)
+1.  **Acceder al Menú de Supervisor:**
+    -   Tras un inicio de sesión exitoso, el supervisor verá el botón "Menú Supervisor".
+    -   Al hacer clic, el sistema solicitará un **legajo de operario** como medida de seguridad adicional.
+2.  **Gestionar Empleados:**
+    -   Navegue a "Gestión de Empleados" para registrar a un nuevo miembro del equipo.
+    -   Complete el formulario con sus datos y capture su rostro con la cámara.
+3.  **Consultar Registros:**
+    -   Vaya a "Historial de Accesos" para ver un listado completo de todos los ingresos y egresos, con filtros por fecha.
 
-### Backend y Base de Datos
-- **Supabase** - Backend as a Service
-- **PostgreSQL** - Base de datos relacional
-- **Row Level Security (RLS)** - Seguridad a nivel de fila
-- **Edge Functions** - Funciones serverless
+## 🛠️ Tecnología y Arquitectura
 
-### Visualización de Datos
-- **Chart.js v4.4.0** - Gráficos estadísticos interactivos
-- **Papa Parse** - Procesamiento de CSV para datos estadísticos
+Este proyecto integra tecnologías de vanguardia para ofrecer una solución moderna y eficiente, combinando Machine Learning en el navegador con un backend serverless.
 
-## 🏗️ Arquitectura del Sistema
-
-### Estructura de Base de Datos
-```sql
--- Tabla de usuarios/empleados
-users (
-  id: UUID PRIMARY KEY,
-  codigo_empleado: TEXT UNIQUE,
-  nombre: TEXT,
-  apellido: TEXT,
-  dni: TEXT,
-  nivel_acceso: INTEGER, -- 1: Empleado, 3: Supervisor
-  descriptor: JSONB,     -- Datos faciales encriptados
-  foto: TEXT,            -- URL de imagen
-  created_at: TIMESTAMP
-)
-
--- Tabla de registros de acceso
-access (
-  id: UUID PRIMARY KEY,
-  codigo_empleado: TEXT,
-  tipo: TEXT,            -- 'ingreso' | 'egreso'
-  fecha_hora: TIMESTAMP,
-  created_at: TIMESTAMP
-)
-```
-
-### Flujo de Autenticación
-1. **Captura facial** con detección de landmarks
-2. **Extracción de descriptor** matemático único
-3. **Comparación** con base de datos encriptada
-4. **Validación de estado** actual del empleado
-5. **Registro** del acceso con timestamp
-
-## 📱 Funcionalidades por Rol
-
-### 👷 Empleados (Nivel 1)
-- Registro de ingreso/egreso facial
-- Fallback manual con código + DNI
-- Confirmación visual del estado
-- Acceso básico al sistema
-
-### 👨‍💼 Supervisores (Nivel 3)
-- Todas las funciones de empleado
-- **Panel administrativo completo**:
-  - Registro de nuevos empleados
-  - Gestión de usuarios existentes
-  - Historial de accesos detallado
-  - Estadísticas operativas avanzadas
-- **Análisis de producción**:
-  - Métricas OEE por proceso
-  - Alertas de calidad y desperdicio
-  - Seguimiento de materias primas
-
-## 📊 Sistema de Estadísticas Avanzadas
-
-### Indicadores Clave de Rendimiento (KPIs)
-- **OEE (Overall Equipment Effectiveness)**
-  - Disponibilidad de equipos
-  - Rendimiento de producción
-  - Índice de calidad
-
-### Análisis por Etapas Productivas
-1. **Recepción**: Control de materias primas y proveedores
-2. **Almacenamiento**: Gestión de inventario por tipo
-3. **Procesamiento**: Producción y control de desperdicio
-4. **Conservación**: Envasado y conservación
-5. **Despacho**: Distribución de productos terminados
-
-### Alertas Inteligentes
-- **Críticas** (Rojas): Alto rechazo de materias primas
-- **Advertencias** (Amarillas): Desperdicio elevado por producto
-- **Exitosas** (Verdes): Métricas dentro de rangos óptimos
+-   **Frontend:** HTML5, CSS3, JavaScript (ES6+)
+-   **Reconocimiento Facial:** `face-api.js` (basado en TensorFlow.js)
+-   **Backend y Base de Datos:** Supabase (PostgreSQL)
+-   **Visualización de Datos:** Chart.js
 
 ## 🔒 Seguridad y Privacidad
 
-### Protección de Datos Biométricos
-- **Sin almacenamiento de imágenes** - Solo descriptores matemáticos
-- **Encriptación** de datos faciales en base de datos
-- **Procesamiento local** - IA ejecuta en el navegador
-- **Cumplimiento GDPR** - Datos mínimos necesarios
+La protección de los datos de su personal es nuestra máxima prioridad.
 
-### Seguridad de Acceso
-- **Row Level Security (RLS)** en Supabase
-- **Tokens JWT** para autenticación
-- **Validación en tiempo real** del estado de usuario
-- **Prevención de registros duplicados**
-
-## 🚀 Instalación y Configuración
-
-### Prerrequisitos
-- Navegador moderno (Chrome 60+, Firefox 55+, Safari 12+, Edge 79+)
-- Cámara web o dispositivo con cámara frontal
-- Conexión a internet estable
-
-## 📚 Guía de Uso
-
-### Registro de Nuevo Empleado
-1. Acceder al panel de supervisor
-2. Seleccionar "Gestión de Empleados" > "Registrar Nuevo Empleado"
-3. Completar datos: código, nombre, apellido, DNI, rol
-4. Capturar rostro con la cámara
-5. Confirmar registro
-
-### Control de Acceso Diario
-1. **Automático**: Mirar a la cámara - reconocimiento instantáneo
-2. **Manual**: Ingresar código + DNI como respaldo
-3. **Confirmación**: Sistema muestra estado actualizado
-
-### Consulta de Estadísticas
-1. Acceder al panel administrativo
-2. Seleccionar "Estadísticas"
-3. Elegir etapa del proceso productivo
-4. Analizar métricas y alertas generadas
-
-## 🧪 Casos de Prueba
-
-### Pruebas de Reconocimiento Facial
-- Detección correcta en condiciones de iluminación óptima
-- Funcionamiento con diferentes ángulos faciales
-- Prevención de reconocimiento múltiple
-- Fallback manual cuando el reconocimiento falla
-
-### Pruebas de Lógica de Negocio
-- Prevención de ingresos duplicados
-- Validación de secuencia ingreso-egreso
-- Gestión correcta de niveles de acceso
-- Integridad de datos en registros simultáneos
-
-### Pruebas de Rendimiento
-- Carga de modelos Face-API en diferentes navegadores
-- Procesamiento en tiempo real con múltiples usuarios
-- Sincronización con base de datos remota
-
-## 📈 Métricas de Evaluación
-
-### Precisión del Sistema
-- **Tasa de reconocimiento facial**: >95% en condiciones normales
-- **Tiempo de respuesta**: <6 segundos para autenticación
-- **Falsos positivos**: <1% con threshold de 0.6
-
-### Usabilidad
-- **Tiempo de entrenamiento**: <5 minutos por usuario
-- **Adopción de empleados**: Interfaz intuitiva
-- **Disponibilidad del sistema**: 24/7 con fallback manual
-
-## 🔧 Mantenimiento y Soporte
-
-### Logs y Monitoreo
-```javascript
-// Logs disponibles en consola del navegador
-console.log('fetchUsers -> registros obtenidos:', data.length);
-console.log('grantAccess - latest records for', user.codigo_empleado);
-```
-
-### Solución de Problemas Comunes
-- **Cámara no funciona**: Verificar permisos del navegador
-- **Reconocimiento impreciso**: Mejorar iluminación
-- **Error de base de datos**: Verificar configuración RLS
-- **Modelos no cargan**: Confirmar estructura de carpetas
+-   **Datos Biométricos Protegidos:** El sistema no almacena imágenes faciales. En su lugar, genera y almacena un descriptor matemático único para cada persona.
+-   **Procesamiento en el Dispositivo:** El reconocimiento se ejecuta localmente en el navegador, lo que significa que los datos biométricos no viajan por la red.
+-   **Comunicaciones Seguras:** Toda la comunicación con la base de datos está encriptada.
 
 ## 🎓 Valor Académico del Proyecto
 
-### Competencias Desarrolladas
-- **Integración de tecnologías**: Frontend + IA + Backend
-- **Gestión de datos biométricos**: Seguridad y privacidad
-- **Análisis de requerimientos**: Solución para PyME real
-- **Testing y validación**: Casos de uso empresarial
+Este sistema es el resultado de un **Proyecto Profesional** que demuestra la aplicación de competencias en desarrollo de software para resolver problemas empresariales del mundo real. Las habilidades clave desarrolladas incluyen:
 
-### Tecnologías de Vanguardia
-- Machine Learning en el navegador
-- Reconocimiento facial en tiempo real
-- Progressive Web App (PWA)
-- Backend serverless moderno
-
-## 📄 Licencia y Créditos
-
-**Proyecto Académico** - Proyecto Profesional 1 (PP1) / Laboratorio de Construcción de Software (LCS)
-
-**Tecnologías utilizadas**:
-- Face-API.js por Vladimir Mandic
-- TensorFlow.js por Google
-- Supabase por Supabase Inc.
-- Chart.js por Chart.js contributors
+-   Integración de Inteligencia Artificial en aplicaciones web.
+-   Diseño de arquitecturas seguras y escalables.
+-   Análisis de requerimientos y desarrollo de soluciones a medida para PyMEs.
 
 ---
-
-**Desarrollado para el sector alimenticio** 🥘 **con tecnología de reconocimiento facial** 🔍 **y análisis de datos avanzado** 📊
+*Desarrollado con un enfoque en la innovación y la seguridad para el sector empresarial.*
