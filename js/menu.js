@@ -44,8 +44,15 @@ const dom = {
     name: document.getElementById('filter-by-name'),
     id: document.getElementById('filter-by-id'),
     shift: document.getElementById('filter-by-shift'),
+    type: document.getElementById('filter-by-type'),
     date: document.getElementById('filter-by-date'),
     clearBtn: document.getElementById('clear-filters-btn')
+  },
+  employeeFilters: {
+    role: document.getElementById('filter-employee-by-role'),
+    shift: document.getElementById('filter-employee-by-shift'),
+    menuAccess: document.getElementById('filter-employee-by-menu-access'),
+    clearBtn: document.getElementById('clear-employee-filters-btn')
   }
 };
 
@@ -179,6 +186,7 @@ function renderRecords() {
   const nameFilter = dom.filters.name.value.toLowerCase();
   const idFilter = dom.filters.id.value.toLowerCase();
   const shiftFilter = dom.filters.shift.value;
+  const typeFilter = dom.filters.type.value;
   const dateFilter = dom.filters.date.value;
 
   const filteredRecords = allRecords.filter(record => {
@@ -191,9 +199,10 @@ function renderRecords() {
     const nameMatch = !nameFilter || userName.includes(nameFilter);
     const idMatch = !idFilter || user.codigo_empleado.toLowerCase().includes(idFilter);
     const shiftMatch = !shiftFilter || user.turno === shiftFilter;
+    const typeMatch = !typeFilter || record.tipo === typeFilter;
     const dateMatch = !dateFilter || recordDate === dateFilter;
 
-    return nameMatch && idMatch && shiftMatch && dateMatch;
+    return nameMatch && idMatch && shiftMatch && typeMatch && dateMatch;
   });
 
 
@@ -258,7 +267,22 @@ function renderRecords() {
 }
 
 function renderEmployees() {
-  dom.employeesList.innerHTML = state.getUsers().map(employee => {
+  const users = state.getUsers();
+
+  // Lógica de filtrado de empleados
+  const roleFilter = dom.employeeFilters.role.value;
+  const shiftFilter = dom.employeeFilters.shift.value;
+  const menuAccessFilter = dom.employeeFilters.menuAccess.value === 'true';
+
+  const filteredUsers = users.filter(user => {
+    const roleMatch = !roleFilter || (user.rol || (user.nivel_acceso === APP_CONSTANTS.USER_LEVELS.SUPERVISOR ? 'Supervisor' : 'Empleado')) === roleFilter;
+    const shiftMatch = !shiftFilter || user.turno === shiftFilter;
+    const menuAccessMatch = !menuAccessFilter || user.nivel_acceso >= 3;
+
+    return roleMatch && shiftMatch && menuAccessMatch;
+  });
+
+  dom.employeesList.innerHTML = filteredUsers.map(employee => {
     // Usar el campo 'rol' si existe, de lo contrario, usar la lógica de nivel de acceso como fallback.
     const roleText = employee.rol || (employee.nivel_acceso === APP_CONSTANTS.USER_LEVELS.SUPERVISOR ? t('role_supervisor_label') : t('role_employee_label'));
     // Crear una clase CSS a partir del nombre del rol para poder darle estilos únicos.
@@ -385,13 +409,26 @@ function attachListeners() {
   dom.filters.name.addEventListener('input', renderRecords);
   dom.filters.id.addEventListener('input', renderRecords);
   dom.filters.shift.addEventListener('change', renderRecords);
+  dom.filters.type.addEventListener('change', renderRecords);
   dom.filters.date.addEventListener('change', renderRecords);
   dom.filters.clearBtn.addEventListener('click', () => {
     dom.filters.name.value = '';
     dom.filters.id.value = '';
     dom.filters.shift.value = '';
+    dom.filters.type.value = '';
     dom.filters.date.value = '';
     renderRecords();
+  });
+
+  // Listeners para los filtros de empleados
+  dom.employeeFilters.role.addEventListener('change', renderEmployees);
+  dom.employeeFilters.shift.addEventListener('change', renderEmployees);
+  dom.employeeFilters.menuAccess.addEventListener('change', renderEmployees);
+  dom.employeeFilters.clearBtn.addEventListener('click', () => {
+    dom.employeeFilters.role.value = '';
+    dom.employeeFilters.shift.value = '';
+    dom.employeeFilters.menuAccess.value = '';
+    renderEmployees();
   });
 
   // Añadir listener para el botón de logout

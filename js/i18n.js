@@ -152,7 +152,15 @@ export const translations = {
     "all_shifts": "Todos los turnos",
     "clear_filters": "Limpiar Filtros",
     "filter_by_name_placeholder": "Filtrar por nombre...",
-    "filter_by_id_placeholder": "Filtrar por legajo..."
+    "filter_by_id_placeholder": "Filtrar por legajo...",
+
+    "all_types": "Todos los tipos",
+    "entry_type": "Ingreso",
+    "exit_type": "Egreso",
+
+    "all_roles": "Todos los roles",
+    "all_access_levels": "Todos los accesos",
+    "with_menu_access": "Con Acceso al Menú (Nivel 3+)"
   },
   en: {
     // index.html
@@ -307,6 +315,14 @@ export const translations = {
     "all_shifts": "All Shifts",
     "clear_filters": "Clear Filters",
     "filter_by_name_placeholder": "Filter by name...",
-    "filter_by_id_placeholder": "Filter by ID..."
+    "filter_by_id_placeholder": "Filter by ID...",
+
+    "all_types": "All Types",
+    "entry_type": "Entry",
+    "exit_type": "Exit",
+
+    "all_roles": "All Roles",
+    "all_access_levels": "All Access Levels",
+    "with_menu_access": "With Menu Access (Level 3+)"
   }
 };

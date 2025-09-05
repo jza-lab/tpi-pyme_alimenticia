@@ -89,6 +89,11 @@
           <option value="Tarde" data-i18n="shift_afternoon">Tarde</option>
           <option value="Noche" data-i18n="shift_night">Noche</option>
         </select>
+        <select id="filter-by-type">
+          <option value="" data-i18n="all_types">Todos los tipos</option>
+          <option value="ingreso" data-i18n="entry_type">Ingreso</option>
+          <option value="egreso" data-i18n="exit_type">Egreso</option>
+        </select>
         <input type="date" id="filter-by-date">
         <button id="clear-filters-btn" class="btn btn-secondary" data-i18n="clear_filters">Limpiar Filtros</button>
       </div>
@@ -125,6 +130,26 @@
         <h2 data-i18n="employee_management">Gestión de Empleados</h2>
         <button id="btn-nuevo-empleado" class="btn btn-primary" data-i18n="register_new_employee">Registrar Nuevo Empleado</button>
         <button id="btn-eliminar-empleado" class="btn btn-danger" data-i18n="delete_employee">Eliminar Empleado</button>
+
+        <div class="filter-container">
+          <select id="filter-employee-by-role">
+            <option value="" data-i18n="all_roles">Todos los roles</option>
+            <option value="Empleado" data-i18n="role_employee_label">Empleado</option>
+            <option value="Supervisor" data-i18n="role_supervisor_label">Supervisor</option>
+          </select>
+          <select id="filter-employee-by-shift">
+            <option value="" data-i18n="all_shifts">Todos los turnos</option>
+            <option value="Mañana" data-i18n="shift_morning">Mañana</option>
+            <option value="Tarde" data-i18n="shift_afternoon">Tarde</option>
+            <option value="Noche" data-i18n="shift_night">Noche</option>
+          </select>
+          <select id="filter-employee-by-menu-access">
+            <option value="" data-i18n="all_access_levels">Todos los accesos</option>
+            <option value="true" data-i18n="with_menu_access">Con Acceso al Menú (Nivel 3+)</option>
+          </select>
+          <button id="clear-employee-filters-btn" class="btn btn-secondary" data-i18n="clear_filters">Limpiar Filtros</button>
+        </div>
+
         <div id="empleados-list"></div> <!-- Lista de empleados se carga aca -->
       </div>
 
