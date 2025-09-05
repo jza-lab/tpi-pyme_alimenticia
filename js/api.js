@@ -4,6 +4,9 @@ import { SUPABASE_CONFIG } from './config.js';
 // Inicializar el cliente de Supabase una sola vez
 const supabase = createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.ANON_KEY);
 
+// Exportar el cliente para poder usarlo en otros módulos (ej: para Realtime)
+export const getSupabaseClient = () => supabase;
+
 /**
  * Convierte una URL de datos (data URL) a un objeto Blob.
  * @param {string} dataURL La data URL a convertir.
