@@ -27,8 +27,8 @@ export const updateUI = () => {
     const key = element.getAttribute('data-i18n');
     const translation = getTranslation(key);
 
-    // No sobreescribir el contenido de botones que son solo íconos (como el menú hamburguesa)
-    const isIconButton = element.tagName === 'BUTTON' && element.classList.contains('hamburger');
+    // No sobreescribir el contenido de botones que son solo íconos (como el menú hamburguesa y el de cierre)
+    const isIconButton = element.tagName === 'BUTTON' && (element.classList.contains('hamburger') || element.id === 'mobile-sidebar-close');
 
     if (!isIconButton) {
       // Para la mayoría de los elementos, el textContent es suficiente.
