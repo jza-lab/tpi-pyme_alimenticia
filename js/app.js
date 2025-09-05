@@ -371,23 +371,45 @@ async function checkAuthorizationStatus(employeeCode, type) {
 
     if (!isStillPending) {
         if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
-        
-        // Verificar si el acceso fue aprobado (si existe un registro reciente)
-        const recentAccess = accessRecords.find(record => 
-            record.codigo_empleado === employeeCode && 
-            record.tipo === type &&
-            (new Date() - new Date(record.fecha_hora + 'Z')) < 60000 // Aprobado en el último minuto
-        );
+
+        // --- NUEVA LÓGICA DE VERIFICACIÓN ---
+        // 1. Encontrar el último registro de acceso para el empleado.
+        const lastAccessRecord = accessRecords
+            .filter(r => r.codigo_empleado === employeeCode)
+            .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora))[0];
 
         const user = state.getUsers().find(u => u.codigo_empleado === employeeCode);
+        let wasApproved = false;
 
-        if (recentAccess) {
+        // 2. Verificar si el último registro cumple las condiciones de aprobación.
+        if (lastAccessRecord && lastAccessRecord.tipo === type) {
+            const recordDate = new Date(lastAccessRecord.fecha_hora + 'Z');
+            const recordShift = getShiftForHour(recordDate.getUTCHours());
+            const currentShift = getCurrentShift();
+
+            // 3. Comprobar que el registro sea para el turno actual.
+            if (recordShift === currentShift) {
+                wasApproved = true;
+            }
+        }
+
+        if (wasApproved) {
             // Si el acceso fue exitoso, limpiar los intentos de autorización
             clearAuthorizationAttempts(employeeCode);
             dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: type });
+
+            // Mostrar el botón de menú de supervisor si corresponde
+            if (type === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
+                dom.supervisorMenuBtn.style.display = 'block';
+                sessionStorage.setItem('isSupervisor', 'true');
+                sessionStorage.setItem('supervisorCode', user.codigo_empleado);
+            } else {
+                dom.supervisorMenuBtn.style.display = 'none';
+            }
+
             showScreen('access-granted-screen');
         } else {
-            // La solicitud ya no está pendiente, pero no hay registro de acceso.
+            // La solicitud ya no está pendiente, pero no hay registro de acceso válido.
             // Asumimos que fue rechazada.
             const attempts = getAuthorizationAttempts(employeeCode);
             let reason = t('authorization_rejected');
