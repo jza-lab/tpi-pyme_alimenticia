@@ -154,60 +154,6 @@ export async function requestImmediateAccess(employeeCode, type, details) {
 }
 
 /**
- * Verifica si un empleado tiene un rechazo de autorización reciente.
- * @param {string} employeeCode - El legajo del empleado.
- * @returns {Promise<boolean>} `true` si hay un rechazo reciente, `false` en caso contrario.
- */
-export async function checkRecentRejection(employeeCode) {
-    // Definir el rango de tiempo (últimas 12 horas)
-    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
-
-    // El log del usuario confirmó que la tabla correcta es 'access' y las columnas son 'estado' y 'fecha_hora'.
-    const { data, error } = await supabase
-        .from('access') // Tabla correcta
-        .select('id')
-        .eq('codigo_empleado', employeeCode)
-        .eq('estado', 'rechazado') // Columna y valor correctos
-        .gte('fecha_hora', twelveHoursAgo) // Columna correcta
-        .limit(1);
-
-    if (error) {
-        console.error('Error al verificar rechazos recientes (tabla access):', error);
-        // En caso de un error de base de datos, es más seguro no bloquear al usuario.
-        return false;
-    }
-
-    // Si data no es nulo y tiene al menos un elemento, significa que hay un rechazo reciente.
-    // Si data no es nulo y tiene al menos un elemento, significa que hay un rechazo reciente.
-    return data && data.length > 0;
-}
-
-/**
- * Obtiene el último registro de acceso de un empleado.
- * @param {string} employeeCode - El legajo del empleado.
- * @returns {Promise<object|null>} El último registro de acceso, o null si no se encuentra.
- */
-export async function fetchLastAccessRecord(employeeCode) {
-    const { data, error } = await supabase
-        .from('access')
-        .select('*')
-        .eq('codigo_empleado', employeeCode)
-        .order('fecha_hora', { ascending: false })
-        .limit(1)
-        .single();
-
-    // PGRST116: "exact one row was not returned". Esto es normal si un empleado es nuevo y no tiene registros.
-    // No lo tratamos como un error, simplemente devolvemos null.
-    if (error && error.code !== 'PGRST116') {
-        console.error('Error al obtener el último registro de acceso:', error);
-        return null;
-    }
-
-    return data;
-}
-
-
-/**
  * Obtiene todos los registros de acceso que están pendientes de autorización.
  * @returns {Promise<Array>} Una lista de registros de acceso pendientes.
  */

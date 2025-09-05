@@ -238,34 +238,12 @@ async function grantAccess(user) {
   isProcessingAccess = true;
 
   try {
-    // --- Logic for EGRESO (Exit) ---
-    if (currentLoginType === 'egreso') {
-      const lastRecord = await api.fetchLastAccessRecord(user.codigo_empleado);
-      // Block exit if the last entry was rejected, which means the user isn't actually inside.
-      if (lastRecord && lastRecord.tipo === 'ingreso' && lastRecord.estado === 'rechazado') {
-        denyAccess(t('exit_denied_due_to_rejection'), user);
-        return; // Halt execution
-      }
-      // Otherwise, proceed with normal exit and show success screen.
-      await api.registerAccess(user.codigo_empleado, currentLoginType);
-      await state.refreshState();
-      dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: t(currentLoginType) });
-      showScreen('access-granted-screen');
-      return; // IMPORTANT: Halt execution after handling exit.
-    }
-    
-    // --- Logic for INGRESO (Entry) ---
     const currentShift = getCurrentShift();
-    const isOutOfShift = (user.turno && user.turno !== currentShift);
+    const isOutOfShift = (currentLoginType === 'ingreso' && user.turno && user.turno !== currentShift);
 
     if (isOutOfShift) {
-      // --- Out-of-shift entry logic ---
-      const hasRecentRejection = await api.checkRecentRejection(user.codigo_empleado);
-      if (hasRecentRejection) {
-        denyAccess(t('access_recently_rejected'), user);
-        return;
-      }
-      // If no recent rejection, request supervisor approval.
+      // --- Lógica para Ingreso Fuera de Turno ---
+      // Esta llamada ahora debe tener toda la lógica de autorización en el backend
       const details = {
         turno_correspondiente: user.turno,
         turno_intento: currentShift,
@@ -274,27 +252,21 @@ async function grantAccess(user) {
       await api.requestImmediateAccess(user.codigo_empleado, currentLoginType, details);
 
     } else {
-      // --- In-shift entry logic ---
-      const lastRecord = await api.fetchLastAccessRecord(user.codigo_empleado);
-      // Client-side check to see if user is already inside, preventing backend bug.
-      if (lastRecord && lastRecord.tipo === 'ingreso' && lastRecord.estado !== 'rechazado') {
-          denyAccess(t('denial_reason_entry', { name: user.nombre }), user);
-          return;
-      }
-      // If not already inside, proceed with a normal entry.
+      // --- Lógica de Acceso Normal (en turno, o cualquier egreso) ---
+      // La función 'access' del backend ahora está corregida y maneja todas las validaciones.
       await api.registerAccess(user.codigo_empleado, currentLoginType);
     }
-    
-    // --- Success Flow for INGRESO ---
+
+    // --- Flujo de Éxito (común) ---
     await state.refreshState();
-    
+
     if (isOutOfShift) {
-      // If entry was out of shift, show the pending review screen.
+      // Si fue fuera de turno, mostrar la pantalla de aviso especial.
       showScreen('access-pending-review-screen');
     } else {
-      // If entry was in-shift, show the normal success screen.
-      dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: t(currentLoginType) });
-      if (user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
+      // Si fue un acceso normal, mostrar la pantalla de éxito estándar.
+      dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: currentLoginType });
+      if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
         dom.supervisorMenuBtn.style.display = 'block';
         sessionStorage.setItem('isSupervisor', 'true');
         sessionStorage.setItem('supervisorCode', user.codigo_empleado);
