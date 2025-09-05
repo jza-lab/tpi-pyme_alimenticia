@@ -1,6 +1,6 @@
-// service-worker.js corregido para evitar problemas de caché
+// service-worker.js corregido y seguro
 
-const CACHE_NAME = 'control-acceso-cache-v8'; // Subir versión
+const CACHE_NAME = 'control-acceso-cache-v8'; // subí versión
 const urlsToCache = [
   'index.html',
   'menu.html',
@@ -29,19 +29,26 @@ self.addEventListener('install', event => {
 
 self.addEventListener('fetch', event => {
   const requestUrl = new URL(event.request.url);
+
+  // Ignorar esquemas no soportados (ej: chrome-extension://)
+  if (!['http:', 'https:'].includes(requestUrl.protocol)) {
+    return;
+  }
+
   const supabaseUrl = 'https://xtruedkvobfabctfmyys.supabase.co';
 
-  // --- Siempre red desde Supabase (API y funciones)
-  if (requestUrl.origin === supabaseUrl || 
-      requestUrl.pathname.includes('/functions/')) {
+  // --- Siempre red para Supabase
+  if (requestUrl.origin === supabaseUrl || requestUrl.pathname.includes('/functions/')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
   // --- Siempre red para JS críticos
-  if (requestUrl.pathname.includes('js/app.js') || 
-      requestUrl.pathname.includes('js/api.js') || 
-      requestUrl.pathname.includes('js/state.js')) {
+  if (
+    requestUrl.pathname.includes('js/app.js') ||
+    requestUrl.pathname.includes('js/api.js') ||
+    requestUrl.pathname.includes('js/state.js')
+  ) {
     event.respondWith(fetch(event.request));
     return;
   }
@@ -50,22 +57,23 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(response => {
       if (response) {
-        // Actualizar en background sin bloquear
+        // Actualizar en segundo plano
         fetch(event.request).then(networkResponse => {
-          if (networkResponse.ok) {
+          if (networkResponse.ok && ['http:', 'https:'].includes(requestUrl.protocol)) {
             caches.open(CACHE_NAME).then(cache => {
               cache.put(event.request, networkResponse);
             });
           }
-        }).catch(() => {}); 
+        }).catch(() => {});
         return response;
       }
-      // Si no está en caché, ir a la red y guardar
+
+      // Si no está en caché, ir a la red
       return fetch(event.request).then(networkResponse => {
-        if (networkResponse.ok) {
-          const responseClone = networkResponse.clone();
+        if (networkResponse.ok && ['http:', 'https:'].includes(requestUrl.protocol)) {
+          const clone = networkResponse.clone();
           caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
+            cache.put(event.request, clone);
           });
         }
         return networkResponse;
@@ -91,7 +99,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Mensajes desde la app
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
