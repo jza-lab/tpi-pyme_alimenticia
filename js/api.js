@@ -128,28 +128,23 @@ export async function registerAccess(employeeCode, type) {
 }
 
 /**
- * Crea una solicitud de autorización de acceso en la tabla 'pending_authorizations'.
+ * Solicita un acceso inmediato para un empleado cuando está fuera de turno.
+ * Llama a la Edge Function `request-immediate-access` que contiene la lógica principal:
+ * - Verifica si el usuario está bloqueado por rechazos previos.
+ * - Registra el acceso inmediatamente con estado 'pendiente_revision'.
+ * - Crea la solicitud de autorización para el supervisor.
  * @param {string} employeeCode - El legajo del empleado.
- * @param {'ingreso' | 'egreso'} type - El tipo de evento de acceso.
- * @param {object} [details={}] - Detalles adicionales para la autorización.
- * @returns {Promise<object>} El registro de autorización pendiente recién creado.
+ * @param {'ingreso' | 'egreso'} type - El tipo de acceso.
+ * @param {object} details - Detalles para la autorización (ej: motivo del intento fuera de turno).
+ * @returns {Promise<object>} El resultado de la función del servidor.
  */
-export async function requestAccessAuthorization(employeeCode, type, details = {}) {
-    const payload = {
-        codigo_empleado: employeeCode,
-        tipo: type,
-        estado: 'pendiente', // Set initial state
-        details: details, // Campo 'details' de tipo JSONB en Supabase
-    };
-
-    const { data, error } = await supabase
-        .from('pending_authorizations')
-        .insert([payload])
-        .select()
-        .single();
+export async function requestImmediateAccess(employeeCode, type, details) {
+    const { data, error } = await supabase.functions.invoke('request-immediate-access', {
+        body: { codigo_empleado: employeeCode, tipo: type, details: details }
+    });
 
     if (error) {
-        console.error('Error al solicitar autorización de acceso:', error);
+        console.error('Error en requestImmediateAccess:', error);
         throw error;
     }
     return data;

@@ -41,34 +41,9 @@ function markCacheIssues() {
   sessionStorage.setItem('auth_cache_issues', 'true');
 }
 
-// Modificar la función showPendingAuthorizationScreen para incluir detección de problemas:
-function showPendingAuthorizationScreen(user, type) {
-    const translatedType = t(type);
-    const message = t('pending_authorization_message_dynamic', { type: translatedType });
-    dom.pendingAuth.message.textContent = message;
-    showScreen('pending-authorization-screen');
-
-    if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
-    
-    // Agregar contador de reintentos para detectar problemas
-    let checkAttempts = 0;
-    const maxCheckAttempts = 20; // 100 segundos máximo
-    
-    authorizationCheckInterval = setInterval(async () => {
-        checkAttempts++;
-        
-        // Si llevamos muchos reintentos, puede haber un problema de caché
-        if (checkAttempts > maxCheckAttempts) {
-            console.warn('Demasiados reintentos de autorización, posible problema de caché');
-            clearInterval(authorizationCheckInterval);
-            markCacheIssues();
-            showScreen('home-screen');
-            return;
-        }
-        
-        await checkAuthorizationStatus(user.codigo_empleado, type);
-    }, 5000);
-}
+// La pantalla de 'autorización pendiente' y su lógica de sondeo (checkAuthorizationStatus)
+// ya no son necesarias en el frontend, ya que el nuevo flujo concede acceso inmediato
+// y la autorización se maneja de forma asíncrona en el backend.
 
 // ------------------- DOM Refs ------------------- //
 // Cachear referencias a elementos del DOM para mayor eficiencia
@@ -223,35 +198,9 @@ function stopFacialRecognition() {
 
 // ------------------- Lógica de Autorización de Acceso ------------------- //
 
-const AUTH_ATTEMPTS_KEY_PREFIX = 'auth_attempts_';
-const MAX_AUTH_ATTEMPTS = 2;
-
-/**
- * Obtiene el número de intentos de autorización para un empleado.
- * @param {string} employeeCode - El legajo del empleado.
- * @returns {number} - El número de intentos.
- */
-function getAuthorizationAttempts(employeeCode) {
-    const attempts = sessionStorage.getItem(`${AUTH_ATTEMPTS_KEY_PREFIX}${employeeCode}`);
-    return attempts ? parseInt(attempts, 10) : 0;
-}
-
-/**
- * Incrementa el contador de intentos de autorización para un empleado.
- * @param {string} employeeCode - El legajo del empleado.
- */
-function incrementAuthorizationAttempts(employeeCode) {
-    const attempts = getAuthorizationAttempts(employeeCode);
-    sessionStorage.setItem(`${AUTH_ATTEMPTS_KEY_PREFIX}${employeeCode}`, attempts + 1);
-}
-
-/**
- * Limpia el contador de intentos de autorización para un empleado.
- * @param {string} employeeCode - El legajo del empleado.
- */
-function clearAuthorizationAttempts(employeeCode) {
-    sessionStorage.removeItem(`${AUTH_ATTEMPTS_KEY_PREFIX}${employeeCode}`);
-}
+// El conteo de intentos de autorización y el bloqueo ahora se manejan
+// en el backend de forma persistente a través de la Edge Function
+// `request-immediate-access`. Se elimina la lógica de sessionStorage.
 
 
 // ------------------- Lógica de Turnos y Acceso ------------------- //
@@ -279,123 +228,64 @@ function getCurrentShift() {
   return getShiftForHour(new Date().getHours());
 }
 
-// Reemplazar la función grantAccess completa en app.js:
-
 async function grantAccess(user) {
   if (isProcessingAccess) return;
   isProcessingAccess = true;
 
   try {
-    // Refrescar estado antes de verificar autorizaciones pendientes
-    await state.refreshState();
-    
-    // --- Verificación de Autorizaciones Pendientes ---
-    const pendingAuths = state.getPendingAuthorizations();
-    const hasPendingAuth = pendingAuths.some(
-      auth => auth.codigo_empleado === user.codigo_empleado && auth.tipo === currentLoginType
-    );
-
-    if (hasPendingAuth) {
-      denyAccess(t('authorization_already_pending'), user);
-      return;
-    }
-
-    // --- Lógica para Ingreso Fuera de Turno ---
     const currentShift = getCurrentShift();
     const isOutOfShift = (currentLoginType === 'ingreso' && user.turno && user.turno !== currentShift);
-    
-    let wasAlreadyApprovedForThisShift = false;
+
     if (isOutOfShift) {
-        const records = state.getAccessRecords();
-        const lastRecord = records
-            .filter(r => r.codigo_empleado === user.codigo_empleado)
-            .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora))[0];
+      // --- Lógica para Ingreso Fuera de Turno (con acceso inmediato) ---
+      const details = {
+        turno_correspondiente: user.turno,
+        turno_intento: currentShift,
+        motivo: t('out_of_shift_attempt')
+      };
+      // Esta función ahora maneja el bloqueo, el registro de acceso y la solicitud de autorización.
+      await api.requestImmediateAccess(user.codigo_empleado, currentLoginType, details);
 
-        if (lastRecord && lastRecord.tipo === 'ingreso') {
-            const recordDate = new Date(lastRecord.fecha_hora + 'Z');
-            const recordShift = getShiftForHour(recordDate.getUTCHours());
-            if (recordShift === currentShift) {
-                wasAlreadyApprovedForThisShift = true;
-            }
-        }
-    }
-
-    // Si es un intento fuera de turno y NO fue aprobado previamente para este turno...
-    if (isOutOfShift && !wasAlreadyApprovedForThisShift) {
-      const attempts = getAuthorizationAttempts(user.codigo_empleado);
-      
-      if (attempts >= MAX_AUTH_ATTEMPTS) {
-        const reason = t('max_authorization_attempts_exceeded', { max: MAX_AUTH_ATTEMPTS });
-        denyAccess(reason, user);
-        return;
-      }
-
-      try {
-        const details = {
-          turno_correspondiente: user.turno,
-          turno_intento: currentShift,
-          motivo: t('out_of_shift_attempt')
-        };
-        await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
-        incrementAuthorizationAttempts(user.codigo_empleado);
-        
-        // Refrescar el estado después de crear la autorización
-        await state.refreshState();
-        
-        showPendingAuthorizationScreen(user, currentLoginType);
-        return; // Detener la ejecución para esperar la autorización
-      } catch (authError) {
-        console.error("Error al solicitar autorización por turno incorrecto:", authError);
-        denyAccess(t('authorization_request_error'), user);
-        return;
-      }
-    }
-
-    // --- Lógica de Acceso Normal ---
-    try {
+    } else {
+      // --- Lógica de Acceso Normal (en turno, o cualquier egreso) ---
+      // La función 'access' original sigue siendo válida para registros simples.
       await api.registerAccess(user.codigo_empleado, currentLoginType);
+    }
 
-      // Refrescar el estado después del registro exitoso
-      await state.refreshState();
+    // --- Flujo de Éxito (común para ambos casos) ---
+    await state.refreshState(); // Refrescar el estado para obtener el nuevo registro
+    
+    dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: currentLoginType });
 
-      // Si el acceso fue exitoso, limpiar los intentos de autorización
-      clearAuthorizationAttempts(user.codigo_empleado);
+    if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
+      dom.supervisorMenuBtn.style.display = 'block';
+      sessionStorage.setItem('isSupervisor', 'true');
+      sessionStorage.setItem('supervisorCode', user.codigo_empleado);
+    } else {
+      dom.supervisorMenuBtn.style.display = 'none';
+    }
 
-      dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: currentLoginType });
+    showScreen('access-granted-screen');
 
-      if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
-        dom.supervisorMenuBtn.style.display = 'block';
-        sessionStorage.setItem('isSupervisor', 'true');
-        sessionStorage.setItem('supervisorCode', user.codigo_empleado);
-      } else {
-        dom.supervisorMenuBtn.style.display = 'none';
-      }
+  } catch (error) {
+    // --- Manejo de Errores (común para ambos casos) ---
+    console.error(t('grant_access_error'), error);
 
-      showScreen('access-granted-screen');
-    } catch (error) {
-        console.error(t('grant_access_error'), error);
-
-        let errorMessage = t('unknown_registration_error');
-        if (error.context && typeof error.context.json === 'function') {
-            try {
-                const jsonError = await error.context.json();
-                errorMessage = jsonError.error || errorMessage;
-            } catch (e) {
-                errorMessage = error.message;
-            }
-        } else {
+    let errorMessage = t('unknown_registration_error');
+    // Extraer el mensaje de error de la respuesta de la Edge Function
+    if (error.context && typeof error.context.json === 'function') {
+        try {
+            const jsonError = await error.context.json();
+            errorMessage = jsonError.error || errorMessage;
+        } catch (e) { 
             errorMessage = error.message;
         }
-
-        // Corregido: En lugar de crear una nueva solicitud de autorización,
-        // simplemente mostramos el error al usuario. El flujo de autorización
-        // solo debe ser iniciado por lógicas específicas (ej: fuera de turno).
-        denyAccess(errorMessage, user);
+    } else {
+        errorMessage = error.message;
     }
-
-  } catch (stateError) {
-    console.error("Error refreshing state in grantAccess:", stateError);
-    denyAccess(t('unknown_registration_error'), user);
+    
+    denyAccess(errorMessage, user);
+  
   } finally {
     isProcessingAccess = false;
   }
@@ -415,88 +305,6 @@ function denyAccess(reason, user = null) {
   showScreen('access-denied-screen');
 }
 
-async function checkAuthorizationStatus(employeeCode, type) {
-    try {
-        // Forzar refresh completo del estado para evitar problemas de caché
-        await state.refreshState();
-        const pendingAuths = state.getPendingAuthorizations();
-
-        const myAuthRequest = pendingAuths.find(auth =>
-            auth.codigo_empleado === employeeCode &&
-            auth.tipo === type
-        );
-
-        if (!myAuthRequest || !myAuthRequest.estado) {
-            if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
-            // The request is gone or in an old format. This can happen if it was resolved
-            // by another client. Safest action is to return to home.
-            showScreen('home-screen');
-            return;
-        }
-
-        const user = state.getUsers().find(u => u.codigo_empleado === employeeCode);
-
-        if (myAuthRequest.estado === 'aprobado') {
-            if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
-            isProcessingAccess = true;
-
-            try {
-                // IMPORTANTE: Refrescar el estado DESPUÉS de la aprobación para obtener el nuevo registro
-                await state.refreshState();
-                
-                // Limpiar la autorización pendiente
-                await api.deletePendingAuthorization(myAuthRequest.id);
-
-                // Limpiar intentos de autorización
-                clearAuthorizationAttempts(employeeCode);
-                
-                dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: type });
-
-                if (type === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
-                    dom.supervisorMenuBtn.style.display = 'block';
-                    sessionStorage.setItem('isSupervisor', 'true');
-                    sessionStorage.setItem('supervisorCode', user.codigo_empleado);
-                } else {
-                    dom.supervisorMenuBtn.style.display = 'none';
-                }
-
-                showScreen('access-granted-screen');
-            } catch (error) {
-                console.error("Error during cleanup of approved access:", error);
-                // El acceso ya fue otorgado, mostrar pantalla de éxito aunque falle la limpieza
-                showScreen('access-granted-screen');
-            } finally {
-                isProcessingAccess = false;
-            }
-
-        } else if (myAuthRequest.estado === 'rechazado') {
-            if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
-            
-            try {
-                await api.deletePendingAuthorization(myAuthRequest.id);
-            } catch (error) {
-                console.error("Error cleaning up rejected authorization:", error);
-            }
-            
-            const attempts = getAuthorizationAttempts(employeeCode);
-            let reason = t('authorization_rejected');
-
-            if (attempts < MAX_AUTH_ATTEMPTS) {
-                const remaining = MAX_AUTH_ATTEMPTS - attempts;
-                reason += ` ${t('you_have_x_attempts_left', { count: remaining })}`;
-            } else {
-                reason += ` ${t('no_more_attempts_left')}`;
-            }
-            denyAccess(reason, user);
-        }
-        // If status is 'pendiente', do nothing and let the interval poll again.
-    } catch (error) {
-        console.error("Error in checkAuthorizationStatus:", error);
-        // En caso de error, volver al home para evitar estados inconsistentes
-        if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
-        showScreen('home-screen');
-    }
-}
 
 // ------------------- Acceso Manual ------------------- //
 async function attemptManualLogin() {
