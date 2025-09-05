@@ -132,13 +132,11 @@ async function handleAuthorizationAction(event) {
     // Llama a la nueva Edge Function que maneja toda la lógica.
     await api.resolveAuthorization(recordId, action);
 
-    // La tarjeta se elimina visualmente. El cliente se encargará del resto.
-    const card = document.getElementById(`auth-card-${recordId}`);
-    if (card) {
-      card.style.transition = 'opacity 0.5s ease';
-      card.style.opacity = '0';
-      setTimeout(() => card.remove(), 500);
-    }
+    // Forzar la actualización del estado y volver a renderizar la lista
+    // para asegurar que la UI está 100% sincronizada con el backend.
+    await state.refreshState();
+    await renderAuthorizations();
+    
   } catch (error) {
     alert(t('authorization_action_error', { action: actionText }));
     console.error('Authorization action failed:', error);

@@ -1,13 +1,17 @@
-// service-worker.js corregido y seguro
+// service-worker.js mejorado para evitar problemas de caché
 
-const CACHE_NAME = 'control-acceso-cache-v8'; // subí versión
+const CACHE_NAME = 'control-acceso-cache-v8'; // Incrementar versión
 const urlsToCache = [
   'index.html',
   'menu.html',
   'styles.css',
   'menu.css',
-  'js/face.js',
+  'js/app.js',
+  'js/menu.js',
+  'js/api.js',
   'js/config.js',
+  'js/face.js',
+  'js/state.js',
   'js/i18n.js',
   'js/i18n-logic.js',
   'js/statistics.js',
@@ -20,65 +24,67 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Cache inicial cargado');
+        console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
-      .then(() => self.skipWaiting())
+      .then(() => {
+        console.log('Cache populated, skipping waiting...');
+        return self.skipWaiting();
+      })
   );
 });
 
 self.addEventListener('fetch', event => {
   const requestUrl = new URL(event.request.url);
-
-  // Ignorar esquemas no soportados (ej: chrome-extension://)
-  if (!['http:', 'https:'].includes(requestUrl.protocol)) {
-    return;
-  }
-
   const supabaseUrl = 'https://xtruedkvobfabctfmyys.supabase.co';
 
-  // --- Siempre red para Supabase
-  if (requestUrl.origin === supabaseUrl || requestUrl.pathname.includes('/functions/')) {
+  // Network-only para Supabase API y datos críticos
+  if (requestUrl.origin === supabaseUrl || 
+      requestUrl.pathname.includes('/functions/') ||
+      requestUrl.searchParams.has('no-cache')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // --- Siempre red para JS críticos
-  if (
-    requestUrl.pathname.includes('js/app.js') ||
-    requestUrl.pathname.includes('js/api.js') ||
-    requestUrl.pathname.includes('js/state.js')
-  ) {
-    event.respondWith(fetch(event.request));
+  // Para archivos JS críticos, usar network-only para asegurar que siempre se obtiene la última versión.
+  // Esto es crucial para evitar bugs por lógica de negocio desactualizada.
+  if (requestUrl.pathname.includes('js/app.js') || 
+      requestUrl.pathname.includes('js/api.js') || 
+      requestUrl.pathname.includes('js/state.js')) {
+    event.respondWith(fetch(event.request)); // Estrategia: Network Only
     return;
   }
 
-  // --- Cache-first para otros recursos estáticos
+  // Cache-first para otros recursos estáticos
   event.respondWith(
-    caches.match(event.request).then(response => {
-      if (response) {
-        // Actualizar en segundo plano
-        fetch(event.request).then(networkResponse => {
-          if (networkResponse.ok && ['http:', 'https:'].includes(requestUrl.protocol)) {
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, networkResponse);
-            });
-          }
-        }).catch(() => {});
-        return response;
-      }
-
-      // Si no está en caché, ir a la red
-      return fetch(event.request).then(networkResponse => {
-        if (networkResponse.ok && ['http:', 'https:'].includes(requestUrl.protocol)) {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, clone);
-          });
+    caches.match(event.request)
+      .then(response => {
+        if (response) {
+          // Actualizar en background sin bloquear
+          fetch(event.request)
+            .then(networkResponse => {
+              if (networkResponse.ok) {
+                caches.open(CACHE_NAME).then(cache => {
+                  cache.put(event.request, networkResponse);
+                });
+              }
+            })
+            .catch(() => {}); // Ignorar errores de red en background
+          return response;
         }
-        return networkResponse;
-      });
-    })
+        
+        // Si no está en caché, ir a la red
+        return fetch(event.request)
+          .then(networkResponse => {
+            if (networkResponse.ok) {
+              const responseClone = networkResponse.clone();
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, responseClone);
+              });
+            }
+            return networkResponse;
+          });
+      })
   );
 });
 
@@ -89,23 +95,27 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (!cacheWhitelist.includes(cacheName)) {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      console.log('Service Worker activated, claiming clients...');
+      return self.clients.claim();
+    })
   );
 });
 
+// Manejar mensajes para forzar actualización de caché
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
   if (event.data && event.data.type === 'CLEAR_CACHE') {
     caches.delete(CACHE_NAME).then(() => {
-      console.log('Cache limpiada manualmente');
+      console.log('Cache cleared by request');
     });
   }
 });
