@@ -154,6 +154,35 @@ export async function requestImmediateAccess(employeeCode, type, details) {
 }
 
 /**
+ * Verifica si un empleado tiene un rechazo de autorización reciente.
+ * @param {string} employeeCode - El legajo del empleado.
+ * @returns {Promise<boolean>} `true` si hay un rechazo reciente, `false` en caso contrario.
+ */
+export async function checkRecentRejection(employeeCode) {
+    // Definir el rango de tiempo (últimas 12 horas)
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+
+    // La tabla `pending_authorizations` debería tener el `status` y el `codigo_empleado`.
+    // Asumimos que la columna de fecha se llama `created_at`, un default común en Supabase.
+    const { count, error } = await supabase
+        .from('pending_authorizations')
+        .select('*', { count: 'exact', head: true })
+        .eq('codigo_empleado', employeeCode)
+        .eq('status', 'rechazado')
+        .gte('created_at', twelveHoursAgo);
+
+    if (error) {
+        console.error('Error al verificar rechazos recientes:', error);
+        // En caso de un error de base de datos, es más seguro no bloquear al usuario
+        // y permitir que el backend (si se arregla) tome la decisión.
+        return false;
+    }
+
+    return count > 0;
+}
+
+
+/**
  * Obtiene todos los registros de acceso que están pendientes de autorización.
  * @returns {Promise<Array>} Una lista de registros de acceso pendientes.
  */

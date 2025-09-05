@@ -238,6 +238,15 @@ async function grantAccess(user) {
     const isOutOfShift = (currentLoginType === 'ingreso' && user.turno && user.turno !== currentShift);
 
     if (isOutOfShift) {
+      // --- Client-side check for recent rejection ---
+      const hasRecentRejection = await api.checkRecentRejection(user.codigo_empleado);
+      if (hasRecentRejection) {
+        // If rejected, deny access directly without contacting the backend function
+        denyAccess(t('access_recently_rejected'), user);
+        return; // Stop the execution flow here
+      }
+      // --- End of client-side check ---
+
       // --- Lógica para Ingreso Fuera de Turno (con acceso inmediato) ---
       const details = {
         turno_correspondiente: user.turno,
