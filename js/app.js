@@ -314,9 +314,11 @@ async function grantAccess(user) {
         errorMessage = error.message;
     }
     
-    // Fallback de autorización para errores como "ya se encuentra dentro"
     const isAuthorizationError = errorMessage.includes('ya se encuentra dentro') || errorMessage.includes('no se encuentra dentro');
-    if (isAuthorizationError) {
+
+    // Solo solicitar autorización si es un error de autorización genuino Y
+    // el usuario no había sido ya aprobado para este turno.
+    if (isAuthorizationError && !wasAlreadyApprovedForThisShift) {
       try {
         const details = { motivo: errorMessage };
         await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
@@ -326,6 +328,7 @@ async function grantAccess(user) {
         denyAccess(t('authorization_request_error'), user);
       }
     } else {
+      // Para re-ingresos o errores no relacionados con autorización, solo mostrar el mensaje.
       denyAccess(errorMessage, user);
     }
 
@@ -480,7 +483,8 @@ async function main() {
   showScreen('home-screen');
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
+    // Usar una ruta relativa para que funcione correctamente en subdirectorios de GitHub Pages
+    navigator.serviceWorker.register('service-worker.js')
       .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
       .catch(err => console.log('ServiceWorker registration failed: ', err));
   }
