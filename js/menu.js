@@ -121,7 +121,7 @@ async function renderAuthorizations() {
 async function handleAuthorizationAction(event) {
   const button = event.currentTarget;
   const recordId = button.dataset.recordId;
-  const action = button.dataset.action;
+  const action = button.dataset.action; // 'aprobado' or 'rechazado'
   const actionText = action === 'aprobado' ? t('approve') : t('reject_verb');
 
   if (!confirm(t('confirm_authorization_action', { action: actionText }))) {
@@ -129,15 +129,17 @@ async function handleAuthorizationAction(event) {
   }
 
   try {
-    await api.updateAccessStatus(recordId, action);
+    // LLAMADA A LA NUEVA FUNCIÓN DE API
+    await api.setAuthorizationStatus(recordId, action);
+
+    // La tarjeta se elimina visualmente. El cliente se encargará del resto.
     const card = document.getElementById(`auth-card-${recordId}`);
     if (card) {
       card.style.transition = 'opacity 0.5s ease';
       card.style.opacity = '0';
       setTimeout(() => card.remove(), 500);
     }
-    // Opcional: refrescar el estado general para que los cambios se reflejen en otras vistas
-    await state.refreshState();
+    // No es necesario refrescar el estado aquí, ya que el cliente está sondeando
   } catch (error) {
     alert(t('authorization_action_error', { action: actionText }));
     console.error('Authorization action failed:', error);

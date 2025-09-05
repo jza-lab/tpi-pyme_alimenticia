@@ -363,42 +363,38 @@ function showPendingAuthorizationScreen(user, type) {
 }
 
 async function checkAuthorizationStatus(employeeCode, type) {
-    await state.refreshState(); // Actualizar todo el estado
+    await state.refreshState();
     const pendingAuths = state.getPendingAuthorizations();
-    const accessRecords = state.getAccessRecords();
 
-    const isStillPending = pendingAuths.some(auth => auth.codigo_empleado === employeeCode && auth.tipo === type);
+    const myAuthRequest = pendingAuths.find(auth =>
+        auth.codigo_empleado === employeeCode &&
+        auth.tipo === type &&
+        auth.estado // Ensure the new column exists and is not null
+    );
 
-    if (!isStillPending) {
+    if (!myAuthRequest) {
+        // This could happen if the request was resolved and deleted by another client,
+        // or if there was an issue. Stop polling and let the user return home.
         if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
+        denyAccess(t('authorization_request_not_found', {
+            default: 'La solicitud de autorización ya no se encuentra. Es posible que haya sido resuelta en otro dispositivo.'
+        }));
+        return;
+    }
 
-        // --- NUEVA LÓGICA DE VERIFICACIÓN ---
-        // 1. Encontrar el último registro de acceso para el empleado.
-        const lastAccessRecord = accessRecords
-            .filter(r => r.codigo_empleado === employeeCode)
-            .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora))[0];
+    const user = state.getUsers().find(u => u.codigo_empleado === employeeCode);
 
-        const user = state.getUsers().find(u => u.codigo_empleado === employeeCode);
-        let wasApproved = false;
+    if (myAuthRequest.estado === 'aprobado') {
+        if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
+        isProcessingAccess = true; // Prevent race conditions
 
-        // 2. Verificar si el último registro cumple las condiciones de aprobación.
-        if (lastAccessRecord && lastAccessRecord.tipo === type) {
-            const recordDate = new Date(lastAccessRecord.fecha_hora + 'Z');
-            const recordShift = getShiftForHour(recordDate.getUTCHours());
-            const currentShift = getCurrentShift();
+        try {
+            await api.registerAccess(employeeCode, type);
+            await api.deletePendingAuthorization(myAuthRequest.id);
 
-            // 3. Comprobar que el registro sea para el turno actual.
-            if (recordShift === currentShift) {
-                wasApproved = true;
-            }
-        }
-
-        if (wasApproved) {
-            // Si el acceso fue exitoso, limpiar los intentos de autorización
             clearAuthorizationAttempts(employeeCode);
             dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: type });
 
-            // Mostrar el botón de menú de supervisor si corresponde
             if (type === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
                 dom.supervisorMenuBtn.style.display = 'block';
                 sessionStorage.setItem('isSupervisor', 'true');
@@ -408,21 +404,30 @@ async function checkAuthorizationStatus(employeeCode, type) {
             }
 
             showScreen('access-granted-screen');
-        } else {
-            // La solicitud ya no está pendiente, pero no hay registro de acceso válido.
-            // Asumimos que fue rechazada.
-            const attempts = getAuthorizationAttempts(employeeCode);
-            let reason = t('authorization_rejected');
-
-            if (attempts < MAX_AUTH_ATTEMPTS) {
-                const remaining = MAX_AUTH_ATTEMPTS - attempts;
-                reason += ` ${t('you_have_x_attempts_left', { count: remaining })}`;
-            } else {
-                reason += ` ${t('no_more_attempts_left')}`;
-            }
-            denyAccess(reason, user);
+        } catch (error) {
+            console.error("Error finalizing approved access:", error);
+            denyAccess(t('error_finalizing_access', { default: 'Ocurrió un error al registrar su acceso aprobado.' }), user);
+        } finally {
+            isProcessingAccess = false;
         }
+
+    } else if (myAuthRequest.estado === 'rechazado') {
+        if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
+        await api.deletePendingAuthorization(myAuthRequest.id);
+        
+        const attempts = getAuthorizationAttempts(employeeCode);
+        let reason = t('authorization_rejected');
+
+        if (attempts < MAX_AUTH_ATTEMPTS) {
+            const remaining = MAX_AUTH_ATTEMPTS - attempts;
+            reason += ` ${t('you_have_x_attempts_left', { count: remaining })}`;
+        } else {
+            reason += ` ${t('no_more_attempts_left')}`;
+        }
+        denyAccess(reason, user);
+
     }
+    // If status is 'pendiente', do nothing and let the interval poll again.
 }
 
 // ------------------- Acceso Manual ------------------- //

@@ -127,6 +127,24 @@ export async function registerAccess(employeeCode, type) {
 }
 
 /**
+ * Elimina una solicitud de autorización pendiente por su ID.
+ * @param {number} recordId - El ID del registro a eliminar.
+ * @returns {Promise<void>}
+ */
+export async function deletePendingAuthorization(recordId) {
+    const { error } = await supabase
+        .from('pending_authorizations')
+        .delete()
+        .eq('id', recordId);
+
+    if (error) {
+        console.error('Error al eliminar la autorización pendiente:', error);
+        // No es necesario lanzar un error aquí, ya que es una operación de limpieza.
+        // Un fallo aquí no debería detener el flujo principal del usuario.
+    }
+}
+
+/**
  * Crea una solicitud de autorización de acceso en la tabla 'pending_authorizations'.
  * @param {string} employeeCode - El legajo del empleado.
  * @param {'ingreso' | 'egreso'} type - El tipo de evento de acceso.
@@ -218,4 +236,25 @@ export async function updateAccessStatus(recordId, status) {
     }
 
     return { success: true, message: `Solicitud ${status} con éxito.` };
+}
+
+/**
+ * Actualiza el estado de una solicitud de autorización pendiente.
+ * @param {number} recordId - El ID del registro en `pending_authorizations`.
+ * @param {'aprobado' | 'rechazado'} status - El nuevo estado.
+ * @returns {Promise<object>} El registro actualizado.
+ */
+export async function setAuthorizationStatus(recordId, status) {
+    const { data, error } = await supabase
+        .from('pending_authorizations')
+        .update({ estado: status })
+        .eq('id', recordId)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error al actualizar el estado de la autorización:', error);
+        throw error;
+    }
+    return data;
 }
