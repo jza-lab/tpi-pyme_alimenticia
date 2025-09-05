@@ -162,14 +162,16 @@ export async function checkRecentRejection(employeeCode) {
     // Definir el rango de tiempo (últimas 12 horas)
     const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
 
-    // La tabla `pending_authorizations` debería tener el `status` y el `codigo_empleado`.
-    // Asumimos que la columna de fecha se llama `created_at`, un default común en Supabase.
-    const { count, error } = await supabase
+    // La investigación en menu.js confirmó que los nombres de las columnas son correctos.
+    // El error 400 probablemente se debió a la sintaxis de la consulta (count/head).
+    // Se simplifica la consulta para que sea más robusta.
+    const { data, error } = await supabase
         .from('pending_authorizations')
-        .select('*', { count: 'exact', head: true })
+        .select('id') // Solo necesitamos saber si existe un registro, no necesitamos todos los datos.
         .eq('codigo_empleado', employeeCode)
         .eq('status', 'rechazado')
-        .gte('created_at', twelveHoursAgo);
+        .gte('created_at', twelveHoursAgo)
+        .limit(1); // Optimización: nos detenemos en cuanto encontramos uno.
 
     if (error) {
         console.error('Error al verificar rechazos recientes:', error);
@@ -178,7 +180,8 @@ export async function checkRecentRejection(employeeCode) {
         return false;
     }
 
-    return count > 0;
+    // Si data no es nulo y tiene al menos un elemento, significa que hay un rechazo reciente.
+    return data && data.length > 0;
 }
 
 
