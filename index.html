@@ -21,12 +21,21 @@
 <body>
   <div class="main-wrapper">
     <div class="container">
+      <div class="language-switcher">
+        <span class="lang-es">ES</span>
+        <label class="switch">
+          <input type="checkbox" id="language-toggle">
+          <span class="slider round"></span>
+        </label>
+        <span class="lang-en">EN</span>
+      </div>
       <div class="content">
 
         <!-- HOME -->
         <section id="home-screen" class="screen active">
-          <h1 class="titulo">Bienvenido</h1>
-          <p class="intro">Sistema de reconocimiento facial para registro y autenticación de usuarios</p>
+          <h1 class="titulo" data-i18n="welcome">Bienvenido</h1>
+          <p class="intro" data-i18n="intro">Sistema de reconocimiento facial para registro y autenticación de usuarios
+          </p>
 
           <!-- LOGO: centered, controlled size -->
           <div class="logo">
@@ -100,10 +109,10 @@
 
         <!-- Pantalla de Autorización Pendiente -->
         <section id="pending-authorization-screen" class="screen">
-            <div class="status-icon pending">⏳</div>
-            <h2>Solicitud Enviada</h2>
-            <p id="pending-auth-message">Su solicitud de acceso ha sido enviada a un supervisor para su aprobación.</p>
-            <button id="back-to-home-from-pending" class="btn btn-primary">Entendido</button>
+          <div class="status-icon pending">⏳</div>
+          <h2>Solicitud Enviada</h2>
+          <p id="pending-auth-message">Su solicitud de acceso ha sido enviada a un supervisor para su aprobación.</p>
+          <button id="back-to-home-from-pending" class="btn btn-primary">Entendido</button>
         </section>
 
       </div>
