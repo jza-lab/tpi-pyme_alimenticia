@@ -28,6 +28,16 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const requestUrl = new URL(event.request.url);
+  const supabaseUrl = 'https://xtruedkvobfabctfmyys.supabase.co';
+
+  // Si la petición es a la API de Supabase, ir directamente a la red.
+  if (requestUrl.origin === supabaseUrl) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Para todos los demás recursos, usar la estrategia "cache-first".
   event.respondWith(
     caches.match(event.request)
       .then(response => {
