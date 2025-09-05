@@ -26,11 +26,17 @@ export const updateUI = () => {
   document.querySelectorAll('[data-i18n]').forEach(element => {
     const key = element.getAttribute('data-i18n');
     const translation = getTranslation(key);
-    // Si el elemento es un botón o un span, se usa textContent
-    if (element.tagName === 'BUTTON' || element.tagName === 'SPAN' || element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3' || element.tagName === 'P' || element.tagName === 'STRONG' || element.tagName === 'LABEL' || element.tagName === 'SMALL' || element.tagName === 'TH' || element.tagName === 'TD' || element.tagName === 'OPTION') {
+
+    // No sobreescribir el contenido de botones que son solo íconos (como el menú hamburguesa)
+    const isIconButton = element.tagName === 'BUTTON' && element.classList.contains('hamburger');
+
+    if (!isIconButton) {
+      // Para la mayoría de los elementos, el textContent es suficiente.
       element.textContent = translation;
-    } else if (element.hasAttribute('aria-label')) {
-      // Si tiene aria-label, se actualiza
+    }
+    
+    // Siempre actualizar aria-label si existe, para accesibilidad.
+    if (element.hasAttribute('aria-label')) {
       element.setAttribute('aria-label', translation);
     }
   });

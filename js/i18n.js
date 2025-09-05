@@ -52,6 +52,8 @@ export const translations = {
     "prompt_supervisor_code": "Para continuar, por favor ingrese su legajo:",
     "incorrect_code_denied": "Legajo incorrecto. Acceso denegado.",
     "loading_error": "Error al cargar: {{error}}",
+    "access_granted_pending_title": "Ingreso Registrado",
+    "access_granted_pending_message": "Su ingreso ha sido registrado, pero está fuera de su turno y será revisado por un supervisor.",
 
     // menu.html
     "admin_panel_title": "Panel Administrativo",
@@ -192,6 +194,8 @@ export const translations = {
     "prompt_supervisor_code": "To continue, please enter your code:",
     "incorrect_code_denied": "Incorrect code. Access denied.",
     "loading_error": "Error loading: {{error}}",
+    "access_granted_pending_title": "Entry Logged",
+    "access_granted_pending_message": "Your entry has been logged, but it is outside of your shift and will be reviewed by a supervisor.",
 
     // menu.html
     "admin_panel_title": "Admin Panel",
