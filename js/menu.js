@@ -129,8 +129,8 @@ async function handleAuthorizationAction(event) {
   }
 
   try {
-    // LLAMADA A LA NUEVA FUNCIÓN DE API
-    await api.setAuthorizationStatus(recordId, action);
+    // Llama a la nueva Edge Function que maneja toda la lógica.
+    await api.resolveAuthorization(recordId, action);
 
     // La tarjeta se elimina visualmente. El cliente se encargará del resto.
     const card = document.getElementById(`auth-card-${recordId}`);
@@ -139,7 +139,6 @@ async function handleAuthorizationAction(event) {
       card.style.opacity = '0';
       setTimeout(() => card.remove(), 500);
     }
-    // No es necesario refrescar el estado aquí, ya que el cliente está sondeando
   } catch (error) {
     alert(t('authorization_action_error', { action: actionText }));
     console.error('Authorization action failed:', error);
@@ -357,7 +356,11 @@ async function main() {
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/service-worker.js')
-      .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
+      .then(registration => {
+        console.log('ServiceWorker registration successful');
+        // Forzar la comprobación de una nueva versión del SW en cada carga.
+        registration.update();
+      })
       .catch(err => console.log('ServiceWorker registration failed: ', err));
   }
 

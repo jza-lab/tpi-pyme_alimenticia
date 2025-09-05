@@ -368,17 +368,14 @@ async function checkAuthorizationStatus(employeeCode, type) {
 
     const myAuthRequest = pendingAuths.find(auth =>
         auth.codigo_empleado === employeeCode &&
-        auth.tipo === type &&
-        auth.estado // Ensure the new column exists and is not null
+        auth.tipo === type
     );
 
-    if (!myAuthRequest) {
-        // This could happen if the request was resolved and deleted by another client,
-        // or if there was an issue. Stop polling and let the user return home.
+    if (!myAuthRequest || !myAuthRequest.estado) {
         if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
-        denyAccess(t('authorization_request_not_found', {
-            default: 'La solicitud de autorización ya no se encuentra. Es posible que haya sido resuelta en otro dispositivo.'
-        }));
+        // The request is gone or in an old format. This can happen if it was resolved
+        // by another client. Safest action is to return to home.
+        showScreen('home-screen');
         return;
     }
 
@@ -386,10 +383,11 @@ async function checkAuthorizationStatus(employeeCode, type) {
 
     if (myAuthRequest.estado === 'aprobado') {
         if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
-        isProcessingAccess = true; // Prevent race conditions
+        isProcessingAccess = true;
 
         try {
-            await api.registerAccess(employeeCode, type);
+            // Access was already registered by the backend Edge Function.
+            // The client's only job is to show success and clean up the request.
             await api.deletePendingAuthorization(myAuthRequest.id);
 
             clearAuthorizationAttempts(employeeCode);
@@ -405,8 +403,9 @@ async function checkAuthorizationStatus(employeeCode, type) {
 
             showScreen('access-granted-screen');
         } catch (error) {
-            console.error("Error finalizing approved access:", error);
-            denyAccess(t('error_finalizing_access', { default: 'Ocurrió un error al registrar su acceso aprobado.' }), user);
+            console.error("Error during cleanup of approved access:", error);
+            // The access was already granted, so show the success screen even if cleanup fails.
+            showScreen('access-granted-screen');
         } finally {
             isProcessingAccess = false;
         }
@@ -425,7 +424,6 @@ async function checkAuthorizationStatus(employeeCode, type) {
             reason += ` ${t('no_more_attempts_left')}`;
         }
         denyAccess(reason, user);
-
     }
     // If status is 'pendiente', do nothing and let the interval poll again.
 }
@@ -510,9 +508,12 @@ async function main() {
   showScreen('home-screen');
 
   if ('serviceWorker' in navigator) {
-    // Usar una ruta relativa para que funcione correctamente en subdirectorios de GitHub Pages
-    navigator.serviceWorker.register('service-worker.js')
-      .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
+    navigator.serviceWorker.register('/service-worker.js') // Use absolute path
+      .then(registration => {
+        console.log('ServiceWorker registration successful');
+        // Forzar la comprobación de una nueva versión del SW en cada carga.
+        registration.update();
+      })
       .catch(err => console.log('ServiceWorker registration failed: ', err));
   }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'control-acceso-cache-v5';
+const CACHE_NAME = 'control-acceso-cache-v6';
 const urlsToCache = [
   'index.html',
   'menu.html',
