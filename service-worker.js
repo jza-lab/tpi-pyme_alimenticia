@@ -1,4 +1,4 @@
-const CACHE_NAME = 'control-acceso-cache-v1';
+const CACHE_NAME = 'control-acceso-cache-v2';
 const urlsToCache = [
   '/',
   'index.html',
@@ -11,6 +11,8 @@ const urlsToCache = [
   'js/config.js',
   'js/face.js',
   'js/state.js',
+  'js/i18n.js',
+  'js/i18n-logic.js',
   'js/statistics.js',
   'icono.png',
   'manifest.json'
