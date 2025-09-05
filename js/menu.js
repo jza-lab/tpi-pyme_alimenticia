@@ -224,17 +224,24 @@ function renderRecords() {
 }
 
 function renderEmployees() {
-  dom.employeesList.innerHTML = state.getUsers().map(employee => `
+  dom.employeesList.innerHTML = state.getUsers().map(employee => {
+    // Usar el campo 'rol' si existe, de lo contrario, usar la lógica de nivel de acceso como fallback.
+    const roleText = employee.rol || (employee.nivel_acceso === APP_CONSTANTS.USER_LEVELS.SUPERVISOR ? t('role_supervisor_label') : t('role_employee_label'));
+    // Crear una clase CSS a partir del nombre del rol para poder darle estilos únicos.
+    const roleClass = (employee.rol || 'default').toLowerCase().replace(/\s+/g, '-');
+
+    return `
         <div class="employee-card">
             <div class="employee-info">
                 <h4>${employee.nombre} ${employee.apellido || ''}</h4>
                 <p>${t('employee_code', { code: employee.codigo_empleado, dni: employee.dni || '' })}</p>
             </div>
-            <div class="employee-level level-${employee.nivel_acceso || 1}">
-                ${employee.nivel_acceso === APP_CONSTANTS.USER_LEVELS.SUPERVISOR ? t('role_supervisor_label') : t('role_employee_label')}
+            <div class="employee-level role-${roleClass}">
+                ${roleText}
             </div>
         </div>
-    `).join('');
+    `;
+  }).join('');
 }
 
 // --- Flujo de Registro de Empleados ---

@@ -304,6 +304,28 @@ table th {
   color: #155724;
 }
 
+/* Colores para roles específicos */
+.role-operario {
+  background-color: #e0e0e0;
+  color: #333;
+}
+.role-analista {
+  background-color: #cce5ff;
+  color: #004085;
+}
+.role-gerente {
+  background-color: #fff3cd;
+  color: #856404;
+}
+.role-supervisor {
+  background-color: #d4edda;
+  color: #155724;
+}
+.role-default {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
 /* Pantallas de registro y captura */
 .screen {
   padding: 30px;
