@@ -336,6 +336,10 @@ function attachListeners() {
     renderRecords();
   });
 
+  document.getElementById('refresh-authorizations-btn')?.addEventListener('click', () => {
+    renderAuthorizations();
+  });
+
   // Añadir listener para el botón de logout
   document.querySelector('.logout-btn')?.addEventListener('click', () => {
     sessionStorage.removeItem('isSupervisor');
@@ -369,32 +373,9 @@ async function main() {
     renderEmployees();
     initializeStatistics();
     updateUI();
-    setupRealtimeSubscriptions(); // Iniciar la escucha de eventos en tiempo real
   } catch (error) {
     alert(t('panel_load_error', { error: error.message }));
   }
-}
-
-function setupRealtimeSubscriptions() {
-  const supabase = api.getSupabaseClient();
-  const channel = supabase.channel('pending-authorizations-changes');
-
-  channel
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pending_authorizations' }, payload => {
-      console.log('New pending authorization received via Realtime:', payload.new);
-      
-      // Solo renderizar si el usuario está en la pestaña de autorizaciones para eficiencia
-      if (document.getElementById('autorizaciones')?.classList.contains('active')) {
-        renderAuthorizations();
-      }
-    })
-    .subscribe(status => {
-      if (status === 'SUBSCRIBED') {
-        console.log('Successfully subscribed to pending_authorizations changes!');
-      } else {
-        console.warn(`Supabase Realtime subscription status: ${status}`);
-      }
-    });
 }
 
 window.addEventListener('load', main);

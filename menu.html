@@ -189,7 +189,10 @@
 
     <!-- AUTORIZACIONES -->
     <section id="autorizaciones" class="content-section">
-      <h2 data-i18n="pending_authorizations_title">Autorizaciones Pendientes</h2>
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 data-i18n="pending_authorizations_title" style="margin: 0;">Autorizaciones Pendientes</h2>
+        <button id="refresh-authorizations-btn" class="btn btn-primary" data-i18n="refresh_authorizations">Actualizar</button>
+      </div>
       <div id="authorizations-list" class="authorizations-container">
         <!-- Las tarjetas de autorización se cargarán aquí -->
       </div>
