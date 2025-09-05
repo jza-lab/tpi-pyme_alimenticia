@@ -3,6 +3,7 @@ import * as api from './api.js';
 import * as face from './face.js';
 import * as state from './state.js';
 import { initializeStatistics } from './statistics.js';
+import { t } from './i18n-logic.js';
 
 // --- Seguridad---
 //  if (sessionStorage.getItem('isSupervisor') !== 'true') {
@@ -68,22 +69,22 @@ async function renderAuthorizations() {
     const userMap = new Map(users.map(u => [u.codigo_empleado, u]));
 
     if (pendingRecords.length === 0) {
-      authorizationsList.innerHTML = '<p>No hay autorizaciones pendientes.</p>';
+      authorizationsList.innerHTML = `<p>${t('no_pending_authorizations')}</p>`;
       return;
     }
 
     authorizationsList.innerHTML = pendingRecords.map(record => {
       const user = userMap.get(record.codigo_empleado);
-      const userName = user ? `${user.nombre} ${user.apellido || ''}` : 'Desconocido';
+      const userName = user ? `${user.nombre} ${user.apellido || ''}` : t('unknown_employee');
       const localDateTime = new Date(record.created_at).toLocaleString('es-ES');
       
-      let detailsHtml = `<p>Motivo: ${record.details?.motivo || 'No especificado'}</p>`;
+      let detailsHtml = `<p>${t('authorization_reason', { reason: record.details?.motivo || t('not_specified') })}</p>`;
 
       if (record.details && record.details.turno_correspondiente) {
         detailsHtml = `
           <div class="authorization-details">
-            <p><strong>Turno Asignado:</strong> ${record.details.turno_correspondiente}</p>
-            <p><strong>Intento de Ingreso:</strong> ${record.details.turno_intento}</p>
+            <p><strong>${t('assigned_shift')}</strong> ${record.details.turno_correspondiente}</p>
+            <p><strong>${t('attempted_shift')}</strong> ${record.details.turno_intento}</p>
           </div>
         `;
       }
@@ -99,8 +100,8 @@ async function renderAuthorizations() {
             ${detailsHtml}
           </div>
           <div class="authorization-actions">
-            <button class="btn btn-success" data-record-id="${record.id}" data-action="aprobado">Autorizar</button>
-            <button class="btn btn-danger" data-record-id="${record.id}" data-action="rechazado">Rechazar</button>
+            <button class="btn btn-success" data-record-id="${record.id}" data-action="aprobado">${t('authorize')}</button>
+            <button class="btn btn-danger" data-record-id="${record.id}" data-action="rechazado">${t('reject')}</button>
           </div>
         </div>
       `;
@@ -112,7 +113,7 @@ async function renderAuthorizations() {
     });
 
   } catch (error) {
-    authorizationsList.innerHTML = '<p class="status error">Error al cargar las autorizaciones.</p>';
+    authorizationsList.innerHTML = `<p class="status error">${t('error_loading_authorizations')}</p>`;
     console.error('Error rendering authorizations:', error);
   }
 }
@@ -121,8 +122,9 @@ async function handleAuthorizationAction(event) {
   const button = event.currentTarget;
   const recordId = button.dataset.recordId;
   const action = button.dataset.action;
+  const actionText = action === 'aprobado' ? t('approve') : t('reject_verb');
 
-  if (!confirm(`¿Está seguro de que desea ${action === 'aprobado' ? 'aprobar' : 'rechazar'} esta solicitud?`)) {
+  if (!confirm(t('confirm_authorization_action', { action: actionText }))) {
     return;
   }
 
@@ -137,7 +139,7 @@ async function handleAuthorizationAction(event) {
     // Opcional: refrescar el estado general para que los cambios se reflejen en otras vistas
     await state.refreshState();
   } catch (error) {
-    alert(`Error al ${action === 'aprobado' ? 'aprobar' : 'rechazar'} la solicitud.`);
+    alert(t('authorization_action_error', { action: actionText }));
     console.error('Authorization action failed:', error);
   }
 }
@@ -180,7 +182,7 @@ function renderRecords() {
   dom.peopleOutsideCount.textContent = users.length - peopleInside;
   dom.recordsTbody.innerHTML = records.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora)).map(record => {
     const user = userMap.get(record.codigo_empleado);
-    const userName = user ? `${user.nombre} ${user.apellido || ''}` : 'Desconocido';
+    const userName = user ? `${user.nombre} ${user.apellido || ''}` : t('unknown_employee');
     
     const capitalizedTipo = record.tipo.charAt(0).toUpperCase() + record.tipo.slice(1);
     const localDateTime = new Date(record.fecha_hora + 'Z').toLocaleString('es-ES');
@@ -192,21 +194,21 @@ function renderRecords() {
       case 'aprobado':
         // El estado "aprobado" se traduce al estado actual del empleado (Dentro/Fuera)
         const status = userStatusMap.get(record.codigo_empleado) || 'egreso';
-        estadoDisplay = status === 'ingreso' ? 'Dentro' : 'Fuera';
+        estadoDisplay = status === 'ingreso' ? t('status_inside') : t('status_outside');
         estadoClass = `estado-${status}`;
         break;
       case 'rechazado':
-        estadoDisplay = 'Rechazado';
+        estadoDisplay = t('status_rejected');
         estadoClass = 'estado-rechazado'; // Necesitará CSS
         break;
       case 'pendiente_autorizacion':
-        estadoDisplay = 'Pendiente';
+        estadoDisplay = t('status_pending');
         estadoClass = 'estado-pendiente_autorizacion';
         break;
       default:
         // Lógica fallback para registros sin el campo 'estado'
         const fallbackStatus = userStatusMap.get(record.codigo_empleado) || 'egreso';
-        estadoDisplay = fallbackStatus === 'ingreso' ? 'Dentro' : 'Fuera';
+        estadoDisplay = fallbackStatus === 'ingreso' ? t('status_inside') : t('status_outside');
         estadoClass = `estado-${fallbackStatus}`;
     }
 
@@ -227,10 +229,10 @@ function renderEmployees() {
         <div class="employee-card">
             <div class="employee-info">
                 <h4>${employee.nombre} ${employee.apellido || ''}</h4>
-                <p>Código: ${employee.codigo_empleado} | DNI: ${employee.dni || ''}</p>
+                <p>${t('employee_code', { code: employee.codigo_empleado, dni: employee.dni || '' })}</p>
             </div>
             <div class="employee-level level-${employee.nivel_acceso || 1}">
-                ${employee.nivel_acceso === APP_CONSTANTS.USER_LEVELS.SUPERVISOR ? 'Supervisor' : 'Empleado'}
+                ${employee.nivel_acceso === APP_CONSTANTS.USER_LEVELS.SUPERVISOR ? t('role_supervisor_label') : t('role_employee_label')}
             </div>
         </div>
     `).join('');
@@ -239,8 +241,8 @@ function renderEmployees() {
 // --- Flujo de Registro de Empleados ---
 function handleStartCaptureClick() {
   const { code, name, surname, dni, role, zone, shift } = dom.form;
-  if (!code.value || !name.value || !surname.value || !dni.value || !role.value || !zone.value || !shift.value) return alert('Complete todos los campos.');
-  if (state.getUsers().some(u => u.codigo_empleado === code.value)) return alert('El código de empleado ya existe.');
+  if (!code.value || !name.value || !surname.value || !dni.value || !role.value || !zone.value || !shift.value) return alert(t('fill_all_fields'));
+  if (state.getUsers().some(u => u.codigo_empleado === code.value)) return alert(t('employee_code_exists'));
 
   currentUserData = {
     codigo_empleado: code.value, nombre: name.value, apellido: surname.value, dni: dni.value,
@@ -263,27 +265,27 @@ async function startFaceCapture() {
       if (detection) {
         const faceMatcher = state.getFaceMatcher();
         if (faceMatcher && faceMatcher.findBestMatch(detection.descriptor).label !== 'unknown') {
-          dom.captureStatus.textContent = 'Este rostro ya está registrado.';
+          dom.captureStatus.textContent = t('face_already_registered');
           dom.confirmCaptureBtn.disabled = true;
         } else {
-          dom.captureStatus.textContent = 'Rostro detectado. Puede confirmar.';
+          dom.captureStatus.textContent = t('face_detected_can_confirm');
           dom.confirmCaptureBtn.disabled = false;
           faceDescriptor = detection.descriptor;
         }
       } else {
-        dom.captureStatus.textContent = 'No se detecta un único rostro.';
+        dom.captureStatus.textContent = t('no_single_face_detected');
         dom.confirmCaptureBtn.disabled = true;
       }
     }, 300);
   } catch (err) {
-    dom.captureStatus.textContent = 'Error al iniciar la cámara.';
+    dom.captureStatus.textContent = t('camera_init_error');
   }
 }
 
 async function confirmCapture() {
   if (!faceDescriptor || !currentUserData) return;
   dom.confirmCaptureBtn.disabled = true;
-  dom.captureStatus.textContent = 'Procesando...';
+  dom.captureStatus.textContent = t('processing');
   try {
     const canvas = document.createElement('canvas');
     canvas.width = dom.video.videoWidth;
@@ -296,11 +298,11 @@ async function confirmCapture() {
     const newUser = await api.registerUser(currentUserData);
     state.addUser(newUser);
 
-    alert(`Usuario ${newUser.nombre} registrado.`);
+    alert(t('user_registered_success', { name: newUser.nombre }));
     showEmployeeView('empleados-main-view');
     renderEmployees();
   } catch (error) {
-    alert('Hubo un error al registrar el usuario.');
+    alert(t('user_registration_error'));
   } finally {
     stopVideoStream();
   }
@@ -364,7 +366,7 @@ async function main() {
     renderEmployees();
     initializeStatistics();
   } catch (error) {
-    alert("No se pudo cargar la información del panel: " + error.message);
+    alert(t('panel_load_error', { error: error.message }));
   }
 }
 
