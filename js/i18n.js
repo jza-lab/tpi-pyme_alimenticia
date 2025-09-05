@@ -147,7 +147,12 @@ export const translations = {
     "processing": "Procesando...",
     "user_registered_success": "Usuario {{name}} registrado.",
     "user_registration_error": "Hubo un error al registrar el usuario.",
-    "panel_load_error": "No se pudo cargar la información del panel: {{error}}"
+    "panel_load_error": "No se pudo cargar la información del panel: {{error}}",
+
+    "all_shifts": "Todos los turnos",
+    "clear_filters": "Limpiar Filtros",
+    "filter_by_name_placeholder": "Filtrar por nombre...",
+    "filter_by_id_placeholder": "Filtrar por legajo..."
   },
   en: {
     // index.html
@@ -297,6 +302,11 @@ export const translations = {
     "processing": "Processing...",
     "user_registered_success": "User {{name}} registered.",
     "user_registration_error": "There was an error registering the user.",
-    "panel_load_error": "Could not load panel information: {{error}}"
+    "panel_load_error": "Could not load panel information: {{error}}",
+
+    "all_shifts": "All Shifts",
+    "clear_filters": "Clear Filters",
+    "filter_by_name_placeholder": "Filter by name...",
+    "filter_by_id_placeholder": "Filter by ID..."
   }
 };
