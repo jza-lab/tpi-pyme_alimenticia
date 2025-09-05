@@ -162,21 +162,18 @@ export async function checkRecentRejection(employeeCode) {
     // Definir el rango de tiempo (últimas 12 horas)
     const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
 
-    // La investigación en menu.js confirmó que los nombres de las columnas son correctos.
-    // El error 400 probablemente se debió a la sintaxis de la consulta (count/head).
-    // Se simplifica la consulta para que sea más robusta.
+    // El log del usuario confirmó que la tabla correcta es 'access' y las columnas son 'estado' y 'fecha_hora'.
     const { data, error } = await supabase
-        .from('pending_authorizations')
-        .select('id') // Solo necesitamos saber si existe un registro, no necesitamos todos los datos.
+        .from('access') // Tabla correcta
+        .select('id')
         .eq('codigo_empleado', employeeCode)
-        .eq('status', 'rechazado')
-        .gte('created_at', twelveHoursAgo)
-        .limit(1); // Optimización: nos detenemos en cuanto encontramos uno.
+        .eq('estado', 'rechazado') // Columna y valor correctos
+        .gte('fecha_hora', twelveHoursAgo) // Columna correcta
+        .limit(1);
 
     if (error) {
-        console.error('Error al verificar rechazos recientes:', error);
-        // En caso de un error de base de datos, es más seguro no bloquear al usuario
-        // y permitir que el backend (si se arregla) tome la decisión.
+        console.error('Error al verificar rechazos recientes (tabla access):', error);
+        // En caso de un error de base de datos, es más seguro no bloquear al usuario.
         return false;
     }
 
