@@ -373,41 +373,24 @@ async function grantAccess(user) {
 
       showScreen('access-granted-screen');
     } catch (error) {
-      console.error(t('grant_access_error'), error);
+        console.error(t('grant_access_error'), error);
 
-      let errorMessage = t('unknown_registration_error');
-      if (error.context && typeof error.context.json === 'function') {
-          try {
-              const jsonError = await error.context.json();
-              errorMessage = jsonError.error || errorMessage;
-          } catch (e) { 
-              errorMessage = error.message; 
-          }
-      } else {
-          errorMessage = error.message;
-      }
-      
-      const isAuthorizationError = errorMessage.includes('ya se encuentra dentro') || errorMessage.includes('no se encuentra dentro');
-
-      // Solo solicitar autorización si es un error de autorización genuino Y
-      // el usuario no había sido ya aprobado para este turno.
-      if (isAuthorizationError && !wasAlreadyApprovedForThisShift) {
-        try {
-          const details = { motivo: errorMessage };
-          await api.requestAccessAuthorization(user.codigo_empleado, currentLoginType, details);
-          
-          // Refrescar estado después de crear la autorización
-          await state.refreshState();
-          
-          showPendingAuthorizationScreen(user, currentLoginType);
-        } catch (authError) {
-          console.error("Error al solicitar autorización por error:", authError);
-          denyAccess(t('authorization_request_error'), user);
+        let errorMessage = t('unknown_registration_error');
+        if (error.context && typeof error.context.json === 'function') {
+            try {
+                const jsonError = await error.context.json();
+                errorMessage = jsonError.error || errorMessage;
+            } catch (e) {
+                errorMessage = error.message;
+            }
+        } else {
+            errorMessage = error.message;
         }
-      } else {
-        // Para re-ingresos o errores no relacionados con autorización, solo mostrar el mensaje.
+
+        // Corregido: En lugar de crear una nueva solicitud de autorización,
+        // simplemente mostramos el error al usuario. El flujo de autorización
+        // solo debe ser iniciado por lógicas específicas (ej: fuera de turno).
         denyAccess(errorMessage, user);
-      }
     }
 
   } catch (stateError) {
