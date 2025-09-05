@@ -90,6 +90,8 @@ export const translations = {
     "role_label": "Rol:",
     "select_role": "Seleccione un rol...",
     "role_employee": "Empleado (Nivel 1)",
+    "role_analyst": "Analista (Nivel 2)",
+    "role_manager": "Gerente (Nivel 4)",
     "role_supervisor": "Supervisor (Nivel 3)",
     "zone_label": "Zona Asignada:",
     "select_zone": "Seleccione una zona...",
@@ -160,7 +162,8 @@ export const translations = {
 
     "all_roles": "Todos los roles",
     "all_access_levels": "Todos los accesos",
-    "with_menu_access": "Con Acceso al Menú (Nivel 3+)"
+    "with_menu_access": "Con Acceso al Menú (Nivel 3+)",
+    "multi_select_hint": "Mantén presionado Ctrl (o Cmd en Mac) para seleccionar varias zonas."
   },
   en: {
     // index.html
@@ -253,6 +256,8 @@ export const translations = {
     "role_label": "Role:",
     "select_role": "Select a role...",
     "role_employee": "Employee (Level 1)",
+    "role_analyst": "Analyst (Level 2)",
+    "role_manager": "Manager (Level 4)",
     "role_supervisor": "Supervisor (Level 3)",
     "zone_label": "Assigned Zone:",
     "select_zone": "Select a zone...",
@@ -323,6 +328,7 @@ export const translations = {
 
     "all_roles": "All Roles",
     "all_access_levels": "All Access Levels",
-    "with_menu_access": "With Menu Access (Level 3+)"
+    "with_menu_access": "With Menu Access (Level 3+)",
+    "multi_select_hint": "Hold down Ctrl (or Cmd on Mac) to select multiple zones."
   }
 };

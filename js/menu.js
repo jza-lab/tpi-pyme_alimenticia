@@ -1,472 +1,334 @@
-import { APP_CONSTANTS } from './config.js';
-import * as api from './api.js';
-import * as face from './face.js';
-import * as state from './state.js';
-import { initializeStatistics } from './statistics.js';
-import { t, updateUI } from './i18n-logic.js';
+export const translations = {
+  es: {
+    // index.html
+    "app_title": "Control de Acceso por Reconocimiento Facial",
+    "welcome": "Bienvenido",
+    "intro": "Sistema de reconocimiento facial para registro y autenticación de usuarios",
+    "select_option": "Seleccione una opción para continuar:",
+    "register_income": "Registrar Ingreso",
+    "register_exit": "Registrar Egreso",
+    "login_title": "Registro de Ingreso/Egreso",
+    "login_description": "Por favor, colóquese frente a la cámara.",
+    "searching_for_match": "Buscando coincidencias...",
+    "back_to_home": "Volver al Inicio",
+    "manual_login": "Inicio de Sesión Manual",
+    "operator_code_label": "Legajo:",
+    "operator_dni_label": "DNI:",
+    "manual_login_button": "Iniciar Sesión",
+    "retry_facial_login": "Reintentar",
+    "access_granted_title": "¡Registro Exitoso!",
+    "supervisor_menu": "Menú Supervisor",
+    "access_denied_title": "Acceso Denegado",
+    "try_again": "Intentar Nuevamente",
+    "pending_authorization_title": "Solicitud Enviada",
+    "pending_authorization_message": "Su solicitud de acceso ha sido enviada a un supervisor para su aprobación.",
+    "understood": "Entendido",
+    "ingreso": "Ingreso",
+    "egreso": "Egreso",
 
-// --- Seguridad---
-//  if (sessionStorage.getItem('isSupervisor') !== 'true') {
-  //  window.location.replace('index.html');
-// }
+    // app.js dynamic strings
+    "register_type": "Registro de {{type}}",
+    "position_for_scan": "Por favor, colóquese frente a la cámara para registrar su {{type}}.",
+    "camera_access_error": "No se pudo acceder a la cámara.",
+    "user_recognized_confirming": "Usuario reconocido: {{name}}. Confirmando en {{countdown}}...",
+    "user_recognized": "Usuario reconocido: {{name}}. Confirmando...",
+    "out_of_shift_attempt": "Intento de ingreso fuera del turno asignado.",
+    "authorization_request_error": "No se pudo enviar la solicitud de autorización.",
+    "unknown_registration_error": "Error desconocido al registrar el acceso.",
+    "authorization_already_pending": "Ya existe una solicitud de autorización pendiente.",
+    "authorization_rejected": "La solicitud de autorización fue rechazada.",
+    "max_authorization_attempts_exceeded": "Ha superado el número máximo ({{max}}) de solicitudes de autorización.",
+    "you_have_x_attempts_left": "Le queda {{count}} intento(s).",
+    "no_more_attempts_left": "No le quedan más intentos.",
+    "access_registered_message": "{{name}}, su {{type}} ha sido registrado.",
+    "grant_access_error": "Error en grantAccess, evaluando fallback de autorización:",
+    "pending_authorization_message_dynamic": "Su solicitud de {{type}} ha sido enviada a un supervisor para su aprobación.",
+    "fill_both_fields": "Por favor, complete ambos campos.",
+    "incorrect_credentials": "Credenciales incorrectas.",
+    "recognition_failed_manual_prompt": "Reconocimiento fallido. Pruebe el acceso manual.",
+    "manual_access_type": "Acceso Manual de {{type}}",
+    "register_type_manual_button": "Registrar {{type}}",
+    "security_error_supervisor_code": "Error de seguridad: No se encontró el legajo de supervisor.",
+    "prompt_supervisor_code": "Para continuar, por favor ingrese su legajo:",
+    "incorrect_code_denied": "Legajo incorrecto. Acceso denegado.",
+    "denial_title_entry": "Ingreso no Registrado",
+    "denial_title_exit": "Egreso no Registrado",
+    "denial_reason_entry": "Razón: {{name}} ya se encuentra dentro.",
+    "denial_reason_exit": "Razón: {{name}} ya se encuentra fuera.",
+    "loading_error": "Error al cargar: {{error}}",
+    "access_granted_pending_title": "Ingreso Registrado",
+    "access_granted_pending_message": "Su ingreso ha sido registrado, pero está fuera de su turno y será revisado por un supervisor.",
+    "access_recently_rejected": "Su solicitud de acceso fue rechazada recientemente. Por favor, espere a su turno.",
+    "exit_denied_due_to_rejection": "Egreso no registrado. Su autorización de ingreso anterior fue rechazada.",
+    "in_shift_entry_reason": "Ingreso normal durante el turno",
 
-// --- Referencias al DOM (cacheadas para eficiencia) ---
-const dom = {
-  sections: document.querySelectorAll('.content-section'),
-  navButtons: document.querySelectorAll('.nav-btn, .mobile-side-item'),
-  empleadosMainView: document.getElementById('empleados-main-view'),
-  registerScreen: document.getElementById('register-screen'),
-  captureScreen: document.getElementById('capture-screen'),
-  employeesList: document.getElementById('empleados-list'),
-  form: {
-    code: document.getElementById('operator-code'), name: document.getElementById('operator-name'),
-    surname: document.getElementById('operator-surname'), dni: document.getElementById('operator-dni'),
-    role: document.getElementById('operator-role'), zone: document.getElementById('operator-zone'),
-    shift: document.getElementById('operator-shift'),
-    captureBtn: document.getElementById('capture-btn'),
-    backToEmployeesBtn: document.getElementById('back-to-employees')
+    // menu.html
+    "admin_panel_title": "Panel Administrativo",
+    "logout": "Salir",
+    "open_menu": "Abrir menú lateral",
+    "menu": "Menú",
+    "close_menu": "Cerrar menú",
+    "access_history": "📊 Historial de Accesos",
+    "employee_management": "👥 Gestión de Empleados",
+    "authorizations": "🔔 Autorizaciones",
+    "statistics": "📈 Estadísticas",
+    "access_history_title": "Historial de Ingresos/Egresos",
+    "refresh_records": "Actualizar Registros",
+    "inside": "Dentro",
+    "outside": "Fuera",
+    "date": "Fecha",
+    "employee": "Empleado/a",
+    "code": "Legajo",
+    "type": "Tipo",
+    "status": "Estado",
+    "register_new_employee": "Registrar Nuevo Empleado",
+    "delete_employee": "Eliminar Empleado",
+    "new_user_registration_title": "Registro de Nuevo Usuario",
+    "employee_code_label": "Legajo:",
+    "name_label": "Nombre:",
+    "surname_label": "Apellido:",
+    "role_label": "Rol:",
+    "select_role": "Seleccione un rol...",
+    "role_employee": "Empleado (Nivel 1)",
+    "role_analyst": "Analista (Nivel 2)",
+    "role_manager": "Gerente (Nivel 4)",
+    "role_supervisor": "Supervisor (Nivel 3)",
+    "zone_label": "Zona Asignada:",
+    "select_zone": "Seleccione una zona...",
+    "zone_reception": "Recepción",
+    "zone_storage": "Almacenamiento",
+    "zone_processing": "Procesamiento",
+    "zone_conservation": "Conservación",
+    "zone_dispatch": "Despacho",
+    "shift_label": "Turno:",
+    "select_shift": "Seleccione un turno...",
+    "shift_morning": "Mañana",
+    "shift_afternoon": "Tarde",
+    "shift_night": "Noche",
+    "capture_face": "Capturar Rostro",
+    "back": "Volver",
+    "face_capture_title": "Captura de Rostro",
+    "face_capture_instruction": "Por favor, colóquese frente a la cámara y asegúrese de que su rostro esté bien iluminado.",
+    "waiting_for_detection": "Esperando detección facial...",
+    "confirm_capture": "Confirmar Captura",
+    "retry": "Reintentar",
+    "back_to_register": "Volver al Registro",
+    "pending_authorizations_title": "Autorizaciones Pendientes",
+    "refresh_authorizations": "Actualizar",
+    "key_alerts_observations": "Alertas y Observaciones Clave",
+    "stats_chart_fallback": "Gráfico de estadísticas se mostraría aquí",
+    "footer_text": "© Sistema - Panel Administrativo",
+
+    // menu.js dynamic strings
+    "no_pending_authorizations": "No hay autorizaciones pendientes.",
+    "authorization_reason": "Motivo: {{reason}}",
+    "not_specified": "No especificado",
+    "assigned_shift": "Turno Asignado:",
+    "attempted_shift": "Intento de Ingreso:",
+    "authorize": "Autorizar",
+    "reject": "Rechazar",
+    "error_loading_authorizations": "Error al cargar las autorizaciones.",
+    "confirm_authorization_action": "¿Está seguro de que desea {{action}} esta solicitud?",
+    "approve": "aprobar",
+    "reject_verb": "rechazar",
+    "authorization_action_error": "Error al {{action}} la solicitud.",
+    "unknown_employee": "Desconocido",
+    "status_inside": "Dentro",
+    "status_outside": "Fuera",
+    "status_rejected": "Rechazado",
+    "status_pending": "Pendiente",
+    "employee_code": "Legajo: {{code}} | DNI: {{dni}}",
+    "role_supervisor_label": "Supervisor",
+    "role_employee_label": "Empleado",
+    "fill_all_fields": "Complete todos los campos.",
+    "employee_code_exists": "El legajo de empleado ya existe.",
+    "face_already_registered": "Este rostro ya está registrado.",
+    "face_detected_can_confirm": "Rostro detectado. Puede confirmar.",
+    "no_single_face_detected": "No se detecta un único rostro.",
+    "camera_init_error": "Error al iniciar la cámara.",
+    "processing": "Procesando...",
+    "user_registered_success": "Usuario {{name}} registrado.",
+    "user_registration_error": "Hubo un error al registrar el usuario.",
+    "panel_load_error": "No se pudo cargar la información del panel: {{error}}",
+
+    "all_shifts": "Todos los turnos",
+    "clear_filters": "Limpiar Filtros",
+    "filter_by_name_placeholder": "Filtrar por nombre...",
+    "filter_by_id_placeholder": "Filtrar por legajo...",
+
+    "all_types": "Todos los tipos",
+    "entry_type": "Ingreso",
+    "exit_type": "Egreso",
+
+    "all_roles": "Todos los roles",
+    "all_access_levels": "Todos los accesos",
+    "with_menu_access": "Con Acceso al Menú (Nivel 3+)",
+    "multi_select_hint": "Mantén presionado Ctrl (o Cmd en Mac) para seleccionar varias zonas."
   },
-  video: document.getElementById('video'),
-  overlay: document.getElementById('overlay'),
-  captureStatus: document.getElementById('capture-status'),
-  confirmCaptureBtn: document.getElementById('confirm-capture-btn'),
-  backToRegisterBtn: document.getElementById('back-to-register'),
-  recordsTbody: document.getElementById('records-tbody'),
-  peopleInsideCount: document.getElementById('people-inside-count'),
-  peopleOutsideCount: document.getElementById('people-outside-count'),
-  refreshRecordsBtn: document.getElementById('refresh-records'),
-  mobile: {
-    openBtn: document.getElementById("mobile-menu-btn"),
-    closeBtn: document.getElementById("mobile-sidebar-close"),
-    overlay: document.getElementById("mobile-sidebar-overlay")
-  },
-  filters: {
-    name: document.getElementById('filter-by-name'),
-    id: document.getElementById('filter-by-id'),
-    shift: document.getElementById('filter-by-shift'),
-    type: document.getElementById('filter-by-type'),
-    date: document.getElementById('filter-by-date'),
-    clearBtn: document.getElementById('clear-filters-btn')
-  },
-  employeeFilters: {
-    role: document.getElementById('filter-employee-by-role'),
-    shift: document.getElementById('filter-employee-by-shift'),
-    menuAccess: document.getElementById('filter-employee-by-menu-access'),
-    clearBtn: document.getElementById('clear-employee-filters-btn')
+  en: {
+    // index.html
+    "app_title": "Access Control by Facial Recognition",
+    "welcome": "Welcome",
+    "intro": "Facial recognition system for user registration and authentication",
+    "select_option": "Select an option to continue:",
+    "register_income": "Register Entry",
+    "register_exit": "Register Exit",
+    "login_title": "Entry/Exit Registration",
+    "login_description": "Please stand in front of the camera.",
+    "searching_for_match": "Searching for matches...",
+    "back_to_home": "Back to Home",
+    "manual_login": "Manual Login",
+    "operator_code_label": "ID:",
+    "operator_dni_label": "DNI:",
+    "manual_login_button": "Login",
+    "retry_facial_login": "Retry",
+    "access_granted_title": "Registration Successful!",
+    "supervisor_menu": "Supervisor Menu",
+    "access_denied_title": "Access Denied",
+    "try_again": "Try Again",
+    "pending_authorization_title": "Request Sent",
+    "pending_authorization_message": "Your access request has been sent to a supervisor for approval.",
+    "understood": "Understood",
+    "ingreso": "Entry",
+    "egreso": "Exit",
+
+    // app.js dynamic strings
+    "register_type": "{{type}} Registration",
+    "position_for_scan": "Please stand in front of the camera to register your {{type}}.",
+    "camera_access_error": "Could not access the camera.",
+    "user_recognized_confirming": "User recognized: {{name}}. Confirming in {{countdown}}...",
+    "user_recognized": "User recognized: {{name}}. Confirming...",
+    "out_of_shift_attempt": "Attempt to enter outside of assigned shift.",
+    "authorization_request_error": "Could not send authorization request.",
+    "unknown_registration_error": "Unknown error when registering access.",
+    "authorization_already_pending": "An authorization request is already pending.",
+    "authorization_rejected": "The authorization request was rejected.",
+    "max_authorization_attempts_exceeded": "You have exceeded the maximum number ({{max}}) of authorization requests.",
+    "you_have_x_attempts_left": "You have {{count}} attempt(s) left.",
+    "no_more_attempts_left": "You have no more attempts left.",
+    "access_registered_message": "{{name}}, your {{type}} has been registered.",
+    "grant_access_error": "Error in grantAccess, evaluating authorization fallback:",
+    "pending_authorization_message_dynamic": "Your {{type}} request has been sent to a supervisor for approval.",
+    "fill_both_fields": "Please fill in both fields.",
+    "incorrect_credentials": "Incorrect credentials.",
+    "recognition_failed_manual_prompt": "Recognition failed. Try manual access.",
+    "manual_access_type": "Manual {{type}} Access",
+    "register_type_manual_button": "Register {{type}}",
+    "security_error_supervisor_code": "Security error: Supervisor code not found.",
+    "prompt_supervisor_code": "To continue, please enter your code:",
+    "incorrect_code_denied": "Incorrect code. Access denied.",
+    "denial_title_entry": "Entry Not Registered",
+    "denial_title_exit": "Exit Not Registered",
+    "denial_reason_entry": "Reason: {{name}} is already inside.",
+    "denial_reason_exit": "Reason: {{name}} is already outside.",
+    "loading_error": "Error loading: {{error}}",
+    "access_granted_pending_title": "Entry Logged",
+    "access_granted_pending_message": "Your entry has been logged, but it is outside of your shift and will be reviewed by a supervisor.",
+    "access_recently_rejected": "Your access request was recently rejected. Please wait for your shift.",
+    "exit_denied_due_to_rejection": "Exit not registered. Your previous entry authorization was rejected.",
+    "in_shift_entry_reason": "Normal in-shift entry",
+
+    // menu.html
+    "admin_panel_title": "Admin Panel",
+    "logout": "Logout",
+    "open_menu": "Open side menu",
+    "menu": "Menu",
+    "close_menu": "Close menu",
+    "access_history": "📊 Access History",
+    "employee_management": "👥 Employee Management",
+    "authorizations": "🔔 Authorizations",
+    "statistics": "📈 Statistics",
+    "access_history_title": "Entry/Exit History",
+    "refresh_records": "Refresh Records",
+    "inside": "Inside",
+    "outside": "Outside",
+    "date": "Date",
+    "employee": "Employee",
+    "code": "ID",
+    "type": "Type",
+    "status": "Status",
+    "register_new_employee": "Register New Employee",
+    "delete_employee": "Delete Employee",
+    "new_user_registration_title": "New User Registration",
+    "employee_code_label": "Employee ID:",
+    "name_label": "Name:",
+    "surname_label": "Surname:",
+    "role_label": "Role:",
+    "select_role": "Select a role...",
+    "role_employee": "Employee (Level 1)",
+    "role_analyst": "Analyst (Level 2)",
+    "role_manager": "Manager (Level 4)",
+    "role_supervisor": "Supervisor (Level 3)",
+    "zone_label": "Assigned Zone:",
+    "select_zone": "Select a zone...",
+    "zone_reception": "Reception",
+    "zone_storage": "Storage",
+    "zone_processing": "Processing",
+    "zone_conservation": "Conservation",
+    "zone_dispatch": "Dispatch",
+    "shift_label": "Shift:",
+    "select_shift": "Select a shift...",
+    "shift_morning": "Morning",
+    "shift_afternoon": "Afternoon",
+    "shift_night": "Night",
+    "capture_face": "Capture Face",
+    "back": "Back",
+    "face_capture_title": "Face Capture",
+    "face_capture_instruction": "Please stand in front of the camera and make sure your face is well lit.",
+    "waiting_for_detection": "Waiting for face detection...",
+    "confirm_capture": "Confirm Capture",
+    "retry": "Retry",
+    "back_to_register": "Back to Registration",
+    "pending_authorizations_title": "Pending Authorizations",
+    "refresh_authorizations": "Refresh",
+    "key_alerts_observations": "Key Alerts and Observations",
+    "stats_chart_fallback": "Statistics chart would be displayed here",
+    "footer_text": "© System - Admin Panel",
+
+    // menu.js dynamic strings
+    "no_pending_authorizations": "No pending authorizations.",
+    "authorization_reason": "Reason: {{reason}}",
+    "not_specified": "Not specified",
+    "assigned_shift": "Assigned Shift:",
+    "attempted_shift": "Attempted Entry:",
+    "authorize": "Authorize",
+    "reject": "Reject",
+    "error_loading_authorizations": "Error loading authorizations.",
+    "confirm_authorization_action": "Are you sure you want to {{action}} this request?",
+    "approve": "approve",
+    "reject_verb": "reject",
+    "authorization_action_error": "Error while trying to {{action}} the request.",
+    "unknown_employee": "Unknown",
+    "status_inside": "Inside",
+    "status_outside": "Outside",
+    "status_rejected": "Rejected",
+    "status_pending": "Pending",
+    "employee_code": "ID: {{code}} | DNI: {{dni}}",
+    "role_supervisor_label": "Supervisor",
+    "role_employee_label": "Employee",
+    "fill_all_fields": "Please complete all fields.",
+    "employee_code_exists": "The employee ID already exists.",
+    "face_already_registered": "This face is already registered.",
+    "face_detected_can_confirm": "Face detected. You can confirm.",
+    "no_single_face_detected": "A single face is not detected.",
+    "camera_init_error": "Error starting the camera.",
+    "processing": "Processing...",
+    "user_registered_success": "User {{name}} registered.",
+    "user_registration_error": "There was an error registering the user.",
+    "panel_load_error": "Could not load panel information: {{error}}",
+
+    "all_shifts": "All Shifts",
+    "clear_filters": "Clear Filters",
+    "filter_by_name_placeholder": "Filter by name...",
+    "filter_by_id_placeholder": "Filter by ID...",
+
+    "all_types": "All Types",
+    "entry_type": "Entry",
+    "exit_type": "Exit",
+
+    "all_roles": "All Roles",
+    "all_access_levels": "All Access Levels",
+    "with_menu_access": "With Menu Access (Level 3+)",
+    "multi_select_hint": "Hold down Ctrl (or Cmd on Mac) to select multiple zones."
   }
 };
-
-// --- Estado local del menú ---
-let currentUserData = null;
-let faceDescriptor = null;
-let detectionInterval = null;
-
-// --- Gestión de Vistas y Navegación ---
-function showSection(sectionId) {
-  dom.sections.forEach(s => s.classList.remove('active'));
-  document.getElementById(sectionId)?.classList.add('active');
-
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.section === sectionId));
-
-  if (sectionId === 'accesos') renderRecords();
-  if (sectionId === 'empleados') renderEmployees();
-  if (sectionId === 'autorizaciones') renderAuthorizations();
-}
-
-async function renderAuthorizations() {
-  const authorizationsList = document.getElementById('authorizations-list');
-  if (!authorizationsList) return;
-
-  try {
-    const pendingRecords = await api.fetchPendingAuthorizations();
-    const users = state.getUsers();
-    const userMap = new Map(users.map(u => [u.codigo_empleado, u]));
-
-    if (pendingRecords.length === 0) {
-      authorizationsList.innerHTML = `<p>${t('no_pending_authorizations')}</p>`;
-      return;
-    }
-
-    authorizationsList.innerHTML = pendingRecords.map(record => {
-      const user = userMap.get(record.codigo_empleado);
-      const userName = user ? `${user.nombre} ${user.apellido || ''}` : t('unknown_employee');
-      const localDateTime = new Date(record.created_at).toLocaleString('es-ES');
-      
-      let detailsHtml = `<p>${t('authorization_reason', { reason: record.details?.motivo || t('not_specified') })}</p>`;
-
-      if (record.details && record.details.turno_correspondiente) {
-        detailsHtml = `
-          <div class="authorization-details">
-            <p><strong>${t('assigned_shift')}</strong> ${record.details.turno_correspondiente}</p>
-            <p><strong>${t('attempted_shift')}</strong> ${record.details.turno_intento}</p>
-          </div>
-        `;
-      }
-
-      return `
-        <div class="authorization-card" id="auth-card-${record.id}">
-          <div class="auth-card-header">
-            <h4>${userName}</h4>
-            <span class="auth-card-time">${localDateTime}</span>
-          </div>
-          <div class="auth-card-body">
-            <p>Solicitó: <strong class="access-type ${record.tipo}">${record.tipo}</strong></p>
-            ${detailsHtml}
-          </div>
-          <div class="authorization-actions">
-            <button class="btn btn-success" data-record-id="${record.id}" data-action="aprobado">${t('authorize')}</button>
-            <button class="btn btn-danger" data-record-id="${record.id}" data-action="rechazado">${t('reject')}</button>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    // Add event listeners after rendering
-    authorizationsList.querySelectorAll('.authorization-actions .btn').forEach(button => {
-      button.addEventListener('click', handleAuthorizationAction);
-    });
-
-  } catch (error) {
-    authorizationsList.innerHTML = `<p class="status error">${t('error_loading_authorizations')}</p>`;
-    console.error('Error rendering authorizations:', error);
-  }
-}
-
-async function handleAuthorizationAction(event) {
-  const button = event.currentTarget;
-  const recordId = button.dataset.recordId;
-  const action = button.dataset.action; // 'aprobado' or 'rechazado'
-  const actionText = action === 'aprobado' ? t('approve') : t('reject_verb');
-
-  if (!confirm(t('confirm_authorization_action', { action: actionText }))) {
-    return;
-  }
-
-  try {
-    // Llama a la nueva Edge Function que maneja toda la lógica.
-    await api.resolveAuthorization(recordId, action);
-
-    // Forzar la actualización del estado y volver a renderizar la lista
-    // para asegurar que la UI está 100% sincronizada con el backend.
-    await state.refreshState();
-    await renderAuthorizations();
-    
-  } catch (error) {
-    alert(t('authorization_action_error', { action: actionText }));
-    console.error('Authorization action failed:', error);
-  }
-}
-
-function showEmployeeView(view) {
-  dom.empleadosMainView.hidden = true;
-  dom.registerScreen.classList.remove('active');
-  dom.captureScreen.classList.remove('active');
-
-  if (view !== 'capture-screen') {
-    stopVideoStream();
-  }
-
-  if (view === 'empleados-main-view') {
-    dom.empleadosMainView.hidden = false;
-  } else if (view === 'register-screen') {
-    dom.registerScreen.classList.add('active');
-  } else if (view === 'capture-screen') {
-    dom.captureScreen.classList.add('active');
-    startFaceCapture();
-  }
-}
-
-// --- Renderizado de Datos ---
-function renderRecords() {
-  const allRecords = state.getAccessRecords();
-  const users = state.getUsers();
-  const userMap = new Map(users.map(u => [u.codigo_empleado, u]));
-
-  // Lógica de filtrado
-  const nameFilter = dom.filters.name.value.toLowerCase();
-  const idFilter = dom.filters.id.value.toLowerCase();
-  const shiftFilter = dom.filters.shift.value;
-  const typeFilter = dom.filters.type.value;
-  const dateFilter = dom.filters.date.value;
-
-  const filteredRecords = allRecords.filter(record => {
-    const user = userMap.get(record.codigo_empleado);
-    if (!user) return false; // Ocultar registros de usuarios desconocidos
-
-    const userName = `${user.nombre} ${user.apellido || ''}`.toLowerCase();
-    const recordDate = record.fecha_hora.split('T')[0]; // Formato YYYY-MM-DD
-
-    const nameMatch = !nameFilter || userName.includes(nameFilter);
-    const idMatch = !idFilter || user.codigo_empleado.toLowerCase().includes(idFilter);
-    const shiftMatch = !shiftFilter || user.turno === shiftFilter;
-    const typeMatch = !typeFilter || record.tipo === typeFilter;
-    const dateMatch = !dateFilter || recordDate === dateFilter;
-
-    return nameMatch && idMatch && shiftMatch && typeMatch && dateMatch;
-  });
-
-
-  const userStatusMap = new Map();
-  let peopleInside = 0;
-  
-  // Base status on all records, not filtered ones
-  users.forEach(user => {
-    const lastRecord = allRecords.filter(r => r.codigo_empleado === user.codigo_empleado).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora))[0];
-    const status = lastRecord ? lastRecord.tipo : 'egreso';
-    userStatusMap.set(user.codigo_empleado, status);
-    if (status === 'ingreso') {
-      peopleInside++;
-    }
-  });
-  
-  // Update counts based on the *original* state, not the filters
-  dom.peopleInsideCount.textContent = peopleInside;
-  dom.peopleOutsideCount.textContent = users.length - peopleInside;
-  dom.recordsTbody.innerHTML = filteredRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora)).map(record => {
-    const user = userMap.get(record.codigo_empleado);
-    const userName = user ? `${user.nombre} ${user.apellido || ''}` : t('unknown_employee');
-    
-    const capitalizedTipo = record.tipo.charAt(0).toUpperCase() + record.tipo.slice(1);
-    const localDateTime = new Date(record.fecha_hora + 'Z').toLocaleString('es-ES');
-
-    let estadoDisplay;
-    let estadoClass;
-
-    switch (record.estado) {
-      case 'aprobado':
-        // El estado "aprobado" se traduce al estado actual del empleado (Dentro/Fuera)
-        const status = userStatusMap.get(record.codigo_empleado) || 'egreso';
-        estadoDisplay = status === 'ingreso' ? t('status_inside') : t('status_outside');
-        estadoClass = `estado-${status}`;
-        break;
-      case 'rechazado':
-        estadoDisplay = t('status_rejected');
-        estadoClass = 'estado-rechazado'; // Necesitará CSS
-        break;
-      case 'pendiente_autorizacion':
-        estadoDisplay = t('status_pending');
-        estadoClass = 'estado-pendiente_autorizacion';
-        break;
-      default:
-        // Lógica fallback para registros sin el campo 'estado'
-        const fallbackStatus = userStatusMap.get(record.codigo_empleado) || 'egreso';
-        estadoDisplay = fallbackStatus === 'ingreso' ? t('status_inside') : t('status_outside');
-        estadoClass = `estado-${fallbackStatus}`;
-    }
-
-    return `
-            <tr>
-                <td>${localDateTime}</td>
-                <td>${userName}</td>
-                <td>${record.codigo_empleado}</td>
-                <td class="tipo-${record.tipo}">${capitalizedTipo}</td>
-                <td class="${estadoClass}">${estadoDisplay}</td>
-            </tr>
-        `;
-  }).join('');
-}
-
-function renderEmployees() {
-  const users = state.getUsers();
-
-  // Lógica de filtrado de empleados
-  const roleFilter = dom.employeeFilters.role.value;
-  const shiftFilter = dom.employeeFilters.shift.value;
-  const menuAccessFilter = dom.employeeFilters.menuAccess.value === 'true';
-
-  const filteredUsers = users.filter(user => {
-    const roleMatch = !roleFilter || (user.rol || (user.nivel_acceso === APP_CONSTANTS.USER_LEVELS.SUPERVISOR ? 'Supervisor' : 'Empleado')) === roleFilter;
-    const shiftMatch = !shiftFilter || user.turno === shiftFilter;
-    const menuAccessMatch = !menuAccessFilter || user.nivel_acceso >= 3;
-
-    return roleMatch && shiftMatch && menuAccessMatch;
-  });
-
-  dom.employeesList.innerHTML = filteredUsers.map(employee => {
-    // Usar el campo 'rol' si existe, de lo contrario, usar la lógica de nivel de acceso como fallback.
-    const roleText = employee.rol || (employee.nivel_acceso === APP_CONSTANTS.USER_LEVELS.SUPERVISOR ? t('role_supervisor_label') : t('role_employee_label'));
-    // Crear una clase CSS a partir del nombre del rol para poder darle estilos únicos.
-    const roleClass = (employee.rol || 'default').toLowerCase().replace(/\s+/g, '-');
-
-    return `
-        <div class="employee-card">
-            <div class="employee-info">
-                <h4>${employee.nombre} ${employee.apellido || ''}</h4>
-                <p>${t('employee_code', { code: employee.codigo_empleado, dni: employee.dni || '' })}</p>
-            </div>
-            <div class="employee-level role-${roleClass}">
-                ${roleText}
-            </div>
-        </div>
-    `;
-  }).join('');
-}
-
-// --- Flujo de Registro de Empleados ---
-function handleStartCaptureClick() {
-  const { code, name, surname, dni, role, zone, shift } = dom.form;
-  if (!code.value || !name.value || !surname.value || !dni.value || !role.value || !zone.value || !shift.value) return alert(t('fill_all_fields'));
-  if (state.getUsers().some(u => u.codigo_empleado === code.value)) return alert(t('employee_code_exists'));
-
-  currentUserData = {
-    codigo_empleado: code.value, nombre: name.value, apellido: surname.value, dni: dni.value,
-    nivel_acceso: parseInt(role.value), zonas_permitidas: zone.value, turno: shift.value, descriptor: null, foto: null
-  };
-  showEmployeeView('capture-screen');
-}
-
-async function startFaceCapture() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-    dom.video.srcObject = stream;
-    await new Promise(resolve => dom.video.onloadedmetadata = () => { dom.video.play(); resolve(); });
-
-    detectionInterval = setInterval(async () => {
-      if (!dom.video.srcObject) return;
-      const detection = await face.getSingleFaceDetection(dom.video);
-      face.drawDetections(dom.video, dom.overlay, detection ? [detection] : []);
-
-      if (detection) {
-        const faceMatcher = state.getFaceMatcher();
-        if (faceMatcher && faceMatcher.findBestMatch(detection.descriptor).label !== 'unknown') {
-          dom.captureStatus.textContent = t('face_already_registered');
-          dom.confirmCaptureBtn.disabled = true;
-        } else {
-          dom.captureStatus.textContent = t('face_detected_can_confirm');
-          dom.confirmCaptureBtn.disabled = false;
-          faceDescriptor = detection.descriptor;
-        }
-      } else {
-        dom.captureStatus.textContent = t('no_single_face_detected');
-        dom.confirmCaptureBtn.disabled = true;
-      }
-    }, 300);
-  } catch (err) {
-    dom.captureStatus.textContent = t('camera_init_error');
-  }
-}
-
-async function confirmCapture() {
-  if (!faceDescriptor || !currentUserData) return;
-  dom.confirmCaptureBtn.disabled = true;
-  dom.captureStatus.textContent = t('processing');
-  try {
-    const canvas = document.createElement('canvas');
-    canvas.width = dom.video.videoWidth;
-    canvas.height = dom.video.videoHeight;
-    canvas.getContext('2d').drawImage(dom.video, 0, 0);
-
-    currentUserData.foto = canvas.toDataURL('image/png');
-    currentUserData.descriptor = Array.from(faceDescriptor);
-
-    const newUser = await api.registerUser(currentUserData);
-    state.addUser(newUser);
-
-    alert(t('user_registered_success', { name: newUser.nombre }));
-    showEmployeeView('empleados-main-view');
-    renderEmployees();
-  } catch (error) {
-    alert(t('user_registration_error'));
-  } finally {
-    stopVideoStream();
-  }
-}
-
-function stopVideoStream() {
-  if (detectionInterval) clearInterval(detectionInterval);
-  if (dom.video.srcObject) {
-    dom.video.srcObject.getTracks().forEach(track => track.stop());
-    dom.video.srcObject = null;
-  }
-}
-
-// --- Inicialización y Event Listeners ---
-function attachListeners() {
-  dom.navButtons.forEach(btn => btn.addEventListener('click', (e) => {
-    const sectionId = e.currentTarget.dataset.section;
-    showSection(sectionId);
-    // Cierra el menú responsive si se hace clic en un item
-    if (document.body.classList.contains('sidebar-open')) {
-      document.body.classList.remove("sidebar-open");
-    }
-  }));
-
-  document.getElementById('btn-nuevo-empleado')?.addEventListener('click', () => showEmployeeView('register-screen'));
-  dom.form.captureBtn.addEventListener('click', handleStartCaptureClick);
-  dom.confirmCaptureBtn.addEventListener('click', confirmCapture);
-  dom.form.backToEmployeesBtn.addEventListener('click', () => showEmployeeView('empleados-main-view'));
-  dom.backToRegisterBtn.addEventListener('click', () => showEmployeeView('register-screen'));
-  dom.refreshRecordsBtn.addEventListener('click', async () => {
-    await state.refreshState();
-    renderRecords();
-  });
-
-  document.getElementById('refresh-authorizations-btn')?.addEventListener('click', () => {
-    renderAuthorizations();
-  });
-
-  // Listeners para los filtros del historial de accesos
-  dom.filters.name.addEventListener('input', renderRecords);
-  dom.filters.id.addEventListener('input', renderRecords);
-  dom.filters.shift.addEventListener('change', renderRecords);
-  dom.filters.type.addEventListener('change', renderRecords);
-  dom.filters.date.addEventListener('change', renderRecords);
-  dom.filters.clearBtn.addEventListener('click', () => {
-    dom.filters.name.value = '';
-    dom.filters.id.value = '';
-    dom.filters.shift.value = '';
-    dom.filters.type.value = '';
-    dom.filters.date.value = '';
-    renderRecords();
-  });
-
-  // Listeners para los filtros de empleados
-  dom.employeeFilters.role.addEventListener('change', renderEmployees);
-  dom.employeeFilters.shift.addEventListener('change', renderEmployees);
-  dom.employeeFilters.menuAccess.addEventListener('change', renderEmployees);
-  dom.employeeFilters.clearBtn.addEventListener('click', () => {
-    dom.employeeFilters.role.value = '';
-    dom.employeeFilters.shift.value = '';
-    dom.employeeFilters.menuAccess.value = '';
-    renderEmployees();
-  });
-
-  // Añadir listener para el botón de logout
-  document.querySelector('.logout-btn')?.addEventListener('click', () => {
-    sessionStorage.removeItem('isSupervisor');
-    window.location.href = 'index.html';
-  });
-
-  // Menu responsive
-  dom.mobile.openBtn?.addEventListener("click", () => document.body.classList.add("sidebar-open"));
-  dom.mobile.closeBtn?.addEventListener("click", () => document.body.classList.remove("sidebar-open"));
-  dom.mobile.overlay?.addEventListener("click", () => document.body.classList.remove("sidebar-open"));
-}
-
-async function main() {
-  attachListeners();
-  showSection('accesos');
-
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(registration => {
-        console.log('ServiceWorker registration successful');
-        // Forzar la comprobación de una nueva versión del SW en cada carga.
-        registration.update();
-      })
-      .catch(err => console.log('ServiceWorker registration failed: ', err));
-  }
-
-  try {
-    await Promise.all([face.loadModels(), state.initState()]);
-    console.log('Panel de administración inicializado.');
-    renderRecords();
-    renderEmployees();
-    initializeStatistics();
-    updateUI();
-  } catch (error) {
-    alert(t('panel_load_error', { error: error.message }));
-  }
-}
-
-window.addEventListener('load', main);

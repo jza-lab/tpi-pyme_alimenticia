@@ -308,6 +308,10 @@ table th {
   background-color: #e2d9f3; /* Violeta */
   color: #49247A;
 }
+.role-gerente {
+  background-color: #f8d7da; /* Rojo */
+  color: #721c24;
+}
 .role-operario {
   background-color: #ffe8d1; /* Naranja */
   color: #854A0E;

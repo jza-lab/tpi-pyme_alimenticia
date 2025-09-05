@@ -135,7 +135,9 @@
           <select id="filter-employee-by-role">
             <option value="" data-i18n="all_roles">Todos los roles</option>
             <option value="Empleado" data-i18n="role_employee_label">Empleado</option>
+            <option value="Analista" data-i18n="role_analyst">Analista</option>
             <option value="Supervisor" data-i18n="role_supervisor_label">Supervisor</option>
+            <option value="Gerente" data-i18n="role_manager">Gerente</option>
           </select>
           <select id="filter-employee-by-shift">
             <option value="" data-i18n="all_shifts">Todos los turnos</option>
@@ -177,19 +179,21 @@
           <select id="operator-role">
             <option value="" data-i18n="select_role">Seleccione un rol...</option>
             <option value="1" data-i18n="role_employee">Empleado (Nivel 1)</option>
+            <option value="2" data-i18n="role_analyst">Analista (Nivel 2)</option>
             <option value="3" data-i18n="role_supervisor">Supervisor (Nivel 3)</option>
+            <option value="4" data-i18n="role_manager">Gerente (Nivel 4)</option>
           </select>
         </div>
         <div class="form-group">
           <label for="operator-zone" data-i18n="zone_label">Zona Asignada:</label>
-          <select id="operator-zone">
-            <option value="" data-i18n="select_zone">Seleccione una zona...</option>
+          <select id="operator-zone" multiple>
             <option value="Recepción" data-i18n="zone_reception">Recepción</option>
             <option value="Almacenamiento" data-i18n="zone_storage">Almacenamiento</option>
             <option value="Procesamiento" data-i18n="zone_processing">Procesamiento</option>
             <option value="Conservación" data-i18n="zone_conservation">Conservación</option>
             <option value="Despacho" data-i18n="zone_dispatch">Despacho</option>
           </select>
+          <small class="form-hint" data-i18n="multi_select_hint">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar varias zonas.</small>
         </div>
 
         <div class="form-group">
