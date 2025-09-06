@@ -255,3 +255,42 @@ async function main() {
 }
 
 window.addEventListener('load', main);
+
+// --- Validaciones de Inputs ---
+
+document.getElementById("operator-surname").addEventListener("input", function () {
+    this.value = this.value.replace(/[^A-Za-zÀ-ÿ\s]/g, "");
+});
+document.getElementById("operator-name").addEventListener("input", function () {
+    this.value = this.value.replace(/[^A-Za-zÀ-ÿ\s]/g, "");
+});
+document.getElementById("operator-dni").addEventListener("input", function () {
+    this.value = this.value.replace(/[^0-9]/g, "");
+});
+
+
+
+
+// Limpieza del formulario al volver a la vista de empleados
+
+// Esperar a que el DOM cargue
+document.addEventListener("DOMContentLoaded", () => {
+  const backButton = document.getElementById("back-to-employees");
+
+  backButton.addEventListener("click", () => {
+    limpiarFormulario();
+  });
+});
+
+function limpiarFormulario() {
+  // Selecciona todos los inputs y selects dentro del div "register-screen"
+  let inputs = document.querySelectorAll('#register-screen input, #register-screen select');
+  
+  inputs.forEach(el => {
+    if (el.tagName === "SELECT") {
+      el.selectedIndex = 0; // vuelve a la primera opción
+    } else {
+      el.value = ""; // limpia el texto
+    }
+  });
+}

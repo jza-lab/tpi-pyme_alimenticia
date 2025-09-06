@@ -255,6 +255,12 @@ function resetManualLoginForm() {
   dom.loginStatus.className = 'status info';
 }
 
+// --- Validaciones de Inputs ---
+document.getElementById("operator-dni").addEventListener("input", function () {
+    this.value = this.value.replace(/[^0-9]/g, "");
+});
+
+
 // ------------------- Navegación Segura al Menú Supervisor ------------------- //
 function handleSupervisorMenuClick() {
   const storedCode = sessionStorage.getItem('supervisorCode');
