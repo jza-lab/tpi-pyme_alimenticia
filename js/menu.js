@@ -56,8 +56,8 @@ function applyRolePermissions() {
       break;
 
     case USER_LEVELS.SUPERVISOR:
-      visibleSections = ['accesos', 'empleados', 'autorizaciones', 'estadisticas'];
-      allButtons['btn-eliminar-empleado'].style.display = 'inline-block';
+      visibleSections = ['accesos', 'empleados', 'autorizaciones'];
+      // Supervisor no puede registrar ni eliminar, por lo que no se muestra ningún botón de acción.
       break;
 
     case USER_LEVELS.ANALISTA:

@@ -272,9 +272,9 @@ async function grantAccess(user) {
     } else {
       // Si fue un acceso normal, mostrar la pantalla de éxito estándar.
       dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: currentLoginType });
-      if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR) {
+      if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.ANALISTA) {
         dom.supervisorMenuBtn.style.display = 'block';
-        sessionStorage.setItem('isSupervisor', 'true');
+        sessionStorage.setItem('isSupervisor', 'true'); // El nombre de la variable en sessionStorage se mantiene por consistencia
         sessionStorage.setItem('supervisorCode', user.codigo_empleado);
       } else {
         dom.supervisorMenuBtn.style.display = 'none';
