@@ -68,15 +68,25 @@
 
           <div id="manual-login" class="manual-login" style="display:none;">
             <h3>Inicio de Sesión Manual</h3>
-            <div class="form-group">
-              <label for="manual-operator-code" data-i18n="operator_code_label">Código:</label>
-              <input type="text" id="manual-operator-code">
+            <div id="credentials-form">
+              <div class="form-group">
+                <label for="manual-operator-code" data-i18n="operator_code_label">Código:</label>
+                <input type="text" id="manual-operator-code">
+              </div>
+              <div class="form-group">
+                <label for="manual-operator-dni">DNI:</label>
+                <input type="text" id="manual-operator-dni">
+              </div>
+              <button id="manual-login-btn" class="btn">Iniciar Sesión</button>
             </div>
-            <div class="form-group">
-              <label for="manual-operator-dni">DNI:</label>
-              <input type="text" id="manual-operator-dni">
+            <div id="token-form" style="display: none;">
+              <p data-i18n="token_sent_prompt">Se ha enviado un token a su correo electrónico. Por favor, ingréselo a continuación:</p>
+              <div class="form-group">
+                  <label for="manual-token" data-i18n="token_label">Token:</label>
+                  <input type="text" id="manual-token">
+              </div>
+              <button id="verify-token-btn" class="btn" data-i18n="verify_token_button">Verificar Token</button>
             </div>
-            <button id="manual-login-btn" class="btn">Iniciar Sesión</button>
             <button id="retry-facial-login-btn" class="btn btn-secondary">Reintentar</button>
           </div>
         </section>
