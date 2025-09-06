@@ -205,3 +205,42 @@ export async function deletePendingAuthorization(recordId) {
         // Un fallo aquí no debería detener el flujo principal del usuario.
     }
 }
+
+/**
+ * Envía un token de inicio de sesión al empleado usando una Edge Function.
+ * @note La función del servidor se encarga de generar el token y enviarlo por email/SMS.
+ * @param {string} code - Legajo del empleado.
+ * @param {string} dni - DNI del empleado.
+ * @returns {Promise<void>}
+ */
+export async function sendLoginToken(code, dni) {
+    const { data, error } = await supabase.functions.invoke('send-login-token', {
+        body: { code, dni }
+    });
+
+    if (error) {
+        const err = await error.context.json()
+        throw new Error(err.error);
+    }
+    return data;
+}
+
+/**
+ * Verifica el token de inicio de sesión.
+ * @param {string} token - El token ingresado por el usuario.
+ * @param {string} code - El legajo del empleado.
+ * @param {string} dni - El DNI del empleado.
+ * @returns {Promise<{user: object}>} El objeto del usuario si el token es válido.
+ */
+export async function verifyLoginToken(token, code, dni) {
+    const { data, error } = await supabase.functions.invoke('verify-login-token', {
+        body: { token, code, dni }
+    });
+
+    if (error) {
+        const err = await error.context.json()
+        throw new Error(err.error);
+    }
+    return data;
+}
+
