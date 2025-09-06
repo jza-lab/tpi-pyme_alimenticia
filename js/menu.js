@@ -5,10 +5,83 @@ import * as state from './state.js';
 import { initializeStatistics } from './statistics.js';
 import { t, updateUI } from './i18n-logic.js';
 
-// --- Seguridad---
-//  if (sessionStorage.getItem('isSupervisor') !== 'true') {
-  //  window.location.replace('index.html');
-// }
+// --- Estado local del menú ---
+let currentUser = null;
+let faceDescriptor = null;
+let detectionInterval = null;
+
+// --- Seguridad y Control de Acceso ---
+async function checkAuthAndApplyPermissions() {
+  await state.initState(); // Asegurarse que el estado está inicializado
+  const userCode = sessionStorage.getItem('supervisorCode');
+  if (!userCode) {
+    window.location.replace('index.html');
+    return;
+  }
+
+  const users = state.getUsers();
+  currentUser = users.find(u => u.codigo_empleado === userCode);
+
+  if (!currentUser || currentUser.nivel_acceso === APP_CONSTANTS.USER_LEVELS.OPERARIO) {
+    window.location.replace('index.html');
+    return;
+  }
+
+  applyRolePermissions();
+}
+
+function applyRolePermissions() {
+  if (!currentUser) return;
+
+  const { nivel_acceso } = currentUser;
+  const { USER_LEVELS } = APP_CONSTANTS;
+
+  // Ocultar todo por defecto y luego mostrar según el rol
+  const allSections = ['accesos', 'empleados', 'autorizaciones', 'estadisticas'];
+  const allButtons = {
+    'btn-nuevo-empleado': document.getElementById('btn-nuevo-empleado'),
+    'btn-eliminar-empleado': document.getElementById('btn-eliminar-empleado'),
+  };
+
+  // Ocultar todos los botones de navegación y de acción
+  document.querySelectorAll('.nav-btn, .mobile-side-item').forEach(btn => btn.style.display = 'none');
+  Object.values(allButtons).forEach(btn => btn.style.display = 'none');
+
+  let visibleSections = [];
+
+  switch (nivel_acceso) {
+    case USER_LEVELS.GERENTE:
+      visibleSections = allSections;
+      Object.values(allButtons).forEach(btn => btn.style.display = 'inline-block');
+      break;
+
+    case USER_LEVELS.SUPERVISOR:
+      visibleSections = ['accesos', 'empleados', 'autorizaciones', 'estadisticas'];
+      allButtons['btn-eliminar-empleado'].style.display = 'inline-block';
+      break;
+
+    case USER_LEVELS.ANALISTA:
+      visibleSections = ['estadisticas'];
+      break;
+  }
+
+  // Mostrar las secciones y botones correspondientes
+  visibleSections.forEach(sectionId => {
+    document.querySelectorAll(`.nav-btn[data-section="${sectionId}"], .mobile-side-item[data-section="${sectionId}"]`).forEach(btn => {
+      btn.style.display = 'block';
+    });
+  });
+
+  // Activar la primera sección visible por defecto
+  if (visibleSections.length > 0) {
+    showSection(visibleSections[0]);
+  } else {
+    // Si un rol no tiene ninguna sección visible (ej. Operario, aunque ya fue redirigido)
+    // se ocultan todas las secciones.
+    dom.sections.forEach(s => s.classList.remove('active'));
+  }
+}
+
 
 // --- Referencias al DOM (cacheadas para eficiencia) ---
 const dom = {
@@ -56,11 +129,6 @@ const dom = {
     clearBtn: document.getElementById('clear-employee-filters-btn')
   }
 };
-
-// --- Estado local del menú ---
-let currentUserData = null;
-let faceDescriptor = null;
-let detectionInterval = null;
 
 // --- Gestión de Vistas y Navegación ---
 function showSection(sectionId) {
@@ -269,6 +337,7 @@ function renderRecords() {
 
 function renderEmployees() {
   const users = state.getUsers();
+  const { USER_LEVELS } = APP_CONSTANTS;
 
   // Lógica de filtrado de empleados
   const roleFilter = dom.employeeFilters.role.value;
@@ -276,16 +345,16 @@ function renderEmployees() {
   const menuAccessFilter = dom.employeeFilters.menuAccess.value === 'true';
 
   const filteredUsers = users.filter(user => {
-    const roleMatch = !roleFilter || (user.rol || (user.nivel_acceso === APP_CONSTANTS.USER_LEVELS.SUPERVISOR ? 'Supervisor' : 'Empleado')) === roleFilter;
+    const roleMatch = !roleFilter || (user.rol || 'Operario') === roleFilter;
     const shiftMatch = !shiftFilter || user.turno === shiftFilter;
-    const menuAccessMatch = !menuAccessFilter || user.nivel_acceso >= 3;
+    const menuAccessMatch = !menuAccessFilter || user.nivel_acceso >= USER_LEVELS.ANALISTA;
 
     return roleMatch && shiftMatch && menuAccessMatch;
   });
 
   dom.employeesList.innerHTML = filteredUsers.map(employee => {
     // Usar el campo 'rol' si existe, de lo contrario, usar la lógica de nivel de acceso como fallback.
-    const roleText = employee.rol || (employee.nivel_acceso === APP_CONSTANTS.USER_LEVELS.SUPERVISOR ? t('role_supervisor_label') : t('role_employee_label'));
+    const roleText = employee.rol || t('role_operator');
     // Crear una clase CSS a partir del nombre del rol para poder darle estilos únicos.
     const roleClass = (employee.rol || 'default').toLowerCase().replace(/\s+/g, '-');
 
@@ -306,8 +375,22 @@ function renderEmployees() {
 // --- Flujo de Registro de Empleados ---
 function handleStartCaptureClick() {
   const { code, name, surname, dni, email, role, zone, shift } = dom.form;
-  if (!code.value || !name.value || !surname.value || !dni.value || !email.value || !role.value || !zone.value || !shift.value) return alert(t('fill_all_fields'));
-  if (state.getUsers().some(u => u.codigo_empleado === code.value)) return alert(t('employee_code_exists'));
+
+  // --- Validación Robusta ---
+  if (!code.value || !name.value || !surname.value || !dni.value || !email.value || !role.value || !zone.value || !shift.value) {
+    return alert(t('fill_all_fields'));
+  }
+  if (state.getUsers().some(u => u.codigo_empleado === code.value)) {
+    return alert(t('employee_code_exists'));
+  }
+  if (dni.value.length < 7 || dni.value.length > 8) {
+    return alert(t('dni_length_error'));
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.value)) {
+    return alert(t('invalid_email_format'));
+  }
+  // --- Fin Validación ---
 
   const selectedRole = dom.form.role.options[dom.form.role.selectedIndex];
   const selectedZones = [...dom.form.zone.options]
@@ -318,13 +401,13 @@ function handleStartCaptureClick() {
     return alert(t('fill_all_fields')); // O un mensaje más específico para las zonas
   }
 
-  currentUserData = {
+  currentUser = {
     codigo_empleado: code.value, nombre: name.value, apellido: surname.value, dni: dni.value, email: email.value,
-    nivel_acceso: parseInt(role.value), 
+    nivel_acceso: parseInt(role.value),
     rol: selectedRole.text.split('(')[0].trim(), // "Analista (Nivel 2)" -> "Analista"
-    zonas_permitidas: selectedZones, 
-    turno: shift.value, 
-    descriptor: null, 
+    zonas_permitidas: selectedZones,
+    turno: shift.value,
+    descriptor: null,
     foto: null
   };
   showEmployeeView('capture-screen');
@@ -362,7 +445,7 @@ async function startFaceCapture() {
 }
 
 async function confirmCapture() {
-  if (!faceDescriptor || !currentUserData) return;
+  if (!faceDescriptor || !currentUser) return;
   dom.confirmCaptureBtn.disabled = true;
   dom.captureStatus.textContent = t('processing');
   try {
@@ -371,10 +454,10 @@ async function confirmCapture() {
     canvas.height = dom.video.videoHeight;
     canvas.getContext('2d').drawImage(dom.video, 0, 0);
 
-    currentUserData.foto = canvas.toDataURL('image/png');
-    currentUserData.descriptor = Array.from(faceDescriptor);
+    currentUser.foto = canvas.toDataURL('image/png');
+    currentUser.descriptor = Array.from(faceDescriptor);
 
-    const newUser = await api.registerUser(currentUserData);
+    const newUser = await api.registerUser(currentUser);
     state.addUser(newUser);
 
     alert(t('user_registered_success', { name: newUser.nombre }));
@@ -456,28 +539,54 @@ function attachListeners() {
   dom.mobile.openBtn?.addEventListener("click", () => document.body.classList.add("sidebar-open"));
   dom.mobile.closeBtn?.addEventListener("click", () => document.body.classList.remove("sidebar-open"));
   dom.mobile.overlay?.addEventListener("click", () => document.body.classList.remove("sidebar-open"));
+
+  // --- Listeners para validación de inputs en tiempo real ---
+  dom.form.dni.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+  });
+  dom.form.name.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
+  });
+  dom.form.surname.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
+  });
+  dom.form.code.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/[^A-Za-z0-9-]/g, '').toUpperCase();
+  });
 }
 
 async function main() {
+  // Primero, asegurar que el usuario está autenticado y tiene permisos.
+  // Esta función también inicializa el estado y carga los datos del usuario.
+  await checkAuthAndApplyPermissions();
+
+  // Si currentUser es nulo, checkAuthAndApplyPermissions ya habrá redirigido.
+  if (!currentUser) return;
+
   attachListeners();
-  showSection('accesos');
+  // La sección a mostrar por defecto ya se establece en applyRolePermissions
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/service-worker.js')
       .then(registration => {
         console.log('ServiceWorker registration successful');
-        // Forzar la comprobación de una nueva versión del SW en cada carga.
         registration.update();
       })
       .catch(err => console.log('ServiceWorker registration failed: ', err));
   }
 
   try {
-    await Promise.all([face.loadModels(), state.initState()]);
+    // El estado ya fue inicializado en checkAuth, solo necesitamos cargar modelos de face-api
+    await face.loadModels();
     console.log('Panel de administración inicializado.');
+    
+    // Renderizar el contenido inicial
     renderRecords();
     renderEmployees();
-    initializeStatistics();
+    
+    // Inicializar estadísticas pasando las zonas permitidas del usuario
+    initializeStatistics(currentUser.zonas_permitidas);
+    
     updateUI();
   } catch (error) {
     alert(t('panel_load_error', { error: error.message }));
