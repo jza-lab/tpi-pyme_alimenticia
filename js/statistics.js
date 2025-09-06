@@ -129,8 +129,22 @@ async function renderStage(stage) {
 }
 
 // --- Función de Inicialización Exportada ---
-export function initializeStatistics() {
+export function initializeStatistics(allowedZones) {
     const stageButtons = document.querySelectorAll('.stage-btn');
+    
+    // Si se proporcionan zonas permitidas (para un Supervisor), filtrar los botones
+    if (allowedZones && Array.isArray(allowedZones)) {
+        stageButtons.forEach(btn => {
+            const stage = btn.dataset.stage;
+            // El botón de Indicadores siempre es visible.
+            // Para otros botones, solo son visibles si su 'stage' está en las zonas permitidas.
+            if (stage !== 'Indicadores' && !allowedZones.includes(stage)) {
+                btn.style.display = 'none';
+            }
+        });
+    }
+    // Si no se proporcionan allowedZones (Gerente), todos los botones permanecen visibles por defecto.
+
     stageButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
             const stage = e.currentTarget.dataset.stage;
@@ -140,8 +154,18 @@ export function initializeStatistics() {
         });
     });
 
-    const initialActive = document.querySelector('.stage-btn.active') || stageButtons[0];
+    // Activar el primer botón *visible*
+    let initialActive = null;
+    for (const btn of stageButtons) {
+        if (btn.style.display !== 'none') {
+            initialActive = btn;
+            break;
+        }
+    }
+
     if (initialActive) {
+        stageButtons.forEach(b => b.classList.remove('active'));
+        initialActive.classList.add('active');
         renderStage(initialActive.dataset.stage);
     }
 }
