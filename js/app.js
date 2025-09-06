@@ -343,7 +343,7 @@ async function attemptManualLogin() {
     
     dom.manualLogin.credentialsForm.style.display = 'none';
     dom.manualLogin.tokenForm.style.display = 'block';
-    dom.loginStatus.textContent = t('token_sent');
+    dom.loginStatus.textContent = t('Token Enviado');
     dom.loginStatus.className = 'status info';
 
   } catch (error) {
