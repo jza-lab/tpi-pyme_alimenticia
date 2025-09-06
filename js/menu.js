@@ -539,7 +539,8 @@ function attachListeners() {
     // Limpiar explícitamente la sesión para asegurar un estado limpio
     sessionStorage.removeItem('isSupervisor');
     sessionStorage.removeItem('supervisorCode');
-    window.location.href = 'index.html';
+    // Redirigir con un parámetro único para forzar la recarga y evitar el cache
+    window.location.replace('index.html?logout=true&t=' + new Date().getTime());
   });
 
   // Menu responsive

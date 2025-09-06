@@ -148,6 +148,7 @@ export function initializeStatistics(allowedZones) {
             // El botón de Indicadores siempre es visible para quienes tienen acceso a estadísticas.
             if (stage !== 'Indicadores' && !userAllowedZones.includes(stage)) {
                 btn.style.display = 'none';
+                btn.classList.add('hidden-by-role');
             }
         });
     }
