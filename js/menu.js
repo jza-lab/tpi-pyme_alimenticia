@@ -21,6 +21,7 @@ const dom = {
   form: {
     code: document.getElementById('operator-code'), name: document.getElementById('operator-name'),
     surname: document.getElementById('operator-surname'), dni: document.getElementById('operator-dni'),
+    email: document.getElementById('operator-email'),
     role: document.getElementById('operator-role'), zone: document.getElementById('operator-zone'),
     shift: document.getElementById('operator-shift'),
     captureBtn: document.getElementById('capture-btn'),
@@ -304,8 +305,8 @@ function renderEmployees() {
 
 // --- Flujo de Registro de Empleados ---
 function handleStartCaptureClick() {
-  const { code, name, surname, dni, role, zone, shift } = dom.form;
-  if (!code.value || !name.value || !surname.value || !dni.value || !role.value || !zone.value || !shift.value) return alert(t('fill_all_fields'));
+  const { code, name, surname, dni, email, role, zone, shift } = dom.form;
+  if (!code.value || !name.value || !surname.value || !dni.value || !email.value || !role.value || !zone.value || !shift.value) return alert(t('fill_all_fields'));
   if (state.getUsers().some(u => u.codigo_empleado === code.value)) return alert(t('employee_code_exists'));
 
   const selectedRole = dom.form.role.options[dom.form.role.selectedIndex];
@@ -318,7 +319,7 @@ function handleStartCaptureClick() {
   }
 
   currentUserData = {
-    codigo_empleado: code.value, nombre: name.value, apellido: surname.value, dni: dni.value,
+    codigo_empleado: code.value, nombre: name.value, apellido: surname.value, dni: dni.value, email: email.value,
     nivel_acceso: parseInt(role.value), 
     rol: selectedRole.text.split('(')[0].trim(), // "Analista (Nivel 2)" -> "Analista"
     zonas_permitidas: selectedZones, 
