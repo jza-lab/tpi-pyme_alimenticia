@@ -14,6 +14,11 @@ let detectionInterval = null;
 async function checkAuthAndApplyPermissions() {
   await state.initState(); // Asegurarse que el estado está inicializado
   const userCode = sessionStorage.getItem('supervisorCode');
+  
+  // --- DEBUGGING ---
+  console.log('Verificando menu.js. Código en sessionStorage:', userCode);
+  // --- FIN DEBUGGING ---
+
   if (!userCode) {
     window.location.replace('index.html');
     return;
@@ -56,7 +61,7 @@ function applyRolePermissions() {
       break;
 
     case USER_LEVELS.SUPERVISOR:
-      visibleSections = ['accesos', 'empleados', 'autorizaciones'];
+      visibleSections = ['accesos', 'empleados', 'autorizaciones', 'estadisticas'];
       // Supervisor no puede registrar ni eliminar, por lo que no se muestra ningún botón de acción.
       break;
 
@@ -531,7 +536,9 @@ function attachListeners() {
 
   // Añadir listener para el botón de logout
   document.querySelector('.logout-btn')?.addEventListener('click', () => {
+    // Limpiar explícitamente la sesión para asegurar un estado limpio
     sessionStorage.removeItem('isSupervisor');
+    sessionStorage.removeItem('supervisorCode');
     window.location.href = 'index.html';
   });
 

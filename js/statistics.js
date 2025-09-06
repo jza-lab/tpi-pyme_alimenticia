@@ -1,4 +1,5 @@
 let statsChartInstance = null;
+let userAllowedZones = null; // Almacenar las zonas permitidas a nivel de módulo
 
 // --- Helpers para Gráficos ---
 function getRandomColor() {
@@ -89,6 +90,13 @@ function calculateOEE(procesamientoData) {
 
 // --- Renderizado de Gráficos ---
 async function renderStage(stage) {
+    // **Validación de Seguridad**: Comprobar si el usuario tiene permiso para ver esta etapa
+    if (userAllowedZones && stage !== 'Indicadores' && !userAllowedZones.includes(stage)) {
+        console.warn(`Acceso no autorizado a la etapa "${stage}" denegado.`);
+        document.getElementById('statsFallback').textContent = `No tiene permiso para ver la etapa: ${stage}.`;
+        return;
+    }
+
     const canvas = document.getElementById('statsCanvas');
     const ctx = canvas.getContext('2d');
     const insightsContainer = document.getElementById('insights-container');
@@ -130,20 +138,20 @@ async function renderStage(stage) {
 
 // --- Función de Inicialización Exportada ---
 export function initializeStatistics(allowedZones) {
+    userAllowedZones = allowedZones; // Almacenar las zonas para uso en renderStage
     const stageButtons = document.querySelectorAll('.stage-btn');
     
-    // Si se proporcionan zonas permitidas (para un Supervisor), filtrar los botones
-    if (allowedZones && Array.isArray(allowedZones)) {
+    // Si se proporcionan zonas permitidas (para un Supervisor o Analista), filtrar los botones
+    if (userAllowedZones && Array.isArray(userAllowedZones)) {
         stageButtons.forEach(btn => {
             const stage = btn.dataset.stage;
-            // El botón de Indicadores siempre es visible.
-            // Para otros botones, solo son visibles si su 'stage' está en las zonas permitidas.
-            if (stage !== 'Indicadores' && !allowedZones.includes(stage)) {
+            // El botón de Indicadores siempre es visible para quienes tienen acceso a estadísticas.
+            if (stage !== 'Indicadores' && !userAllowedZones.includes(stage)) {
                 btn.style.display = 'none';
             }
         });
     }
-    // Si no se proporcionan allowedZones (Gerente), todos los botones permanecen visibles por defecto.
+    // Si no se proporcionan allowedZones (Gerente), todos los botones permanecen visibles.
 
     stageButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {

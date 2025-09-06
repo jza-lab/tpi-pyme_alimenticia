@@ -272,6 +272,15 @@ async function grantAccess(user) {
     } else {
       // Si fue un acceso normal, mostrar la pantalla de éxito estándar.
       dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: currentLoginType });
+      
+      // --- DEBUGGING ---
+      console.log('Verificando acceso al menú para:', { 
+        nombre: user.nombre, 
+        nivel_acceso: user.nivel_acceso,
+        condicion: user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.ANALISTA
+      });
+      // --- FIN DEBUGGING ---
+
       if (currentLoginType === 'ingreso' && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.ANALISTA) {
         dom.supervisorMenuBtn.style.display = 'block';
         sessionStorage.setItem('isSupervisor', 'true'); // El nombre de la variable en sessionStorage se mantiene por consistencia
