@@ -160,7 +160,7 @@
         <h2 data-i18n="new_user_registration_title">Registro de Nuevo Usuario</h2>
         <div class="form-group">
           <label for="operator-code" data-i18n="employee_code_label">Legajo:</label>
-          <input type="text" id="operator-code" placeholder="Ej: OP-001">
+          <input type="text" id="operator-code" placeholder="Ej: OP-001" maxlength="10">
         </div>
         <div class="form-group">
           <label for="operator-name" data-i18n="name_label">Nombre:</label>
@@ -172,7 +172,7 @@
         </div>
         <div class="form-group">
           <label for="operator-dni" data-i18n="operator_dni_label">DNI:</label>
-          <input type="text" id="operator-dni" placeholder="Ej: 12345678">
+          <input type="text" id="operator-dni" placeholder="Ej: 12345678" maxlength="8" minlength="7">
         </div>
         <div class="form-group">
           <label for="operator-email" data-i18n="email_label">Email:</label>
@@ -182,7 +182,7 @@
           <label for="operator-role" data-i18n="role_label">Rol:</label>
           <select id="operator-role">
             <option value="" data-i18n="select_role">Seleccione un rol...</option>
-            <option value="1" data-i18n="role_employee">Empleado (Nivel 1)</option>
+            <option value="1" data-i18n="role_operator">Operario (Nivel 1)</option>
             <option value="2" data-i18n="role_analyst">Analista (Nivel 2)</option>
             <option value="3" data-i18n="role_supervisor">Supervisor (Nivel 3)</option>
             <option value="4" data-i18n="role_manager">Gerente (Nivel 4)</option>
