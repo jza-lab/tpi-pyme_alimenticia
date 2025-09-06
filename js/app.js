@@ -66,6 +66,7 @@ const dom = {
     credentialsForm: document.getElementById('credentials-form'),
     tokenForm: document.getElementById('token-form'),
     tokenInput: document.getElementById('manual-token'),
+    tokenTimer: document.getElementById('token-timer'),
     verifyTokenBtn: document.getElementById('verify-token-btn'),
     code: document.getElementById('manual-operator-code'),
     dni: document.getElementById('manual-operator-dni'),
@@ -80,6 +81,7 @@ let currentLoginType = 'ingreso';
 let isProcessingAccess = false;
 let recognitionInterval = null;
 let authorizationCheckInterval = null;
+let tokenTimerInterval = null;
 
 // ------------------- Gestión de Pantallas ------------------- //
 function showScreen(screenId) {
@@ -345,6 +347,7 @@ async function attemptManualLogin() {
     dom.manualLogin.tokenForm.style.display = 'block';
     dom.loginStatus.textContent = t('Token Enviado');
     dom.loginStatus.className = 'status info';
+    startTokenTimer(900);
 
   } catch (error) {
     denyAccess(error.message || t('Credenciales inválidas'));
@@ -360,6 +363,7 @@ async function verifyToken() {
 
     try {
         const { user } = await api.verifyLoginToken(token, code, dni);
+        clearInterval(tokenTimerInterval);
         grantAccess(user);
     } catch (error) {
         denyAccess(error.message || t('Token invalido o expirado'));
@@ -388,7 +392,34 @@ function resetManualLoginForm() {
   if(tokenInput) tokenInput.value = '';
   dom.loginStatus.textContent = t('searching_for_match');
   dom.loginStatus.className = 'status info';
+  
+  if (tokenTimerInterval) clearInterval(tokenTimerInterval);
+  if (dom.manualLogin.tokenTimer) {
+      dom.manualLogin.tokenTimer.parentElement.style.display = 'none';
+  }
 }
+
+// ------------ Token Function ------------------- //
+function startTokenTimer(durationInSeconds) {
+  // Limpiar cualquier temporizador anterior
+  if (tokenTimerInterval) clearInterval(tokenTimerInterval);
+
+  let timer = durationInSeconds;
+  dom.manualLogin.tokenTimer.parentElement.style.display = 'block'; // Muestra el texto del timer
+
+  tokenTimerInterval = setInterval(() => {
+    const minutes = Math.floor(timer / 60);
+    let seconds = timer % 60;
+    seconds = seconds < 10 ? '0' + seconds : seconds;
+
+    dom.manualLogin.tokenTimer.textContent = `${minutes}:${seconds}`;
+    if (--timer < 0) {
+      clearInterval(tokenTimerInterval);
+      dom.manualLogin.tokenTimer.textContent = "expirado";
+    }
+  }, 1000);
+}
+
 
 // ------------------- Navegación Segura al Menú Supervisor ------------------- //
 function handleSupervisorMenuClick() {
