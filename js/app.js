@@ -63,6 +63,10 @@ const dom = {
   },
   manualLogin: {
     container: document.getElementById('manual-login'),
+    credentialsForm: document.getElementById('credentials-form'),
+    tokenForm: document.getElementById('token-form'),
+    tokenInput: document.getElementById('manual-token'),
+    verifyTokenBtn: document.getElementById('verify-token-btn'),
     code: document.getElementById('manual-operator-code'),
     dni: document.getElementById('manual-operator-dni'),
     title: document.querySelector('#manual-login h3'),
@@ -332,14 +336,34 @@ function denyAccess(reason, user = null) {
 async function attemptManualLogin() {
   const code = dom.manualLogin.code.value;
   const dni = dom.manualLogin.dni.value;
-  if (!code || !dni) return alert(t('fill_both_fields'));
+  if (!code || !dni) return alert(t('Rellene ambos campos'));
 
-  const user = state.getUsers().find(u => u.codigo_empleado === code && u.dni === dni);
-  if (user) {
-    grantAccess(user);
-  } else {
-    denyAccess(t('incorrect_credentials'));
+  try {
+    await api.sendLoginToken(code, dni);
+    
+    dom.manualLogin.credentialsForm.style.display = 'none';
+    dom.manualLogin.tokenForm.style.display = 'block';
+    dom.loginStatus.textContent = t('token_sent');
+    dom.loginStatus.className = 'status info';
+
+  } catch (error) {
+    denyAccess(error.message || t('Credenciales inválidas'));
   }
+}
+
+async function verifyToken() {
+    const token = dom.manualLogin.tokenInput.value;
+    const code = dom.manualLogin.code.value;
+    const dni = dom.manualLogin.dni.value;
+
+    if (!token) return alert(t('Ingrese el token recibido'));
+
+    try {
+        const { user } = await api.verifyLoginToken(token, code, dni);
+        grantAccess(user);
+    } catch (error) {
+        denyAccess(error.message || t('Token invalido o expirado'));
+    }
 }
 
 function showManualLoginOption() {
@@ -355,10 +379,13 @@ function showManualLoginOption() {
 }
 
 function resetManualLoginForm() {
-  const { container, code, dni } = dom.manualLogin;
+  const { container, code, dni, tokenInput, credentialsForm, tokenForm } = dom.manualLogin;
   container.style.display = 'none';
-  code.value = '';
-  dni.value = '';
+  if (credentialsForm) credentialsForm.style.display = 'block';
+  if (tokenForm) tokenForm.style.display = 'none';
+  if(code) code.value = '';
+  if(dni) dni.value = '';
+  if(tokenInput) tokenInput.value = '';
   dom.loginStatus.textContent = t('searching_for_match');
   dom.loginStatus.className = 'status info';
 }
@@ -397,6 +424,7 @@ function attachListeners() {
 
   el('try-again-btn')?.addEventListener('click', () => startFacialLogin(currentLoginType));
   el('manual-login-btn')?.addEventListener('click', attemptManualLogin);
+  el('verify-token-btn')?.addEventListener('click', verifyToken);
   el('retry-facial-login-btn')?.addEventListener('click', () => startFacialLogin(currentLoginType));
   el('supervisor-menu-btn')?.addEventListener('click', handleSupervisorMenuClick);
   el('supervisor-menu-btn-denied')?.addEventListener('click', handleSupervisorMenuClick);
