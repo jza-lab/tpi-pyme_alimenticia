@@ -1141,8 +1141,8 @@ async function renderStage(stage) {
     }
 }
 
-// --- Función de Inicialización Exportada ---
-export function initializeStatistics(allowedZones) {
+// --- Funciones Exportadas ---
+function initializeStatistics(allowedZones) {
     userAllowedZones = allowedZones;
     const stageButtons = document.querySelectorAll('.stage-btn');
 
@@ -1196,3 +1196,12 @@ export function initializeStatistics(allowedZones) {
         });
     }
 }
+
+function renderCurrentStatsView() {
+    const activeStageBtn = document.querySelector('#estadisticas .stage-btn.active');
+    if (activeStageBtn && activeStageBtn.dataset.stage) {
+        renderStage(activeStageBtn.dataset.stage);
+    }
+}
+
+export { initializeStatistics, renderCurrentStatsView };

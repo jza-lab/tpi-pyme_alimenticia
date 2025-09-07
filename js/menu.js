@@ -2,7 +2,11 @@ import { APP_CONSTANTS } from './config.js';
 import * as api from './api.js';
 import * as face from './face.js';
 import * as state from './state.js';
-import { initializeStatistics } from './statistics.js';
+import { APP_CONSTANTS } from './config.js';
+import * as api from './api.js';
+import * as face from './face.js';
+import * as state from './state.js';
+import { initializeStatistics, renderCurrentStatsView } from './statistics.js';
 import { t, updateUI } from './i18n-logic.js';
 
 // --- Estado local del menú ---
@@ -184,7 +188,7 @@ function showSection(sectionId, isMainSection = true) {
     if (sectionId === 'accesos') renderRecords();
     if (sectionId === 'empleados') renderEmployees();
     if (sectionId === 'autorizaciones') renderAuthorizations();
-    if (sectionId === 'estadisticas') initializeStatistics(currentUser.zonas_permitidas);
+    if (sectionId === 'estadisticas') renderCurrentStatsView();
 }
 
 function initializeManualEntry() {
@@ -218,7 +222,11 @@ function initializeManualEntry() {
         me.employeeAccessLevel.textContent = '-';
         me.employeeDetailsContainer.classList.remove('found');
         me.employeeNotFoundMsg.style.display = 'none';
-        me.legajoInput.parentElement.querySelector('.error-msg').classList.remove('show');
+        
+        const legajoError = me.legajoInput.closest('.form-group').querySelector('.error-msg');
+        if (legajoError) {
+            legajoError.classList.remove('show');
+        }
     }
 
     function searchEmployee(legajo) {
@@ -816,6 +824,10 @@ async function main() {
   // Si currentUser es nulo, checkAuthAndApplyPermissions ya habrá redirigido.
   if (!currentUser) return;
 
+  // Inicializar módulos que solo necesitan cargarse una vez
+  initializeStatistics(currentUser.zonas_permitidas);
+  initializeManualEntry();
+
   attachListeners();
   // La sección a mostrar por defecto ya se establece en applyRolePermissions
 
@@ -834,13 +846,9 @@ async function main() {
     state.initFaceMatcher(); // Cargar el modelo de face-api después de tener los datos
     console.log('Panel de administración inicializado.');
 
-    // Renderizar el contenido inicial
-    renderRecords();
-    renderEmployees();
-
-    // Inicializar módulos
-    initializeStatistics(currentUser.zonas_permitidas);
-    initializeManualEntry();
+    // Renderizar el contenido inicial de la primera sección visible
+    const firstSection = document.querySelector('.nav-btn[style*="display: block"]')?.dataset.section || 'accesos';
+    showSection(firstSection);
 
     updateUI();
   } catch (error) {
