@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargar Ingreso/Egreso</title>
+    <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&family=Montserrat:ital,wght@0,200;1,200&family=Raleway:ital,wght@0,200;1,200&family=Rubik:ital,wght@0,300;1,300&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="manual-entry.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Cargar ingreso/egreso</h1>
+        <p class="subtitle">Registra aquí todos los ingresos y egresos de manera manual.</p>
+
+        <div class="form-card">
+            <h2>Nuevo registro manual</h2>
+            <p class="form-subtitle">Complete los datos para registrar un acceso manual</p>
+
+            <div class="form-group">
+                <label for="legajo">Legajo</label>
+                <input type="text" id="legajo" placeholder="Ingrese el legajo" name="legajo" required>
+                <small class="error-msg">El legajo es obligatorio.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="name">Nombre</label>
+                <input type="text" id="name" placeholder="Se completará automáticamente" name="name" required readonly>
+                <small class="error-msg">El nombre es obligatorio.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de acceso</label>
+                <div class="toggle-buttons">
+                    <button class="toggle-btn" data-type="ingreso">Ingreso</button>
+                    <button class="toggle-btn" data-type="egreso">Egreso</button>
+                </div>
+                <small class="error-msg" id="type-error">Debe seleccionar un tipo de acceso.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="fecha-hora">Fecha y Hora</label>
+                <input type="datetime-local" id="fecha-hora" name="fecha-hora" required>
+            </div>
+
+            <button class="btn-submit" disabled>
+                <i class='bx bx-check'></i> Complete todos los campos
+            </button>
+        </div>
+
+        <button class="btn-volver-menu">Volver al menú</button>
+    </div>
+
+    <script type="module" src="js/manual-entry.js"></script>
+</body>
+
+</html>
