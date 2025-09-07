@@ -24,7 +24,9 @@ export const FACE_API_CONFIG = {
  */
 export const APP_CONSTANTS = {
   USER_LEVELS: {
-    EMPLOYEE: 1,
-    SUPERVISOR: 3
+    OPERARIO: 1,
+    ANALISTA: 2,
+    SUPERVISOR: 3,
+    GERENTE: 4,
   }
 };

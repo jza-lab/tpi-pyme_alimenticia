@@ -2,280 +2,636 @@
 <html lang="es">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel Administrativo</title>
-  <link rel="manifest" href="manifest.json">
-  <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="menu.css">
-
-  <!-- Librerías necesarias -->
-  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-
-  <script type="module" src="js/i18n-logic.js"></script>
-  <script type="module" src="js/menu.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo</title>
+    <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="menu.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
-  <header class="admin-header">
-    <div class="header-inner">
-      <h1 class="panel-title" data-i18n="admin_panel_title">Panel Administrativo</h1>
-
-      <div class="header-controls">
-        <div class="language-switcher">
-          <span class="lang-es">ESP</span>
-          <label class="switch">
-            <input type="checkbox" id="language-toggle">
-            <span class="slider round"></span>
-          </label>
-          <span class="lang-en">ENG</span>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="hamburger" id="mobile-menu-btn" aria-label="Abrir menú">
+                    <i class='bx bx-menu'></i>
+                </button>
+                <h1 class="header-title" data-i18n="admin_panel_title">Panel Administrativo</h1>
+            </div>
+            
+            <div class="header-right">
+                <div class="language-toggle">
+                    <label class="toggle-container">
+                        <span class="toggle-label">ES</span>
+                        <input type="checkbox" id="language-toggle">
+                        <span class="slider"></span>
+                        <span class="toggle-label">EN</span>
+                    </label>
+                </div>
+                <button class="logout-btn" data-i18n="logout">
+                    <i class='bx bx-log-out'></i>
+                    <span>Salir</span>
+                </button>
+            </div>
         </div>
-        <button class="logout-btn" data-i18n="logout">Salir</button>
-      </div>
+    </header>
 
-      <!-- 👇 Botón hamburguesa y sidebar van aquí dentro -->
-      <button id="mobile-menu-btn" class="hamburger" data-i18n="open_menu" aria-label="Abrir menú lateral" aria-expanded="false"
-        aria-controls="mobile-sidebar">
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-      </button>
-
-      <!-- Sidebar móvil -->
-      <aside id="mobile-sidebar" class="mobile-sidebar" role="dialog" aria-modal="true" aria-hidden="true">
-        <div class="mobile-sidebar-header">
-          <strong data-i18n="menu">Menú</strong>
-          <button id="mobile-sidebar-close" data-i18n="close_menu" aria-label="Cerrar menú">✕</button>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-content">
+            <nav class="nav">
+                <button class="nav-btn" data-section="accesos">
+                    <i class='bx bx-history'></i>
+                    <span data-i18n="access_history">Historial de Accesos</span>
+                </button>
+                
+                <button class="nav-btn" data-section="empleados">
+                    <i class='bx bx-group'></i>
+                    <span data-i18n="employee_management">Gestión de Empleados</span>
+                </button>
+                
+                <button class="nav-btn" data-section="autorizaciones">
+                    <i class='bx bx-check-shield'></i>
+                    <span data-i18n="authorizations">Autorizaciones</span>
+                </button>
+                
+                <button class="nav-btn" data-section="estadisticas">
+                    <i class='bx bx-bar-chart-alt-2'></i>
+                    <span data-i18n="statistics">Estadísticas</span>
+                </button>
+            </nav>
         </div>
-        <nav class="mobile-sidebar-nav" role="navigation" aria-label="Navegación móvil">
-          <button class="mobile-side-item" data-section="accesos" data-i18n="access_history">Historial de Accesos</button>
-          <button class="mobile-side-item" data-section="empleados" data-i18n="employee_management">Gestión de Empleados</button>
-          <button class="mobile-side-item" data-section="autorizaciones" data-i18n="authorizations">Autorizaciones</button>
-          <button class="mobile-side-item" data-section="estadisticas" data-i18n="statistics">Estadísticas</button>
-        </nav>
-        <div class="mobile-sidebar-footer">
-          <button class="btn btn-secondary" onclick="logout()" data-i18n="logout">Salir</button>
-        </div>
-      </aside>
+    </aside>
 
-      <!-- Overlay -->
-      <div id="mobile-sidebar-overlay" class="mobile-sidebar-overlay" aria-hidden="true"></div>
-    </div>
+    <!-- Mobile Sidebar -->
+    <div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay"></div>
 
-    <!-- navegación principal (se oculta en mobile por CSS) -->
-    <nav class="admin-nav" role="navigation" aria-label="Panel principal">
-      <button class="nav-btn active" data-section="accesos" aria-controls="accesos" data-i18n="access_history">Historial de Accesos</button>
-      <button class="nav-btn" data-section="empleados" aria-controls="empleados" data-i18n="employee_management">Gestión de Empleados</button>
-      <button class="nav-btn" data-section="autorizaciones" aria-controls="autorizaciones" data-i18n="authorizations">Autorizaciones</button>
-      <button class="nav-btn" data-section="estadisticas" aria-controls="estadisticas" data-i18n="statistics">Estadísticas</button>
-    </nav>
-  </header>
+    <!-- CONTENIDO MAIN -->
+    <main class="main-content">
+        <!-- Historial de Accesos  -->
+        <section id="accesos" class="content-section active">
+            <div class="section-header">
+                <h2 data-i18n="access_history_title">Historial de Ingresos/Egresos</h2>
+                <div class="section-actions">
+                    <button id="refresh-records-btn" class="btn btn-secondary">
+                        <i class='bx bx-refresh'></i>
+                        <span data-i18n="refresh_records">Actualizar Registros</span>
+                    </button>
+                </div>
+            </div>
 
-  <main class="container">
+            <!-- TARJETAS DE ESTADISTICAS -->
+            <div class="stats-grid">
+                <div class="stat-card inside">
+                    <div class="stat-icon">
+                        <i class='bx bx-user-check'></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="people-inside-count">0</h3>
+                        <p data-i18n="inside">Dentro</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card outside">
+                    <div class="stat-icon">
+                        <i class='bx bx-user-x'></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="people-outside-count">0</h3>
+                        <p data-i18n="outside">Fuera</p>
+                    </div>
+                </div>
+            </div>
 
-    <!-- ACCESOS -->
-    <section id="accesos" class="content-section">
-      <h2 data-i18n="access_history_title">Historial de Ingresos/Egresos</h2>
-      <button id="refresh-records" class="btn btn-primary" data-i18n="refresh_records">Actualizar Registros</button>
+            <!-- FILTROS -->
+            <div class="filters-card">
+                <h3 data-i18n="filters_title">Filtros</h3>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="filter-by-name" data-i18n="filter_label_name">Nombre</label>
+                        <input type="text" id="filter-by-name" data-i18n-placeholder="filter_placeholder_name">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filter-by-id" data-i18n="filter_label_id">Legajo</label>
+                        <input type="text" id="filter-by-id" data-i18n-placeholder="filter_placeholder_id">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filter-by-shift" data-i18n="filter_label_shift">Turno</label>
+                        <select id="filter-by-shift">
+                            <option value="" data-i18n="all_shifts">Todos los turnos</option>
+                            <option value="Mañana" data-i18n="shift_morning">Mañana</option>
+                            <option value="Tarde" data-i18n="shift_afternoon">Tarde</option>
+                            <option value="Noche" data-i18n="shift_night">Noche</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filter-by-type" data-i18n="filter_label_type">Tipo</label>
+                        <select id="filter-by-type">
+                            <option value="" data-i18n="all_types">Todos los tipos</option>
+                            <option value="ingreso" data-i18n="entry_type">Ingreso</option>
+                            <option value="egreso" data-i18n="exit_type">Egreso</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filter-by-date" data-i18n="filter_label_date">Fecha</label>
+                        <input type="date" id="filter-by-date">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <button id="clear-filters-btn" class="btn btn-outline">
+                            <i class='bx bx-x'></i>
+                            <span data-i18n="clear_filters">Limpiar Filtros</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-      <div class="filter-container">
-        <input type="text" id="filter-by-name" placeholder="Filtrar por nombre..." data-i18n-placeholder="filter_by_name_placeholder">
-        <input type="text" id="filter-by-id" placeholder="Filtrar por legajo..." data-i18n-placeholder="filter_by_id_placeholder">
-        <select id="filter-by-shift">
-          <option value="" data-i18n="all_shifts">Todos los turnos</option>
-          <option value="Mañana" data-i18n="shift_morning">Mañana</option>
-          <option value="Tarde" data-i18n="shift_afternoon">Tarde</option>
-          <option value="Noche" data-i18n="shift_night">Noche</option>
-        </select>
-        <select id="filter-by-type">
-          <option value="" data-i18n="all_types">Todos los tipos</option>
-          <option value="ingreso" data-i18n="entry_type">Ingreso</option>
-          <option value="egreso" data-i18n="exit_type">Egreso</option>
-        </select>
-        <input type="date" id="filter-by-date">
-        <button id="clear-filters-btn" class="btn btn-secondary" data-i18n="clear_filters">Limpiar Filtros</button>
-      </div>
+            <!-- TABLA DE ACCESOS -->
+            <div class="table-card">
+                <div class="table-container">
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="date">Fecha</th>
+                                <th data-i18n="employee">Empleado/a</th>
+                                <th data-i18n="code">Legajo</th>
+                                <th data-i18n="type">Tipo</th>
+                                <th data-i18n="status">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="records-tbody">
+                            <!-- Los accesos se cargan aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
 
-      <div class="records-summary">
-        <div class="summary-card">
-          <h3 data-i18n="inside">Dentro</h3>
-          <span id="people-inside-count">0</span>
-        </div>
-        <div class="summary-card">
-          <h3 data-i18n="outside">Fuera</h3>
-          <span id="people-outside-count">0</span>
-        </div>
-      </div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th data-i18n="date">Fecha</th>
-              <th data-i18n="employee">Empleado/a</th>
-              <th data-i18n="code">Legajo</th>
-              <th data-i18n="type">Tipo</th>
-              <th data-i18n="status">Estado</th>
-            </tr>
-          </thead>
-          <tbody id="records-tbody"></tbody> <!-- Registros se cargan aca -->
-        </table>
-      </div>
-    </section>
+        <!-- EMPLEADOS -->
+        <section id="empleados" class="content-section">
+            <div id="empleados-main-view">
+                <div class="section-header">
+                    <h2 data-i18n="employee_management">Gestión de Empleados</h2>
+                    <div class="section-actions">
+                        <button id="btn-nuevo-empleado" class="btn btn-primary">
+                            <i class='bx bx-user-plus'></i>
+                            <span data-i18n="register_new_employee">Registrar Nuevo Empleado</span>
+                        </button>
+                        <button id="btn-carga-manual" class="btn btn-secondary">
+                            <i class='bx bx-edit'></i>
+                            <span>Carga de Ingreso/Egreso Manual</span>
+                        </button>
+                    </div>
+                </div>
 
-    <!-- EMPLEADOS -->
-    <section id="empleados" class="content-section">
-      <div id="empleados-main-view">
-        <h2 data-i18n="employee_management">Gestión de Empleados</h2>
-        <button id="btn-nuevo-empleado" class="btn btn-primary" data-i18n="register_new_employee">Registrar Nuevo Empleado</button>
-        <button id="btn-eliminar-empleado" class="btn btn-danger" data-i18n="delete_employee">Eliminar Empleado</button>
+                <!-- FILTROS DE EMPANADAS -->
+                <div class="filters-card">
+                    <h3 data-i18n="employee_filters_title">Filtros de Empleados</h3>
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label for="filter-employee-by-role" data-i18n="filter_label_role">Rol</label>
+                            <select id="filter-employee-by-role">
+                                <option value="" data-i18n="all_roles">Todos los roles</option>
+                                <option value="Operario" data-i18n="role_operator_label">Operario</option>
+                                <option value="Analista" data-i18n="role_analyst_label">Analista</option>
+                                <option value="Supervisor" data-i18n="role_supervisor_label">Supervisor</option>
+                                <option value="Gerente" data-i18n="role_manager_label">Gerente</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="filter-employee-by-shift" data-i18n="filter_label_shift">Turno</label>
+                            <select id="filter-employee-by-shift">
+                                <option value="" data-i18n="all_shifts">Todos los turnos</option>
+                                <option value="Mañana" data-i18n="shift_morning">Mañana</option>
+                                <option value="Tarde" data-i18n="shift_afternoon">Tarde</option>
+                                <option value="Noche" data-i18n="shift_night">Noche</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="filter-employee-by-menu-access" data-i18n="filter_label_menu_access">Acceso al Menú</label>
+                            <select id="filter-employee-by-menu-access">
+                                <option value="" data-i18n="all_access_levels">Todos los niveles</option>
+                                <option value="true" data-i18n="with_menu_access">Con Acceso al Menú (Nivel 3+)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <button id="clear-employee-filters-btn" class="btn btn-outline">
+                                <i class='bx bx-x'></i>
+                                <span data-i18n="clear_filters">Limpiar Filtros</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="filter-container">
-          <select id="filter-employee-by-role">
-            <option value="" data-i18n="all_roles">Todos los roles</option>
-            <option value="Empleado" data-i18n="role_employee_label">Empleado</option>
-            <option value="Analista" data-i18n="role_analyst">Analista</option>
-            <option value="Supervisor" data-i18n="role_supervisor_label">Supervisor</option>
-            <option value="Gerente" data-i18n="role_manager">Gerente</option>
-          </select>
-          <select id="filter-employee-by-shift">
-            <option value="" data-i18n="all_shifts">Todos los turnos</option>
-            <option value="Mañana" data-i18n="shift_morning">Mañana</option>
-            <option value="Tarde" data-i18n="shift_afternoon">Tarde</option>
-            <option value="Noche" data-i18n="shift_night">Noche</option>
-          </select>
-          <select id="filter-employee-by-menu-access">
-            <option value="" data-i18n="all_access_levels">Todos los accesos</option>
-            <option value="true" data-i18n="with_menu_access">Con Acceso al Menú (Nivel 3+)</option>
-          </select>
-          <button id="clear-employee-filters-btn" class="btn btn-secondary" data-i18n="clear_filters">Limpiar Filtros</button>
-        </div>
+                <!-- LISTA DE EMPLEADOS -->
+                <div class="employees-grid" id="empleados-list">
+                    <!-- Los empleados se cargan aquí -->
+                </div>
+            </div>
 
-        <div id="empleados-list"></div> <!-- Lista de empleados se carga aca -->
-      </div>
+            <!-- REGISTRO DE EMPLEADO -->
+            <div id="register-screen" class="register-screen">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h2 data-i18n="new_user_registration_title">Registro de Nuevo Usuario</h2>
+                        <button id="back-to-employees" class="btn btn-outline">
+                            <i class='bx bx-arrow-back'></i>
+                            <span data-i18n="back">Volver</span>
+                        </button>
+                    </div>
 
-      <!-- Pantalla de registro -->
-      <div id="register-screen" class="screen">
-        <h2 data-i18n="new_user_registration_title">Registro de Nuevo Usuario</h2>
-        <div class="form-group">
-          <label for="operator-code" data-i18n="employee_code_label">Legajo:</label>
-          <input type="text" id="operator-code" placeholder="Ej: OP-001">
-        </div>
-        <div class="form-group">
-          <label for="operator-name" data-i18n="name_label">Nombre:</label>
-          <input type="text" id="operator-name" placeholder="Ej: Ana">
-        </div>
-        <div class="form-group">
-          <label for="operator-surname" data-i18n="surname_label">Apellido:</label>
-          <input type="text" id="operator-surname" placeholder="Ej: Perez">
-        </div>
-        <div class="form-group">
-          <label for="operator-dni" data-i18n="operator_dni_label">DNI:</label>
-          <input type="text" id="operator-dni" placeholder="Ej: 12345678">
-        </div>
-        <div class="form-group">
-          <label for="operator-email" data-i18n="email_label">Email:</label>
-          <input type="email" id="operator-email" placeholder="Ej: ana.perez@empresa.com">
-        </div>
-        <div class="form-group">
-          <label for="operator-role" data-i18n="role_label">Rol:</label>
-          <select id="operator-role">
-            <option value="" data-i18n="select_role">Seleccione un rol...</option>
-            <option value="1" data-i18n="role_employee">Empleado (Nivel 1)</option>
-            <option value="2" data-i18n="role_analyst">Analista (Nivel 2)</option>
-            <option value="3" data-i18n="role_supervisor">Supervisor (Nivel 3)</option>
-            <option value="4" data-i18n="role_manager">Gerente (Nivel 4)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="operator-zone" data-i18n="zone_label">Zona Asignada:</label>
-          <select id="operator-zone" multiple>
-            <option value="Recepción" data-i18n="zone_reception">Recepción</option>
-            <option value="Almacenamiento" data-i18n="zone_storage">Almacenamiento</option>
-            <option value="Procesamiento" data-i18n="zone_processing">Procesamiento</option>
-            <option value="Conservación" data-i18n="zone_conservation">Conservación</option>
-            <option value="Despacho" data-i18n="zone_dispatch">Despacho</option>
-          </select>
-          <small class="form-hint" data-i18n="multi_select_hint">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar varias zonas.</small>
-        </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="operator-code" data-i18n="employee_code_label">Legajo:</label>
+                            <input type="text" id="operator-code" required>
+                        </div>
 
-        <div class="form-group">
-          <label for="operator-shift" data-i18n="shift_label">Turno:</label>
-          <select id="operator-shift">
-            <option value="" data-i18n="select_shift">Seleccione un turno...</option>
-            <option value="Mañana" data-i18n="shift_morning">Mañana</option>
-            <option value="Tarde" data-i18n="shift_afternoon">Tarde</option>
-            <option value="Noche" data-i18n="shift_night">Noche</option>
-          </select>
-        </div>
+                        <div class="form-group">
+                            <label for="operator-name" data-i18n="name_label">Nombre:</label>
+                            <input type="text" id="operator-name" required>
+                        </div>
 
-        <div class="action-buttons">
-          <button id="capture-btn" class="btn btn-primary" data-i18n="capture_face">Capturar Rostro</button>
-          <button id="back-to-employees" class="btn btn-secondary" data-i18n="back">Volver</button>
-        </div>
-      </div>
+                        <div class="form-group">
+                            <label for="operator-surname" data-i18n="surname_label">Apellido:</label>
+                            <input type="text" id="operator-surname" required>
+                        </div>
 
-      <!-- Pantalla de captura facial -->
-      <div id="capture-screen" class="screen">
-        <h2 data-i18n="face_capture_title">Captura de Rostro</h2>
-        <p data-i18n="face_capture_instruction">Por favor, colóquese frente a la cámara y asegúrese de que su rostro esté bien iluminado.</p>
-        <div class="video-container">
-          <video id="video" width="600" height="450" autoplay muted></video>
-          <canvas id="overlay"></canvas>
-        </div>
-        <div id="capture-status" class="status info" data-i18n="waiting_for_detection">Esperando detección facial...</div>
-        <div class="action-buttons">
-          <button id="confirm-capture-btn" class="btn btn-primary" disabled data-i18n="confirm_capture">Confirmar Captura</button>
-          <button id="retry-capture-btn" class="btn btn-secondary" data-i18n="retry">Reintentar</button>
-          <button id="back-to-register" class="btn btn-secondary" data-i18n="back_to_register">Volver al Registro</button>
-        </div>
-      </div>
-    </section>
+                        <div class="form-group">
+                            <label for="operator-dni">DNI:</label>
+                            <input type="text" id="operator-dni" required>
+                        </div>
 
-    <!-- AUTORIZACIONES -->
-    <section id="autorizaciones" class="content-section">
-      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h2 data-i18n="pending_authorizations_title" style="margin: 0;">Autorizaciones Pendientes</h2>
-        <button id="refresh-authorizations-btn" class="btn btn-primary" data-i18n="refresh_authorizations">Actualizar</button>
-      </div>
-      <div id="authorizations-list" class="authorizations-container">
-        <!-- Las tarjetas de autorización se cargarán aquí -->
-      </div>
-    </section>
+                        <div class="form-group">
+                            <label for="operator-email">Email:</label>
+                            <input type="email" id="operator-email" required>
+                        </div>
 
-    <!-- ESTADISTICAS -->
-    <section id="estadisticas" class="content-section" hidden>
-      <h2 data-i18n="statistics">Estadísticas</h2>
+                        <div class="form-group">
+                            <label for="operator-role" data-i18n="role_label">Rol:</label>
+                            <select id="operator-role" required>
+                                <option value="" data-i18n="select_role">Seleccione un rol...</option>
+                                <option value="1">Operario (Nivel 1)</option>
+                                <option value="2">Analista (Nivel 2)</option>
+                                <option value="3">Supervisor (Nivel 3)</option>
+                                <option value="4">Gerente (Nivel 4)</option>
+                            </select>
+                        </div>
 
-      <!-- botones por etapa -->
-      <div class="stage-buttons" role="tablist" aria-label="Etapas de proceso">
-        <button class="stage-btn active" data-stage="Recepcion" role="tab" data-i18n="zone_reception">Recepción</button>
-        <button class="stage-btn" data-stage="Almacenamiento" role="tab" data-i18n="zone_storage">Almacenamiento</button>
-        <button class="stage-btn" data-stage="Procesamiento" role="tab" data-i18n="zone_processing">Procesamiento</button>
-        <button class="stage-btn" data-stage="Conservacion" role="tab" data-i18n="zone_conservation">Conservación</button>
-        <button class="stage-btn" data-stage="ServicioDespacho" role="tab" data-i18n="zone_dispatch">Servicio y Despacho</button>
-        <button class="stage-btn" data-stage="Indicadores" role="tab" data-i18n="statistics">Indicadores</button>
-      </div>
+                        <div class="form-group">
+                            <label for="operator-zone" data-i18n="zone_label">Zona Asignada:</label>
+                            <select id="operator-zone" multiple required>
+                                <option value="Recepcion">Recepción</option>
+                                <option value="Almacenamiento">Almacenamiento</option>
+                                <option value="Procesamiento">Procesamiento</option>
+                                <option value="Conservacion">Conservación</option>
+                                <option value="Despacho">Despacho</option>
+                            </select>
+                            <small>Mantén presionado Ctrl (o Cmd en Mac) para seleccionar múltiples zonas.</small>
+                        </div>
 
-      <!-- Contenedor para insights -->
-      <div id="insights-container" class="insights-wrapper" style="display: none;">
-        <h3 data-i18n="key_alerts_observations">Alertas y Observaciones Clave</h3>
-        <div id="insights-list"></div>
-      </div>
+                        <div class="form-group">
+                            <label for="operator-shift" data-i18n="shift_label">Turno:</label>
+                            <select id="operator-shift" required>
+                                <option value="" data-i18n="select_shift">Seleccione un turno...</option>
+                                <option value="Mañana">Mañana</option>
+                                <option value="Tarde">Tarde</option>
+                                <option value="Noche">Noche</option>
+                            </select>
+                        </div>
+                    </div>
 
-      <!-- contenedor del gráfico -->
-      <div class="chart-wrapper">
-        <canvas id="statsCanvas" aria-label="Gráfico de estadísticas" role="img"></canvas>
-        <div id="statsFallback" class="fallback" data-i18n="stats_chart_fallback">Gráfico de estadísticas se mostraría aquí</div>
-      </div>
-    </section>
+                    <div class="form-actions">
+                        <button id="capture-btn" class="btn btn-primary">
+                            <i class='bx bx-camera'></i>
+                            <span data-i18n="capture_face">Capturar Rostro</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-  </main>
+            <!-- CAPTURA DE CARA -->
+            <div id="capture-screen" class="capture-screen">
+                <div class="capture-card">
+                    <div class="capture-header">
+                        <h2 data-i18n="face_capture_title">Captura de Rostro</h2>
+                        <p data-i18n="face_capture_instruction">Por favor, colóquese frente a la cámara y asegúrese de que su rostro esté bien iluminado.</p>
+                    </div>
 
-  <footer class="app-footer">
-    <small data-i18n="footer_text">© Sistema - Panel Administrativo</small>
-  </footer>
+                    <div class="video-container">
+                        <video id="video" autoplay muted></video>
+                        <canvas id="overlay"></canvas>
+                        <div class="video-frame"></div>
+                    </div>
+
+                    <div class="capture-status">
+                        <p id="capture-status" class="status info" data-i18n="waiting_for_detection">Esperando detección facial...</p>
+                    </div>
+
+                    <div class="capture-actions">
+                        <button id="back-to-register" class="btn btn-outline">
+                            <i class='bx bx-arrow-back'></i>
+                            <span data-i18n="back_to_register">Volver al Registro</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- CARGA MANUAL -->
+        <section id="manual-entry" class="content-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-i18n="manual_entry_title">Carga de Ingreso/Egreso Manual</h2>
+                    <div class="section-actions">
+                         <button id="back-to-menu-from-manual" class="btn btn-outline">
+                            <i class='bx bx-arrow-back'></i>
+                            <span data-i18n="back_to_menu">Volver al Menú</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <p class="subtitle" data-i18n="manual_entry_subtitle">Registra aquí todos los ingresos y egresos de manera manual.</p>
+        
+                <div class="form-card">
+                    <h2 data-i18n="new_manual_registration">Nuevo registro manual</h2>
+                    <p class="form-subtitle" data-i18n="manual_form_subtitle">Complete los datos para registrar un acceso manual</p>
+        
+                    <div class="form-group">
+                        <label for="manual-legajo" data-i18n="legajo_label">Legajo</label>
+                        <div class="input-with-button">
+                            <input type="text" id="manual-legajo" data-i18n-placeholder="legajo_placeholder" name="legajo" required>
+                            <button type="button" id="manual-search-btn" class="btn-search">
+                                <i class='bx bx-search'></i> <span data-i18n="search_button">Buscar</span>
+                            </button>
+                        </div>
+                        <small class="error-msg" data-i18n="legajo_required">El legajo es obligatorio.</small>
+                    </div>
+        
+                    <!-- Contenedor para detalles del empleado -->
+                    <div id="manual-employee-details" class="employee-details">
+                        <div class="detail-row">
+                            <div class="detail-item">
+                                <label data-i18n="employee_name_label">Nombre</label>
+                                <span id="manual-employee-name">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label data-i18n="employee_surname_label">Apellido</label>
+                                <span id="manual-employee-surname">-</span>
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-item">
+                                <label data-i18n="employee_dni_label">DNI</label>
+                                <span id="manual-employee-dni">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label data-i18n="employee_shift_label">Turno</label>
+                                <span id="manual-employee-shift">-</span>
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-item">
+                                <label data-i18n="employee_role_label">Rol</label>
+                                <span id="manual-employee-role">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label data-i18n="employee_access_level_label">Nivel de Acceso</label>
+                                <span id="manual-employee-access-level">-</span>
+                            </div>
+                        </div>
+                        <small id="manual-employee-not-found" class="error-msg" data-i18n="employee_not_found">Empleado no encontrado.</small>
+                    </div>
+        
+                    <div class="form-group">
+                        <label data-i18n="access_type_label">Tipo de acceso</label>
+                        <div class="toggle-buttons">
+                            <button type="button" class="toggle-btn manual-toggle-btn" data-type="ingreso">
+                                <i class='bx bx-log-in'></i>
+                                <span data-i18n="entry_button">Ingreso</span>
+                            </button>
+                            <button type="button" class="toggle-btn manual-toggle-btn" data-type="egreso">
+                                <i class='bx bx-log-out'></i>
+                                <span data-i18n="exit_button">Egreso</span>
+                            </button>
+                        </div>
+                        <small class="error-msg" id="manual-type-error" data-i18n="access_type_required">Debe seleccionar un tipo de acceso.</small>
+                    </div>
+        
+                    <div class="form-group">
+                        <label for="manual-fecha-hora" data-i18n="datetime_label">Fecha y Hora</label>
+                        <input type="datetime-local" id="manual-fecha-hora" name="fecha-hora" required>
+                    </div>
+        
+                    <button type="button" id="manual-submit-btn" class="btn-submit disabled" disabled>
+                        <i class='bx bx-check'></i> <span data-i18n="complete_all_fields">Complete todos los campos</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- AUTORIZACIONES -->
+        <section id="autorizaciones" class="content-section">
+            <div class="section-header">
+                <h2 data-i18n="pending_authorizations_title">Autorizaciones Pendientes</h2>
+                <div class="section-actions">
+                    <button id="refresh-authorizations-btn" class="btn btn-secondary">
+                        <i class='bx bx-refresh'></i>
+                        <span data-i18n="refresh_authorizations">Actualizar</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="authorizations-list" class="authorizations-list">
+                <!-- Las autorizaciones se cargan aqui -->
+            </div>
+        </section>
+
+        <!-- ESTADISTICAS -->
+        <section id="estadisticas" class="content-section">
+            <div class="section-header">
+                <h2 data-i18n="statistics">Estadísticas</h2>
+            </div>
+
+            <div class="stats-controls">
+                <button class="stage-btn active" data-stage="Indicadores">
+                    <i class='bx bx-trending-up'></i>
+                    <span data-i18n="indicators">Indicadores</span>
+                </button>
+                <button class="stage-btn" data-stage="Accesos">
+                    <i class='bx bx-time'></i>
+                    <span data-i18n="stats_access_analysis">Análisis de Accesos</span>
+                </button>
+                <button class="stage-btn" data-stage="Recepcion">
+                    <i class='bx bx-package'></i>
+                    <span data-i18n="stats_reception">Recepción</span>
+                </button>
+                <button class="stage-btn" data-stage="Almacenamiento">
+                    <i class='bx bx-store'></i>
+                    <span data-i18n="stats_storage">Almacenamiento</span>
+                </button>
+                <button class="stage-btn" data-stage="Procesamiento">
+                    <i class='bx bx-cog'></i>
+                    <span data-i18n="stats_processing">Procesamiento</span>
+                </button>
+                <button class="stage-btn" data-stage="Conservacion">
+                    <i class='bx bx-fridge'></i>
+                    <span data-i18n="stats_conservation">Conservación</span>
+                </button>
+                <button class="stage-btn" data-stage="ServicioDespacho">
+                    <i class='bx bxs-truck'></i>
+                    <span data-i18n="stats_dispatch">Despacho</span>
+                </button>
+            </div>
+
+            <div id="indicators-view">
+                <div class="oee-components-grid">
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_availability">Disponibilidad</h3>
+                        <div class="chart-card" id="availabilityChartCard">
+                            <canvas id="availabilityChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_performance">Rendimiento</h3>
+                        <div class="chart-card" id="performanceChartCard">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_quality">Calidad</h3>
+                        <div class="chart-card" id="qualityChartCard">
+                            <canvas id="qualityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <hr class="section-divider">
+                <h2 class="subsection-title" data-i18n="additional_kpis_title">Otros Indicadores Clave de Proceso</h2>
+                <div class="oee-components-grid">
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="kpi_rejection_rate">Tasa de Rechazo (Materia Prima)</h3>
+                        <div class="chart-card" id="rejectionRateChartCard">
+                            <canvas id="rejectionRateChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="kpi_yield">Rendimiento General (Procesamiento)</h3>
+                        <div class="chart-card" id="yieldChartCard">
+                            <canvas id="yieldChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="kpi_documentation">Cumplimiento de Documentación (Despacho)</h3>
+                        <div class="chart-card" id="documentationComplianceChartCard">
+                            <canvas id="documentationComplianceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <hr class="section-divider">
+                <div class="final-oee-container">
+                    <h2 class="subsection-title" data-i18n="final_oee_title">OEE General Actual</h2>
+                    <div id="final-oee-value" class="final-oee-value">--%</div>
+                    <div class="oee-legend">
+                        <div class="legend-item"><span class="legend-color" style="background-color: #dc3545;"></span><span data-i18n="oee_legend_bad">&lt; 60% (Malo)</span></div>
+                        <div class="legend-item"><span class="legend-color" style="background-color: #ffc107;"></span><span data-i18n="oee_legend_acceptable">60% - 85% (Aceptable)</span></div>
+                        <div class="legend-item"><span class="legend-color" style="background-color: #28a745;"></span><span data-i18n="oee_legend_excellent">&gt; 85% (Excelente)</span></div>
+                    </div>
+                </div>
+                <hr class="section-divider">
+                <div class="chart-wrapper">
+                    <h3 class="chart-title-outside" data-i18n="chart_title_oee_trend">Tendencia OEE General</h3>
+                    <div class="chart-container main-chart">
+                        <canvas id="oeeTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div id="stages-view" class="stages-view" style="display: none;">
+                <div class="stage-charts-grid" id="recepcion-charts">
+                    <div class="chart-card"><canvas id="recepcionChart1"></canvas></div>
+                    <div class="chart-card"><canvas id="recepcionChart2"></canvas></div>
+                    <div class="chart-card"><canvas id="recepcionChart3"></canvas></div>
+                </div>
+                <div class="stage-charts-grid" id="almacenamiento-charts">
+                    <div class="chart-card"><canvas id="almacenamientoChart1"></canvas></div>
+                    <div class="chart-card"><canvas id="almacenamientoChart2"></canvas></div>
+                    <div class="chart-card"><canvas id="almacenamientoChart3"></canvas></div>
+                </div>
+                <div class="stage-charts-grid" id="procesamiento-charts">
+                    <div class="chart-card"><canvas id="procesamientoChart1"></canvas></div>
+                    <div class="chart-card"><canvas id="procesamientoChart2"></canvas></div>
+                    <div class="chart-card"><canvas id="procesamientoChart3"></canvas></div>
+                </div>
+                <div class="stage-charts-grid" id="conservacion-charts">
+                    <div class="chart-card"><canvas id="conservacionChart1"></canvas></div>
+                    <div class="chart-card"><canvas id="conservacionChart2"></canvas></div>
+                    <div class="chart-card"><canvas id="conservacionChart3"></canvas></div>
+                </div>
+                <div class="stage-charts-grid" id="despacho-charts">
+                    <div class="chart-card"><canvas id="despachoChart1"></canvas></div>
+                    <div class="chart-card"><canvas id="despachoChart2"></canvas></div>
+                    <div class="chart-card"><canvas id="despachoChart3"></canvas></div>
+                </div>
+            </div>
+            <div id="access-charts-view" style="display: none;">
+                <div class="oee-components-grid">
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_arrivals">Llegadas</h3>
+                        <div class="chart-card">
+                            <canvas id="arrivalsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_employees_by_shift">Empleados por Turno</h3>
+                        <div class="chart-card">
+                            <canvas id="shiftChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_employees_by_role">Empleados por Rol</h3>
+                        <div class="chart-card">
+                            <canvas id="roleChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="statsFallback" class="chart-fallback" data-i18n="stats_chart_fallback">Gráfico de estadísticas se mostraría aquí</div>
+
+            <div id="insights-container" class="insights-container">
+                <h3 data-i18n="key_alerts_observations">Alertas y Observaciones Clave</h3>
+                <div id="insights-list" class="insights-list">
+                    <!-- Los indicadores se cargan aqui -->
+                </div>
+            </div>
+
+            <div id="alerts-config-container" class="filters-card">
+                <h3 data-i18n="alerts_config_title">Configuración de Alertas</h3>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="rejection-threshold" data-i18n="alert_label_rejection">Umbral de Rechazo de Materia Prima (%)</label>
+                        <input type="number" id="rejection-threshold" value="20" min="0" max="100">
+                    </div>
+                    <div class="filter-group">
+                        <label for="waste-threshold" data-i18n="alert_label_waste">Umbral de Desperdicio en Procesamiento (%)</label>
+                        <input type="number" id="waste-threshold" value="25" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
+    <script type="module" src="js/menu.js"></script>
 </body>
 
 </html>

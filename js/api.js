@@ -118,9 +118,14 @@ export async function registerUser(userData) {
  * @param {'ingreso' | 'egreso'} type - El tipo de evento de acceso.
  * @returns {Promise<object>} El resultado de la función del servidor.
  */
-export async function registerAccess(employeeCode, type) {
+export async function registerAccess(employeeCode, type, fecha_hora = null) {
+    const body = { codigo_empleado: employeeCode, tipo: type };
+    if (fecha_hora) {
+        body.fecha_hora = fecha_hora;
+    }
+
     const { data, error } = await supabase.functions.invoke('access', {
-        body: { codigo_empleado: employeeCode, tipo: type }
+        body: body
     });
 
     if (error) {
@@ -128,6 +133,71 @@ export async function registerAccess(employeeCode, type) {
         throw error;
     }
     return data;
+}
+
+/**
+ * Obtiene todos los datos de recepción de la base de datos.
+ * @returns {Promise<Array>} Una lista de registros de recepción.
+ */
+export async function fetchRecepcionData() {
+    const { data, error } = await supabase.from('recepcion').select('*');
+    if (error) {
+        console.error('Error al obtener datos de recepción:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+/**
+ * Obtiene todos los datos de almacenamiento de la base de datos.
+ * @returns {Promise<Array>} Una lista de registros de almacenamiento.
+ */
+export async function fetchAlmacenamientoData() {
+    const { data, error } = await supabase.from('almacenamiento').select('*');
+    if (error) {
+        console.error('Error al obtener datos de almacenamiento:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+/**
+ * Obtiene todos los datos de procesamiento de la base de datos.
+ * @returns {Promise<Array>} Una lista de registros de procesamiento.
+ */
+export async function fetchProcesamientoData() {
+    const { data, error } = await supabase.from('procesamiento').select('*');
+    if (error) {
+        console.error('Error al obtener datos de procesamiento:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+/**
+ * Obtiene todos los datos de conservación de la base de datos.
+ * @returns {Promise<Array>} Una lista de registros de conservación.
+ */
+export async function fetchConservacionData() {
+    const { data, error } = await supabase.from('conservacion').select('*');
+    if (error) {
+        console.error('Error al obtener datos de conservación:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+/**
+ * Obtiene todos los datos de despacho de la base de datos.
+ * @returns {Promise<Array>} Una lista de registros de despacho.
+ */
+export async function fetchDespachoData() {
+    const { data, error } = await supabase.from('despacho').select('*');
+    if (error) {
+        console.error('Error al obtener datos de despacho:', error);
+        throw error;
+    }
+    return data || [];
 }
 
 /**
