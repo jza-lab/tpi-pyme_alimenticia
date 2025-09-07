@@ -1,96 +1,10 @@
 let statsChartInstance = null;
 let userAllowedZones = null; // Almacenar las zonas permitidas a nivel de módulo
 
-// --- Helpers para Gráficos ---
-function getRandomColor() {
-    const r = Math.floor(Math.random() * 255);
-    const g = Math.floor(Math.random() * 255);
-    const b = Math.floor(Math.random() * 255);
-    return `rgba(${r}, ${g}, ${b}, 0.7)`;
-}
-
-function getColors(count) {
-    const colors = [];
-    for (let i = 0; i < count; i++) {
-        colors.push(getRandomColor());
-    }
-    return colors;
-}
-
-// --- Lógica de Negocio para Estadísticas (OEE, Insights) ---
-function generateInsights(allData, oeeResults) {
-    const insights = [];
-    const latestOeeData = oeeResults.datasets.oee.length > 0 ? oeeResults.datasets.oee[oeeResults.datasets.oee.length - 1] : null;
-
-    if (latestOeeData && latestOeeData >= 0.85) {
-        insights.push({ text: `¡Excelente! El OEE del último día (${(latestOeeData * 100).toFixed(1)}%) es de clase mundial.`, level: 'success' });
-    }
-
-    const recepcionData = allData.Recepcion || [];
-    if (recepcionData.length > 0) {
-        const totalRecibido = recepcionData.reduce((sum, item) => sum + item['Cantidad Recibida (en Kg)'], 0);
-        const totalRechazado = recepcionData.filter(item => item.Decisión === 'Rechazado').reduce((sum, item) => sum + item['Cantidad Recibida (en Kg)'], 0);
-        const rechazoRate = (totalRecibido > 0) ? (totalRechazado / totalRecibido) : 0;
-        if (rechazoRate > 0.20) {
-            insights.push({ text: `ALERTA: Alto porcentaje de rechazo de materias primas (${(rechazoRate * 100).toFixed(1)}%). Proveedores a revisar.`, level: 'alert' });
-        } else if (rechazoRate < 0.05) {
-            insights.push({ text: `BUEN TRABAJO: Tasa de rechazo de materia prima muy baja (${(rechazoRate * 100).toFixed(1)}%).`, level: 'success' });
-        }
-    }
-
-    const procesamientoData = allData.Procesamiento || [];
-    if (procesamientoData.length > 0) {
-        const promedioDesperdicio = procesamientoData.reduce((sum, item) => sum + item['Desperdicio (en %)'], 0) / procesamientoData.length;
-        const productosConAltoDesperdicio = procesamientoData.filter(item => item['Desperdicio (en %)'] > (promedioDesperdicio * 1.25));
-        if (productosConAltoDesperdicio.length > 0) {
-            const nombres = productosConAltoDesperdicio.map(p => `${p.Producto} (${p['Desperdicio (en %)']}%)`).join(', ');
-            insights.push({ text: `ADVERTENCIA: Productos con desperdicio elevado: ${nombres}.`, level: 'warning' });
-        }
-    }
-    return insights;
-}
-
-function calculateOEE(procesamientoData) {
-    const idealCycleTimes_seconds = { 'Hamburguesas': 6, 'Milanesas': 6.5, 'Salchichas': 13, 'Albóndigas': 3.5, 'Nuggets': 5, 'Medallones': 5.5 };
-    const dates = [...new Set(procesamientoData.map(p => p.Fecha))];
-    const results = { labels: [], datasets: { availability: [], performance: [], quality: [], oee: [] } };
-
-    dates.forEach(date => {
-        const dailyData = procesamientoData.filter(p => p.Fecha === date);
-        if (dailyData.length === 0) return;
-        results.labels.push(new Date(date).toLocaleDateString('es-ES'));
-        const unplannedStopTime_hours = 1, cleaningTimePerProcess_hours = 0.75;
-        const numProcesses = dailyData.length;
-        const totalCleaningTime_hours = (numProcesses > 1) ? (numProcesses - 1) * cleaningTimePerProcess_hours : 0;
-        const totalStopTime_hours = unplannedStopTime_hours + totalCleaningTime_hours;
-        const actualRunTime_hours = dailyData.reduce((sum, p) => sum + p['Tiempo de Operación (en Horas)'], 0);
-        const plannedProductionTime_hours = actualRunTime_hours + totalStopTime_hours;
-        const availability = (plannedProductionTime_hours > 0) ? actualRunTime_hours / plannedProductionTime_hours : 0;
-        let totalGoodCount = 0, totalCount = 0;
-        dailyData.forEach(p => {
-            const processedCount = p['Cantidades Procesadas (en Unidades)'];
-            const wastePercentage = p['Desperdicio (en %)'];
-            totalGoodCount += processedCount * (1 - wastePercentage / 100);
-            totalCount += processedCount;
-        });
-        const quality = (totalCount > 0) ? totalGoodCount / totalCount : 0;
-        let totalNetRunTime_hours = 0;
-        dailyData.forEach(p => {
-            const idealCycle_seconds = idealCycleTimes_seconds[p.Producto];
-            if (idealCycle_seconds) totalNetRunTime_hours += (idealCycle_seconds * p['Cantidades Procesadas (en Unidades)']) / 3600;
-        });
-        const performance = (actualRunTime_hours > 0) ? totalNetRunTime_hours / actualRunTime_hours : 0;
-        results.datasets.availability.push(availability);
-        results.datasets.performance.push(performance);
-        results.datasets.quality.push(quality);
-        results.datasets.oee.push(availability * performance * quality);
-    });
-    return results;
-}
-
 // --- Renderizado de Gráficos ---
-async function renderStage(stage) {
+import { getUsers, getAccessRecords } from './state.js';
 
+async function renderStage(stage) {
     const canvas = document.getElementById('statsCanvas');
     const ctx = canvas.getContext('2d');
     const insightsContainer = document.getElementById('insights-container');
@@ -103,30 +17,87 @@ async function renderStage(stage) {
     if (statsChartInstance) statsChartInstance.destroy();
 
     try {
-        const response = await fetch('data/statistics.json');
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        const allData = await response.json();
+        const accessRecords = getAccessRecords();
+        if (!accessRecords || accessRecords.length === 0) {
+            throw new Error('No hay registros de acceso para mostrar estadísticas.');
+        }
 
         let config;
+        // Simplificaremos los gráficos para usar los datos reales que tenemos.
+        // El OEE y otros indicadores complejos no se pueden calcular con los datos actuales.
         if (stage === 'Indicadores') {
-            const oeeResults = calculateOEE(allData.Procesamiento);
-            const insights = generateInsights(allData, oeeResults);
-            if (insights.length > 0) {
-                insightsList.innerHTML = insights.map(insight => `<div class="employee-card" style="border-left-color: ${insight.level === 'alert' ? '#e74c3c' : insight.level === 'warning' ? '#f39c12' : '#27ae60'}"><p>${insight.text}</p></div>`).join('');
-                insightsContainer.style.display = 'block';
+            const ingresosPorHora = {};
+            const egresosPorHora = {};
+            for (let i = 0; i < 24; i++) {
+                ingresosPorHora[i] = 0;
+                egresosPorHora[i] = 0;
             }
-            config = { type: 'bar', data: { labels: oeeResults.labels, datasets: [{ label: 'Disponibilidad', data: oeeResults.datasets.availability, backgroundColor: 'rgba(54, 162, 235, 0.7)' }, { label: 'Rendimiento', data: oeeResults.datasets.performance, backgroundColor: 'rgba(255, 206, 86, 0.7)' }, { label: 'Calidad', data: oeeResults.datasets.quality, backgroundColor: 'rgba(75, 192, 192, 0.7)' }, { label: 'OEE', data: oeeResults.datasets.oee, backgroundColor: 'rgba(153, 102, 255, 0.7)' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Indicador OEE por Día' } }, scales: { y: { beginAtZero: true, max: 1, ticks: { callback: v => (v * 100).toFixed(0) + '%' } } } } };
+            accessRecords.forEach(record => {
+                const hour = new Date(record.fecha_hora).getHours();
+                if (record.tipo === 'ingreso') {
+                    ingresosPorHora[hour]++;
+                } else {
+                    egresosPorHora[hour]++;
+                }
+            });
+
+            config = {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(ingresosPorHora).map(h => `${h}:00`),
+                    datasets: [{
+                        label: 'Ingresos por Hora',
+                        data: Object.values(ingresosPorHora),
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    }, {
+                        label: 'Egresos por Hora',
+                        data: Object.values(egresosPorHora),
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: 'Flujo de Accesos por Hora' } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            };
         } else {
-            const stageData = allData[stage];
-            if (!stageData || stageData.length === 0) throw new Error(`No hay datos para "${stage}"`);
-            const labels = [...new Set(stageData.map(item => item.Producto || item.Proveedor || item.Tipo))];
-            const data = labels.map(label => stageData.filter(item => (item.Producto || item.Proveedor || item.Tipo) === label).reduce((sum, item) => sum + (item['Cantidad Recibida (en Kg)'] || item['Cantidad almacenada (en Kg)'] || item['Cantidades Procesadas (en Unidades)'] || item['Cantidad envasada (en Unidades)'] || item['Cantidades despachadas (en unidades)']), 0));
-            config = { type: 'bar', data: { labels, datasets: [{ label: `Datos para ${stage}`, data, backgroundColor: getColors(labels.length) }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: `Análisis de ${stage}` } } } };
+            // Gráfico de accesos por turno como ejemplo para las otras pestañas
+            const accesosPorTurno = { 'Mañana': 0, 'Tarde': 0, 'Noche': 0 };
+            const users = getUsers();
+            const userMap = new Map(users.map(u => [u.codigo_empleado, u]));
+
+            accessRecords.forEach(record => {
+                const user = userMap.get(record.codigo_empleado);
+                if (user && user.turno && accesosPorTurno.hasOwnProperty(user.turno)) {
+                    accesosPorTurno[user.turno]++;
+                }
+            });
+
+            config = {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(accesosPorTurno),
+                    datasets: [{
+                        label: 'Accesos por Turno',
+                        data: Object.values(accesosPorTurno),
+                        backgroundColor: ['rgba(255, 206, 86, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(153, 102, 255, 0.7)'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: `Distribución de Accesos por Turno` } }
+                }
+            };
         }
         statsChartInstance = new Chart(ctx, config);
+        document.getElementById('statsFallback').textContent = ''; // Limpiar mensaje de error
     } catch (err) {
         console.error(`Error en renderStage para ${stage}:`, err);
-        document.getElementById('statsFallback').textContent = err.message;
+        document.getElementById('statsFallback').textContent = `Error al generar gráfico: ${err.message}`;
+        document.getElementById('statsFallback').style.display = 'block';
     }
 }
 

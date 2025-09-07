@@ -12,7 +12,9 @@ let detectionInterval = null;
 
 // --- Seguridad y Control de Acceso ---
 async function checkAuthAndApplyPermissions() {
-  await state.initState(); // Asegurarse que el estado está inicializado
+  // Forzar la actualización del estado para asegurar que los datos de roles y
+  // accesos están siempre actualizados al cargar el menú.
+  await state.refreshState();
   const userCode = sessionStorage.getItem('supervisorCode');
 
   // --- DEBUGGING ---
@@ -125,7 +127,6 @@ const dom = {
   video: document.getElementById('video'),
   overlay: document.getElementById('overlay'),
   captureStatus: document.getElementById('capture-status'),
-  confirmCaptureBtn: document.getElementById('confirm-capture-btn'),
   backToRegisterBtn: document.getElementById('back-to-register'),
   recordsTbody: document.getElementById('records-tbody'),
   peopleInsideCount: document.getElementById('people-inside-count'),
@@ -395,38 +396,78 @@ function renderEmployees() {
 }
 
 // --- Flujo de Registro de Empleados ---
-function handleStartCaptureClick() {
+
+/**
+ * Valida el formulario de registro de empleados y muestra errores visualmente.
+ * @returns {boolean} - Devuelve `true` si el formulario es válido, `false` en caso contrario.
+ */
+function validateRegistrationForm() {
   const { code, name, surname, dni, email, role, zone, shift } = dom.form;
+  let isValid = true;
 
-  // --- Validación Robusta ---
-  if (!code.value || !name.value || !surname.value || !dni.value || !email.value || !role.value || !zone.value || !shift.value) {
-    return alert(t('fill_all_fields'));
-  }
-  if (state.getUsers().some(u => u.codigo_empleado === code.value)) {
-    return alert(t('employee_code_exists'));
-  }
-  if (dni.value.length < 7 || dni.value.length > 8) {
-    return alert(t('dni_length_error'));
-  }
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email.value)) {
-    return alert(t('invalid_email_format'));
-  }
-  // --- Fin Validación ---
+  // Función para marcar un campo como inválido
+  const markInvalid = (field, messageKey) => {
+    field.classList.add('is-invalid');
+    field.placeholder = t(messageKey);
+    isValid = false;
+  };
 
-  const selectedRole = dom.form.role.options[dom.form.role.selectedIndex];
-  const selectedZones = [...dom.form.zone.options]
+  // Función para limpiar el estado de validación de un campo
+  const clearValidation = (field) => {
+    field.classList.remove('is-invalid');
+    // Restaurar placeholder original si es necesario (se puede guardar en un data-attribute)
+  };
+
+  // Limpiar validaciones previas
+  Object.values(dom.form).forEach(field => {
+    if (field.nodeName === 'INPUT' || field.nodeName === 'SELECT') {
+      clearValidation(field);
+    }
+  });
+
+  // 1. Validar campos requeridos
+  const requiredFields = { code, name, surname, dni, email, role, shift };
+  for (const [fieldName, field] of Object.entries(requiredFields)) {
+    if (!field.value) {
+      markInvalid(field, 'field_required');
+    }
+  }
+  const selectedZones = [...zone.options].filter(opt => opt.selected);
+  if (selectedZones.length === 0) {
+    markInvalid(zone, 'field_required');
+  }
+
+  // 2. Validaciones específicas si los campos tienen valor
+  if (code.value && state.getUsers().some(u => u.codigo_empleado === code.value)) {
+    markInvalid(code, 'employee_code_exists');
+  }
+  if (dni.value && (dni.value.length < 7 || dni.value.length > 8)) {
+    markInvalid(dni, 'dni_length_error');
+  }
+  if (email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    markInvalid(email, 'invalid_email_format');
+  }
+
+  return isValid;
+}
+
+
+function handleStartCaptureClick() {
+  if (!validateRegistrationForm()) {
+    alert(t('check_form_errors'));
+    return;
+  }
+
+  const { code, name, surname, dni, email, role, zone, shift } = dom.form;
+  const selectedRole = role.options[role.selectedIndex];
+  const selectedZones = [...zone.options]
     .filter(opt => opt.selected)
     .map(opt => opt.value);
-
-  if (selectedZones.length === 0) {
-    return alert(t('fill_all_fields')); // O un mensaje más específico para las zonas
-  }
 
   currentUser = {
     codigo_empleado: code.value, nombre: name.value, apellido: surname.value, dni: dni.value, email: email.value,
     nivel_acceso: parseInt(role.value),
-    rol: selectedRole.text.split('(')[0].trim(), // "Analista (Nivel 2)" -> "Analista"
+    rol: selectedRole.text.split('(')[0].trim(),
     zonas_permitidas: selectedZones,
     turno: shift.value,
     descriptor: null,
@@ -436,41 +477,59 @@ function handleStartCaptureClick() {
 }
 
 async function startFaceCapture() {
+  let isCapturing = false; // Flag to prevent multiple captures
+  dom.captureStatus.textContent = t('waiting_for_detection');
+
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
     dom.video.srcObject = stream;
     await new Promise(resolve => dom.video.onloadedmetadata = () => { dom.video.play(); resolve(); });
 
     detectionInterval = setInterval(async () => {
-      if (!dom.video.srcObject) return;
+      if (!dom.video.srcObject || isCapturing) return;
+
       const detection = await face.getSingleFaceDetection(dom.video);
       face.drawDetections(dom.video, dom.overlay, detection ? [detection] : []);
 
       if (detection) {
         const faceMatcher = state.getFaceMatcher();
-        if (faceMatcher && faceMatcher.findBestMatch(detection.descriptor).label !== 'unknown') {
+        const bestMatch = faceMatcher ? faceMatcher.findBestMatch(detection.descriptor) : null;
+
+        if (bestMatch && bestMatch.label !== 'unknown') {
           dom.captureStatus.textContent = t('face_already_registered');
-          dom.confirmCaptureBtn.disabled = true;
+          dom.captureStatus.className = 'status error';
         } else {
-          dom.captureStatus.textContent = t('face_detected_can_confirm');
-          dom.confirmCaptureBtn.disabled = false;
+          // Rostro válido y no registrado detectado, iniciar captura automática
+          isCapturing = true;
           faceDescriptor = detection.descriptor;
+          dom.captureStatus.textContent = t('face_detected_capturing');
+          dom.captureStatus.className = 'status success';
+          
+          // Detener el intervalo de detección para evitar más procesamientos
+          if (detectionInterval) clearInterval(detectionInterval);
+          
+          // Esperar un breve momento para que el usuario vea el mensaje y luego capturar
+          setTimeout(async () => {
+            await confirmCapture();
+          }, 1500);
         }
       } else {
         dom.captureStatus.textContent = t('no_single_face_detected');
-        dom.confirmCaptureBtn.disabled = true;
+        dom.captureStatus.className = 'status info';
       }
-    }, 300);
+    }, 500); // Intervalo ligeramente más largo para dar tiempo a la UI
   } catch (err) {
     dom.captureStatus.textContent = t('camera_init_error');
+    dom.captureStatus.className = 'status error';
   }
 }
 
 async function confirmCapture() {
   if (!faceDescriptor || !currentUser) return;
-  dom.confirmCaptureBtn.disabled = true;
   dom.captureStatus.textContent = t('processing');
+
   try {
+    // La captura de la imagen se hace aquí para asegurar que es la del momento de la detección
     const canvas = document.createElement('canvas');
     canvas.width = dom.video.videoWidth;
     canvas.height = dom.video.videoHeight;
@@ -480,15 +539,17 @@ async function confirmCapture() {
     currentUser.descriptor = Array.from(faceDescriptor);
 
     const newUser = await api.registerUser(currentUser);
-    state.addUser(newUser);
+    state.addUser(newUser); // Actualizar el estado local
 
     alert(t('user_registered_success', { name: newUser.nombre }));
-    showEmployeeView('empleados-main-view');
-    renderEmployees();
-  } catch (error) {
-    alert(t('user_registration_error'));
-  } finally {
     stopVideoStream();
+    showEmployeeView('empleados-main-view');
+    renderEmployees(); // Volver a renderizar la lista de empleados
+  } catch (error) {
+    alert(t('user_registration_error', { error: error.message }));
+    // En caso de error, permitir al usuario volver a intentarlo
+    stopVideoStream();
+    showEmployeeView('register-screen'); // Volver al formulario
   }
 }
 
@@ -516,7 +577,6 @@ function attachListeners() {
     window.location.href = 'manual-entry.html';
   });
   dom.form.captureBtn.addEventListener('click', handleStartCaptureClick);
-  dom.confirmCaptureBtn.addEventListener('click', confirmCapture);
   dom.form.backToEmployeesBtn.addEventListener('click', () => showEmployeeView('empleados-main-view'));
   dom.backToRegisterBtn.addEventListener('click', () => showEmployeeView('register-screen'));
   dom.refreshRecordsBtn.addEventListener('click', async () => {

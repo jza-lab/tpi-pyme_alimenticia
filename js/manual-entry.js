@@ -1,8 +1,10 @@
 import { registerAccess } from './api.js';
+import * as state from './state.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // --- Referencias al DOM ---
     const legajoInput = document.getElementById('legajo');
+    const searchBtn = document.getElementById('search-btn');
     const toggleButtons = document.querySelectorAll('.toggle-btn');
     const btnSubmit = document.querySelector('.btn-submit');
     const fechaHoraInput = document.getElementById('fecha-hora');
@@ -20,30 +22,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Estado ---
     let selectedType = null;
-    let users = [];
     let selectedUser = null;
 
-    // --- Función para obtener usuarios directamente desde la API ---
-    async function loadUsers() {
+    // --- Función para inicializar el estado ---
+    async function initializeState() {
         try {
-            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
-            const supabase = createClient('https://xtruedkvobfabctfmyys.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0cnVlZGt2b2JmYWJjdGZteXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NzkzOTUsImV4cCI6MjA3MjA1NTM5NX0.ViqW5ii4uOpvO48iG3FD6S4eg085GvXr-xKUC4TLrqo');
-            
-            const { data, error } = await supabase.from('users').select('*');
-            if (error) {
-                console.error('Error al obtener usuarios:', error);
-                throw error;
-            }
-            users = data || [];
-            console.log('Usuarios cargados:', users.length);
+            await state.initState();
+            console.log('Estado inicializado, usuarios cargados:', state.getUsers().length);
         } catch (error) {
-            console.error('Error al cargar usuarios:', error);
+            console.error('Error al inicializar el estado:', error);
             alert('No se pudo cargar la lista de empleados. Por favor, recargue la página.');
         }
     }
 
     // --- Inicialización ---
-    await loadUsers();
+    await initializeState();
 
     // --- Configurar restricciones de fecha ---
     function setupDateTimeRestrictions() {
@@ -100,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        const user = users.find(u => u.codigo_empleado === legajo);
+        const user = state.getUsers().find(u => u.codigo_empleado === legajo);
         
         if (user) {
             console.log('Usuario encontrado:', user);
@@ -132,6 +125,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // También buscar empleado cuando se pierde el foco (por si acaso)
     legajoInput.addEventListener('blur', () => {
+        const legajo = legajoInput.value.trim();
+        searchEmployee(legajo);
+    });
+
+    // Buscar empleado al hacer clic en el botón
+    searchBtn.addEventListener('click', () => {
         const legajo = legajoInput.value.trim();
         searchEmployee(legajo);
     });
