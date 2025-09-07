@@ -131,7 +131,7 @@ const dom = {
   recordsTbody: document.getElementById('records-tbody'),
   peopleInsideCount: document.getElementById('people-inside-count'),
   peopleOutsideCount: document.getElementById('people-outside-count'),
-  refreshRecordsBtn: document.getElementById('refresh-records'),
+  refreshRecordsBtn: document.getElementById('refresh-records-btn'),
   mobile: {
     openBtn: document.getElementById("mobile-menu-btn"),
     overlay: document.getElementById("mobile-sidebar-overlay")
