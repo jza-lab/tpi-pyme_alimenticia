@@ -27,11 +27,41 @@
                 <small class="error-msg">El legajo es obligatorio.</small>
             </div>
 
-            <div class="form-group">
-                <label for="name">Nombre</label>
-                <input type="text" id="name" placeholder="Se completará automáticamente" name="name" required readonly>
-                <small class="error-msg">El nombre es obligatorio.</small>
+            <!-- Contenedor para detalles del empleado -->
+            <div id="employee-details" class="employee-details">
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>Nombre</label>
+                        <span id="employee-name">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Apellido</label>
+                        <span id="employee-surname">-</span>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>DNI</label>
+                        <span id="employee-dni">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Turno</label>
+                        <span id="employee-shift">-</span>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>Rol</label>
+                        <span id="employee-role">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Nivel de Acceso</label>
+                        <span id="employee-access-level">-</span>
+                    </div>
+                </div>
+                <small id="employee-not-found" class="error-msg">Empleado no encontrado.</small>
             </div>
+
 
             <div class="form-group">
                 <label>Tipo de acceso</label>

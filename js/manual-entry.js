@@ -2,17 +2,27 @@ import { registerAccess } from './api.js';
 import { initState, getUsers } from './state.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // --- Referencias al DOM ---
     const legajoInput = document.getElementById('legajo');
-    const nameInput = document.getElementById('name');
     const toggleButtons = document.querySelectorAll('.toggle-btn');
     const btnSubmit = document.querySelector('.btn-submit');
     const fechaHoraInput = document.getElementById('fecha-hora');
     const typeError = document.getElementById('type-error');
-    const legajoError = legajoInput.nextElementSibling;
-    const nameError = nameInput.nextElementSibling;
 
+    // Detalles del empleado
+    const employeeDetailsContainer = document.getElementById('employee-details');
+    const employeeName = document.getElementById('employee-name');
+    const employeeSurname = document.getElementById('employee-surname');
+    const employeeDni = document.getElementById('employee-dni');
+    const employeeShift = document.getElementById('employee-shift');
+    const employeeRole = document.getElementById('employee-role');
+    const employeeAccessLevel = document.getElementById('employee-access-level');
+    const employeeNotFoundMsg = document.getElementById('employee-not-found');
+
+    // --- Estado ---
     let selectedType = null;
     let users = [];
+    let selectedUser = null;
 
     // --- Inicialización ---
     try {
@@ -24,33 +34,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Lógica de Autocompletado ---
+    function clearEmployeeDetails() {
+        employeeName.textContent = '-';
+        employeeSurname.textContent = '-';
+        employeeDni.textContent = '-';
+        employeeShift.textContent = '-';
+        employeeRole.textContent = '-';
+        employeeAccessLevel.textContent = '-';
+        employeeDetailsContainer.classList.remove('found');
+        employeeNotFoundMsg.style.display = 'none';
+    }
+
     legajoInput.addEventListener('blur', () => {
         const legajo = legajoInput.value.trim();
+        clearEmployeeDetails();
+        selectedUser = null;
+
         if (!legajo) {
-            nameInput.value = '';
             validateForm();
             return;
         }
 
         const user = users.find(u => u.codigo_empleado === legajo);
         if (user) {
-            nameInput.value = `${user.nombre} ${user.apellido || ''}`;
-            nameError.classList.remove('show');
+            selectedUser = user;
+            employeeName.textContent = user.nombre || '-';
+            employeeSurname.textContent = user.apellido || '-';
+            employeeDni.textContent = user.dni || '-';
+            employeeShift.textContent = user.turno || '-';
+            employeeRole.textContent = user.rol || '-';
+            employeeAccessLevel.textContent = user.nivel_acceso || '-';
+            employeeDetailsContainer.classList.add('found');
         } else {
-            nameInput.value = 'Empleado no encontrado';
-            nameError.classList.add('show');
+            employeeNotFoundMsg.style.display = 'block';
         }
         validateForm();
     });
 
     // --- Lógica del Formulario ---
     function validateForm() {
-        const isLegajoValid = legajoInput.value.trim() !== '';
-        const isNameValid = nameInput.value.trim() !== '' && nameInput.value !== 'Empleado no encontrado';
+        const isUserFound = selectedUser !== null;
         const isTypeSelected = selectedType !== null;
         const isDateValid = fechaHoraInput.value !== '';
 
-        if (isLegajoValid && isNameValid && isTypeSelected && isDateValid) {
+        if (isUserFound && isTypeSelected && isDateValid) {
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = selectedType === 'ingreso'
                 ? `<i class='bx bx-plus'></i> Registrar Ingreso`
@@ -79,11 +106,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnSubmit.addEventListener('click', async (e) => {
         e.preventDefault();
 
-        const legajo = legajoInput.value.trim();
-        const fechaHora = fechaHoraInput.value;
-
         // Re-validar antes de enviar
-        if (!legajo || nameInput.value === 'Empleado no encontrado' || !selectedType || !fechaHora) {
+        if (!selectedUser || !selectedType || !fechaHoraInput.value) {
             alert('Por favor, corrija los errores antes de enviar.');
             return;
         }
@@ -92,17 +116,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = 'Registrando...';
 
-            const isoDate = new Date(fechaHora).toISOString();
-            await registerAccess(legajo, selectedType, isoDate);
+            const isoDate = new Date(fechaHoraInput.value).toISOString();
+            await registerAccess(selectedUser.codigo_empleado, selectedType, isoDate);
 
-            alert(`Registro de ${selectedType.toUpperCase()} para ${nameInput.value} (Legajo ${legajo}) guardado exitosamente.`);
+            alert(`Registro de ${selectedType.toUpperCase()} para ${selectedUser.nombre} ${selectedUser.apellido} (Legajo ${selectedUser.codigo_empleado}) guardado exitosamente.`);
 
             // Resetear formulario
             legajoInput.value = '';
-            nameInput.value = '';
             fechaHoraInput.value = '';
             toggleButtons.forEach(btn => btn.classList.remove('active'));
             selectedType = null;
+            selectedUser = null;
+            clearEmployeeDetails();
             validateForm();
 
         } catch (error) {
@@ -120,5 +145,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Estado inicial
+    clearEmployeeDetails();
     validateForm();
 });
