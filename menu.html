@@ -36,8 +36,8 @@
       </div>
 
       <!-- 👇 Botón hamburguesa y sidebar van aquí dentro -->
-      <button id="mobile-menu-btn" class="hamburger" data-i18n="open_menu" aria-label="Abrir menú lateral" aria-expanded="false"
-        aria-controls="mobile-sidebar">
+      <button id="mobile-menu-btn" class="hamburger" data-i18n="open_menu" aria-label="Abrir menú lateral"
+        aria-expanded="false" aria-controls="mobile-sidebar">
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
@@ -50,9 +50,12 @@
           <button id="mobile-sidebar-close" data-i18n="close_menu" aria-label="Cerrar menú">✕</button>
         </div>
         <nav class="mobile-sidebar-nav" role="navigation" aria-label="Navegación móvil">
-          <button class="mobile-side-item" data-section="accesos" data-i18n="access_history">Historial de Accesos</button>
-          <button class="mobile-side-item" data-section="empleados" data-i18n="employee_management">Gestión de Empleados</button>
-          <button class="mobile-side-item" data-section="autorizaciones" data-i18n="authorizations">Autorizaciones</button>
+          <button class="mobile-side-item" data-section="accesos" data-i18n="access_history">Historial de
+            Accesos</button>
+          <button class="mobile-side-item" data-section="empleados" data-i18n="employee_management">Gestión de
+            Empleados</button>
+          <button class="mobile-side-item" data-section="autorizaciones"
+            data-i18n="authorizations">Autorizaciones</button>
           <button class="mobile-side-item" data-section="estadisticas" data-i18n="statistics">Estadísticas</button>
         </nav>
         <div class="mobile-sidebar-footer">
@@ -66,10 +69,14 @@
 
     <!-- navegación principal (se oculta en mobile por CSS) -->
     <nav class="admin-nav" role="navigation" aria-label="Panel principal">
-      <button class="nav-btn active" data-section="accesos" aria-controls="accesos" data-i18n="access_history">Historial de Accesos</button>
-      <button class="nav-btn" data-section="empleados" aria-controls="empleados" data-i18n="employee_management">Gestión de Empleados</button>
-      <button class="nav-btn" data-section="autorizaciones" aria-controls="autorizaciones" data-i18n="authorizations">Autorizaciones</button>
-      <button class="nav-btn" data-section="estadisticas" aria-controls="estadisticas" data-i18n="statistics">Estadísticas</button>
+      <button class="nav-btn active" data-section="accesos" aria-controls="accesos" data-i18n="access_history">Historial
+        de Accesos</button>
+      <button class="nav-btn" data-section="empleados" aria-controls="empleados" data-i18n="employee_management">Gestión
+        de Empleados</button>
+      <button class="nav-btn" data-section="autorizaciones" aria-controls="autorizaciones"
+        data-i18n="authorizations">Autorizaciones</button>
+      <button class="nav-btn" data-section="estadisticas" aria-controls="estadisticas"
+        data-i18n="statistics">Estadísticas</button>
     </nav>
   </header>
 
@@ -81,8 +88,10 @@
       <button id="refresh-records" class="btn btn-primary" data-i18n="refresh_records">Actualizar Registros</button>
 
       <div class="filter-container">
-        <input type="text" id="filter-by-name" placeholder="Filtrar por nombre..." data-i18n-placeholder="filter_by_name_placeholder">
-        <input type="text" id="filter-by-id" placeholder="Filtrar por legajo..." data-i18n-placeholder="filter_by_id_placeholder">
+        <input type="text" id="filter-by-name" placeholder="Filtrar por nombre..."
+          data-i18n-placeholder="filter_by_name_placeholder">
+        <input type="text" id="filter-by-id" placeholder="Filtrar por legajo..."
+          data-i18n-placeholder="filter_by_id_placeholder">
         <select id="filter-by-shift">
           <option value="" data-i18n="all_shifts">Todos los turnos</option>
           <option value="Mañana" data-i18n="shift_morning">Mañana</option>
@@ -128,7 +137,8 @@
     <section id="empleados" class="content-section">
       <div id="empleados-main-view">
         <h2 data-i18n="employee_management">Gestión de Empleados</h2>
-        <button id="btn-nuevo-empleado" class="btn btn-primary" data-i18n="register_new_employee">Registrar Nuevo Empleado</button>
+        <button id="btn-nuevo-empleado" class="btn btn-primary" data-i18n="register_new_employee">Registrar Nuevo
+          Empleado</button>
         <button id="btn-eliminar-empleado" class="btn btn-danger" data-i18n="delete_employee">Eliminar Empleado</button>
         <button id="btn-carga-manual" class="btn btn-secondary">Carga Manual</button>
 
@@ -150,7 +160,8 @@
             <option value="" data-i18n="all_access_levels">Todos los accesos</option>
             <option value="true" data-i18n="with_menu_access">Con Acceso al Menú (Nivel 3+)</option>
           </select>
-          <button id="clear-employee-filters-btn" class="btn btn-secondary" data-i18n="clear_filters">Limpiar Filtros</button>
+          <button id="clear-employee-filters-btn" class="btn btn-secondary" data-i18n="clear_filters">Limpiar
+            Filtros</button>
         </div>
 
         <div id="empleados-list"></div> <!-- Lista de empleados se carga aca -->
@@ -198,7 +209,8 @@
             <option value="Conservación" data-i18n="zone_conservation">Conservación</option>
             <option value="Despacho" data-i18n="zone_dispatch">Despacho</option>
           </select>
-          <small class="form-hint" data-i18n="multi_select_hint">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar varias zonas.</small>
+          <small class="form-hint" data-i18n="multi_select_hint">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar
+            varias zonas.</small>
         </div>
 
         <div class="form-group">
@@ -220,25 +232,31 @@
       <!-- Pantalla de captura facial -->
       <div id="capture-screen" class="screen">
         <h2 data-i18n="face_capture_title">Captura de Rostro</h2>
-        <p data-i18n="face_capture_instruction">Por favor, colóquese frente a la cámara y asegúrese de que su rostro esté bien iluminado.</p>
+        <p data-i18n="face_capture_instruction">Por favor, colóquese frente a la cámara y asegúrese de que su rostro
+          esté bien iluminado.</p>
         <div class="video-container">
           <video id="video" width="600" height="450" autoplay muted></video>
           <canvas id="overlay"></canvas>
         </div>
-        <div id="capture-status" class="status info" data-i18n="waiting_for_detection">Esperando detección facial...</div>
+        <div id="capture-status" class="status info" data-i18n="waiting_for_detection">Esperando detección facial...
+        </div>
         <div class="action-buttons">
-          <button id="confirm-capture-btn" class="btn btn-primary" disabled data-i18n="confirm_capture">Confirmar Captura</button>
+          <button id="confirm-capture-btn" class="btn btn-primary" disabled data-i18n="confirm_capture">Confirmar
+            Captura</button>
           <button id="retry-capture-btn" class="btn btn-secondary" data-i18n="retry">Reintentar</button>
-          <button id="back-to-register" class="btn btn-secondary" data-i18n="back_to_register">Volver al Registro</button>
+          <button id="back-to-register" class="btn btn-secondary" data-i18n="back_to_register">Volver al
+            Registro</button>
         </div>
       </div>
     </section>
 
     <!-- AUTORIZACIONES -->
     <section id="autorizaciones" class="content-section">
-      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <div class="section-header"
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
         <h2 data-i18n="pending_authorizations_title" style="margin: 0;">Autorizaciones Pendientes</h2>
-        <button id="refresh-authorizations-btn" class="btn btn-primary" data-i18n="refresh_authorizations">Actualizar</button>
+        <button id="refresh-authorizations-btn" class="btn btn-primary"
+          data-i18n="refresh_authorizations">Actualizar</button>
       </div>
       <div id="authorizations-list" class="authorizations-container">
         <!-- Las tarjetas de autorización se cargarán aquí -->
@@ -252,9 +270,12 @@
       <!-- botones por etapa -->
       <div class="stage-buttons" role="tablist" aria-label="Etapas de proceso">
         <button class="stage-btn active" data-stage="Recepción" role="tab" data-i18n="zone_reception">Recepción</button>
-        <button class="stage-btn" data-stage="Almacenamiento" role="tab" data-i18n="zone_storage">Almacenamiento</button>
-        <button class="stage-btn" data-stage="Procesamiento" role="tab" data-i18n="zone_processing">Procesamiento</button>
-        <button class="stage-btn" data-stage="Conservación" role="tab" data-i18n="zone_conservation">Conservación</button>
+        <button class="stage-btn" data-stage="Almacenamiento" role="tab"
+          data-i18n="zone_storage">Almacenamiento</button>
+        <button class="stage-btn" data-stage="Procesamiento" role="tab"
+          data-i18n="zone_processing">Procesamiento</button>
+        <button class="stage-btn" data-stage="Conservación" role="tab"
+          data-i18n="zone_conservation">Conservación</button>
         <button class="stage-btn" data-stage="Despacho" role="tab" data-i18n="zone_dispatch">Despacho</button>
         <button class="stage-btn" data-stage="Indicadores" role="tab" data-i18n="indicators">Indicadores</button>
       </div>
@@ -268,7 +289,8 @@
       <!-- contenedor del gráfico -->
       <div class="chart-wrapper">
         <canvas id="statsCanvas" aria-label="Gráfico de estadísticas" role="img"></canvas>
-        <div id="statsFallback" class="fallback" data-i18n="stats_chart_fallback">Gráfico de estadísticas se mostraría aquí</div>
+        <div id="statsFallback" class="fallback" data-i18n="stats_chart_fallback">Gráfico de estadísticas se mostraría
+          aquí</div>
       </div>
     </section>
 

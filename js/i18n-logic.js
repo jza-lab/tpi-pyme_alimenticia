@@ -34,7 +34,7 @@ export const updateUI = () => {
       // Para la mayoría de los elementos, el textContent es suficiente.
       element.textContent = translation;
     }
-    
+
     // Siempre actualizar aria-label si existe, para accesibilidad.
     if (element.hasAttribute('aria-label')) {
       element.setAttribute('aria-label', translation);

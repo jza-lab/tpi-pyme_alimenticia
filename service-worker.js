@@ -44,18 +44,18 @@ self.addEventListener('fetch', event => {
   const supabaseUrl = 'https://xtruedkvobfabctfmyys.supabase.co';
 
   // Network-only para Supabase API y datos críticos
-  if (requestUrl.origin === supabaseUrl || 
-      requestUrl.pathname.includes('/functions/') ||
-      requestUrl.searchParams.has('no-cache')) {
+  if (requestUrl.origin === supabaseUrl ||
+    requestUrl.pathname.includes('/functions/') ||
+    requestUrl.searchParams.has('no-cache')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
   // Para archivos JS críticos, usar network-only para asegurar que siempre se obtiene la última versión.
   // Esto es crucial para evitar bugs por lógica de negocio desactualizada.
-  if (requestUrl.pathname.includes('js/app.js') || 
-      requestUrl.pathname.includes('js/api.js') || 
-      requestUrl.pathname.includes('js/state.js')) {
+  if (requestUrl.pathname.includes('js/app.js') ||
+    requestUrl.pathname.includes('js/api.js') ||
+    requestUrl.pathname.includes('js/state.js')) {
     event.respondWith(fetch(event.request)); // Estrategia: Network Only
     return;
   }
@@ -74,10 +74,10 @@ self.addEventListener('fetch', event => {
                 });
               }
             })
-            .catch(() => {}); // Ignorar errores de red en background
+            .catch(() => { }); // Ignorar errores de red en background
           return response;
         }
-        
+
         // Si no está en caché, ir a la red
         return fetch(event.request)
           .then(networkResponse => {

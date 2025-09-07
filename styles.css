@@ -405,7 +405,7 @@ blockquote {
   background-color: #fff;
   padding: 5px 10px;
   border-radius: 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   z-index: 100;
 }
 
@@ -452,11 +452,11 @@ blockquote {
   transition: .4s;
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: #2196F3;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   transform: translateX(20px);
 }
 

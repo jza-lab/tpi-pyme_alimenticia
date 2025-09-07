@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         validateForm();
     });
-    
+
     // --- Lógica del Formulario ---
     function validateForm() {
         const isLegajoValid = legajoInput.value.trim() !== '';
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Envío del Formulario ---
     btnSubmit.addEventListener('click', async (e) => {
         e.preventDefault();
-        
+
         const legajo = legajoInput.value.trim();
         const fechaHora = fechaHoraInput.value;
 
@@ -94,9 +94,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const isoDate = new Date(fechaHora).toISOString();
             await registerAccess(legajo, selectedType, isoDate);
-            
+
             alert(`Registro de ${selectedType.toUpperCase()} para ${nameInput.value} (Legajo ${legajo}) guardado exitosamente.`);
-            
+
             // Resetear formulario
             legajoInput.value = '';
             nameInput.value = '';

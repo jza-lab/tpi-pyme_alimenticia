@@ -134,7 +134,7 @@ async function renderStage(stage) {
 export function initializeStatistics(allowedZones) {
     userAllowedZones = allowedZones; // Almacenar las zonas para uso en renderStage
     const stageButtons = document.querySelectorAll('.stage-btn');
-    
+
     // Ya no se filtra por zona, todos los botones son visibles por defecto si se tiene acceso a la sección.
     // Asegurarse de que los botones que podrían haber sido ocultados previamente ahora sean visibles.
     stageButtons.forEach(btn => {

@@ -26,7 +26,7 @@ function forceServiceWorkerUpdate() {
 function detectAndHandleCacheIssues() {
   // Detectar si hay inconsistencias que sugieran problemas de caché
   const hasInconsistencies = sessionStorage.getItem('auth_cache_issues') === 'true';
-  
+
   if (hasInconsistencies) {
     console.warn('Detectados problemas de caché, forzando actualización...');
     forceServiceWorkerUpdate();
@@ -85,10 +85,10 @@ let tokenTimerInterval = null;
 
 // ------------------- Gestión de Pantallas ------------------- //
 function showScreen(screenId) {
-    if (screenId !== 'pending-authorization-screen') {
-        if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
-        authorizationCheckInterval = null;
-    }
+  if (screenId !== 'pending-authorization-screen') {
+    if (authorizationCheckInterval) clearInterval(authorizationCheckInterval);
+    authorizationCheckInterval = null;
+  }
 
   if (screenId === 'home-screen') {
     sessionStorage.removeItem('isSupervisor');
@@ -136,7 +136,7 @@ async function startFacialLogin(type) {
   // Forzar la actualización del estado al iniciar un nuevo flujo de login
   // para asegurar que los datos del usuario (ej: turno) están actualizados.
   await state.refreshState();
-  
+
   currentLoginType = type;
   if (dom.loginOverlay) {
     const ctx = dom.loginOverlay.getContext('2d');
@@ -163,43 +163,43 @@ async function startFacialLogin(type) {
 }
 
 function runFacialRecognition() {
-    dom.loginStatus.textContent = t('searching_for_match');
-    dom.loginStatus.className = 'status info';
+  dom.loginStatus.textContent = t('searching_for_match');
+  dom.loginStatus.className = 'status info';
 
-    let recognitionAttempts = 0;
-    const maxAttempts = 15; // Intentar durante ~5 segundos (15 * 300ms)
+  let recognitionAttempts = 0;
+  const maxAttempts = 15; // Intentar durante ~5 segundos (15 * 300ms)
 
-    if (recognitionInterval) clearInterval(recognitionInterval);
-    recognitionInterval = setInterval(async () => {
-        if (!dom.loginVideo.srcObject || recognitionAttempts >= maxAttempts) {
+  if (recognitionInterval) clearInterval(recognitionInterval);
+  recognitionInterval = setInterval(async () => {
+    if (!dom.loginVideo.srcObject || recognitionAttempts >= maxAttempts) {
+      stopFacialRecognition();
+      showManualLoginOption();
+      return;
+    }
+
+    recognitionAttempts++;
+    const detection = await face.getSingleFaceDetection(dom.loginVideo);
+
+    if (detection) {
+      face.drawDetections(dom.loginVideo, dom.loginOverlay, [detection]);
+      const faceMatcher = state.getFaceMatcher();
+      if (faceMatcher) {
+        const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+        if (bestMatch.label !== 'unknown') {
+          const user = state.getUsers().find(u => u.codigo_empleado === bestMatch.label);
+          if (user) {
             stopFacialRecognition();
-            showManualLoginOption();
-            return;
+            dom.loginStatus.textContent = t('user_recognized', { name: user.nombre });
+            dom.loginStatus.className = 'status success';
+            grantAccess(user);
+          }
         }
-
-        recognitionAttempts++;
-        const detection = await face.getSingleFaceDetection(dom.loginVideo);
-
-        if (detection) {
-            face.drawDetections(dom.loginVideo, dom.loginOverlay, [detection]);
-            const faceMatcher = state.getFaceMatcher();
-            if (faceMatcher) {
-                const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
-                if (bestMatch.label !== 'unknown') {
-                    const user = state.getUsers().find(u => u.codigo_empleado === bestMatch.label);
-                    if (user) {
-                        stopFacialRecognition();
-                        dom.loginStatus.textContent = t('user_recognized', { name: user.nombre });
-                        dom.loginStatus.className = 'status success';
-                        grantAccess(user);
-                    }
-                }
-            }
-        } else {
-            const ctx = dom.loginOverlay.getContext('2d');
-            ctx.clearRect(0, 0, dom.loginOverlay.width, dom.loginOverlay.height);
-        }
-    }, 300);
+      }
+    } else {
+      const ctx = dom.loginOverlay.getContext('2d');
+      ctx.clearRect(0, 0, dom.loginOverlay.width, dom.loginOverlay.height);
+    }
+  }, 300);
 }
 
 function stopFacialRecognition() {
@@ -272,10 +272,10 @@ async function grantAccess(user) {
     } else {
       // Si fue un acceso normal, mostrar la pantalla de éxito estándar.
       dom.welcomeMessage.textContent = t('access_registered_message', { name: user.nombre, type: currentLoginType });
-      
+
       // --- DEBUGGING ---
-      console.log('Verificando acceso al menú para:', { 
-        nombre: user.nombre, 
+      console.log('Verificando acceso al menú para:', {
+        nombre: user.nombre,
         nivel_acceso: user.nivel_acceso,
         condicion: user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.ANALISTA
       });
@@ -297,18 +297,18 @@ async function grantAccess(user) {
 
     let errorMessage = t('unknown_registration_error');
     if (error.context && typeof error.context.json === 'function') {
-        try {
-            const jsonError = await error.context.json();
-            errorMessage = jsonError.error || errorMessage;
-        } catch (e) { 
-            errorMessage = error.message;
-        }
-    } else {
+      try {
+        const jsonError = await error.context.json();
+        errorMessage = jsonError.error || errorMessage;
+      } catch (e) {
         errorMessage = error.message;
+      }
+    } else {
+      errorMessage = error.message;
     }
-    
+
     denyAccess(errorMessage, user);
-  
+
   } finally {
     isProcessingAccess = false;
   }
@@ -317,7 +317,7 @@ async function grantAccess(user) {
 function denyAccess(reason, user = null) {
   // Reset to default title first
   dom.denialTitle.textContent = t('access_denied_title');
-  
+
   // Handle specific denial reasons
   if (reason.toLowerCase().includes('dentro')) {
     dom.denialTitle.textContent = t('denial_title_entry');
@@ -351,7 +351,7 @@ async function attemptManualLogin() {
 
   try {
     await api.sendLoginToken(code, dni);
-    
+
     dom.manualLogin.credentialsForm.style.display = 'none';
     dom.manualLogin.tokenForm.style.display = 'block';
     dom.loginStatus.textContent = t('Token Enviado');
@@ -364,19 +364,19 @@ async function attemptManualLogin() {
 }
 
 async function verifyToken() {
-    const token = dom.manualLogin.tokenInput.value;
-    const code = dom.manualLogin.code.value;
-    const dni = dom.manualLogin.dni.value;
+  const token = dom.manualLogin.tokenInput.value;
+  const code = dom.manualLogin.code.value;
+  const dni = dom.manualLogin.dni.value;
 
-    if (!token) return alert(t('Ingrese el token recibido'));
+  if (!token) return alert(t('Ingrese el token recibido'));
 
-    try {
-        const { user } = await api.verifyLoginToken(token, code, dni);
-        clearInterval(tokenTimerInterval);
-        grantAccess(user);
-    } catch (error) {
-        denyAccess(error.message || t('Token invalido o expirado'));
-    }
+  try {
+    const { user } = await api.verifyLoginToken(token, code, dni);
+    clearInterval(tokenTimerInterval);
+    grantAccess(user);
+  } catch (error) {
+    denyAccess(error.message || t('Token invalido o expirado'));
+  }
 }
 
 function showManualLoginOption() {
@@ -396,15 +396,15 @@ function resetManualLoginForm() {
   container.style.display = 'none';
   if (credentialsForm) credentialsForm.style.display = 'block';
   if (tokenForm) tokenForm.style.display = 'none';
-  if(code) code.value = '';
-  if(dni) dni.value = '';
-  if(tokenInput) tokenInput.value = '';
+  if (code) code.value = '';
+  if (dni) dni.value = '';
+  if (tokenInput) tokenInput.value = '';
   dom.loginStatus.textContent = t('searching_for_match');
   dom.loginStatus.className = 'status info';
-  
+
   if (tokenTimerInterval) clearInterval(tokenTimerInterval);
   if (dom.manualLogin.tokenTimer) {
-      dom.manualLogin.tokenTimer.parentElement.style.display = 'none';
+    dom.manualLogin.tokenTimer.parentElement.style.display = 'none';
   }
 }
 
@@ -474,7 +474,7 @@ function attachListeners() {
 async function main() {
   // Detectar y manejar problemas de caché al inicio
   detectAndHandleCacheIssues();
-  
+
   attachListeners();
   showScreen('home-screen');
 
@@ -482,15 +482,15 @@ async function main() {
     navigator.serviceWorker.register('/service-worker.js')
       .then(registration => {
         console.log('ServiceWorker registration successful');
-        
+
         // Forzar la comprobación de una nueva versión del SW en cada carga
         registration.update();
-        
+
         // Escuchar actualizaciones del service worker
         registration.addEventListener('updatefound', () => {
           console.log('Nueva versión del service worker disponible');
           const newWorker = registration.installing;
-          
+
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
@@ -510,6 +510,7 @@ async function main() {
       face.loadModels(),
       state.initState()
     ]);
+    state.initFaceMatcher(); // Cargar el modelo de face-api después de tener los datos
     console.log('Aplicación principal inicializada.');
   } catch (error) {
     console.error('Error crítico durante la inicialización:', error);
@@ -518,7 +519,7 @@ async function main() {
     errorDiv.className = 'status error';
     errorDiv.textContent = `Error al cargar: ${error.message}`;
     homeScreen.appendChild(errorDiv);
-    
+
     // Marcar problema de caché si el error parece relacionado
     if (error.message.includes('models') || error.message.includes('fetch')) {
       markCacheIssues();

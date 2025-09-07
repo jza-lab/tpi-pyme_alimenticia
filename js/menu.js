@@ -14,7 +14,7 @@ let detectionInterval = null;
 async function checkAuthAndApplyPermissions() {
   await state.initState(); // Asegurarse que el estado está inicializado
   const userCode = sessionStorage.getItem('supervisorCode');
-  
+
   // --- DEBUGGING ---
   console.log('Verificando menu.js. Código en sessionStorage:', userCode);
   // --- FIN DEBUGGING ---
@@ -182,7 +182,7 @@ async function renderAuthorizations() {
       const user = userMap.get(record.codigo_empleado);
       const userName = user ? `${user.nombre} ${user.apellido || ''}` : t('unknown_employee');
       const localDateTime = new Date(record.created_at).toLocaleString('es-ES');
-      
+
       let detailsHtml = `<p>${t('authorization_reason', { reason: record.details?.motivo || t('not_specified') })}</p>`;
 
       if (record.details && record.details.turno_correspondiente) {
@@ -241,7 +241,7 @@ async function handleAuthorizationAction(event) {
     // para asegurar que la UI está 100% sincronizada con el backend.
     await state.refreshState();
     await renderAuthorizations();
-    
+
   } catch (error) {
     alert(t('authorization_action_error', { action: actionText }));
     console.error('Authorization action failed:', error);
@@ -299,7 +299,7 @@ function renderRecords() {
 
   const userStatusMap = new Map();
   let peopleInside = 0;
-  
+
   // Base status on all records, not filtered ones
   users.forEach(user => {
     const lastRecord = allRecords.filter(r => r.codigo_empleado === user.codigo_empleado).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora))[0];
@@ -309,14 +309,14 @@ function renderRecords() {
       peopleInside++;
     }
   });
-  
+
   // Update counts based on the *original* state, not the filters
   dom.peopleInsideCount.textContent = peopleInside;
   dom.peopleOutsideCount.textContent = users.length - peopleInside;
   dom.recordsTbody.innerHTML = filteredRecords.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora)).map(record => {
     const user = userMap.get(record.codigo_empleado);
     const userName = user ? `${user.nombre} ${user.apellido || ''}` : t('unknown_employee');
-    
+
     const capitalizedTipo = record.tipo.charAt(0).toUpperCase() + record.tipo.slice(1);
     const localDateTime = new Date(record.fecha_hora + 'Z').toLocaleString('es-ES');
 
@@ -608,14 +608,14 @@ async function main() {
     await face.loadModels();
     state.initFaceMatcher(); // Cargar el modelo de face-api después de tener los datos
     console.log('Panel de administración inicializado.');
-    
+
     // Renderizar el contenido inicial
     renderRecords();
     renderEmployees();
-    
+
     // Inicializar estadísticas pasando las zonas permitidas del usuario
     initializeStatistics(currentUser.zonas_permitidas);
-    
+
     updateUI();
   } catch (error) {
     alert(t('panel_load_error', { error: error.message }));
