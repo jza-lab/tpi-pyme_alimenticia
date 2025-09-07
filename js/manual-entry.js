@@ -1,5 +1,4 @@
 import { registerAccess } from './api.js';
-import { initState, getUsers } from './state.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // --- Referencias al DOM ---
@@ -24,14 +23,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     let users = [];
     let selectedUser = null;
 
+    // --- Función para obtener usuarios directamente desde la API ---
+    async function loadUsers() {
+        try {
+            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
+            const supabase = createClient('https://xtruedkvobfabctfmyys.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0cnVlZGt2b2JmYWJjdGZteXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NzkzOTUsImV4cCI6MjA3MjA1NTM5NX0.ViqW5ii4uOpvO48iG3FD6S4eg085GvXr-xKUC4TLrqo');
+            
+            const { data, error } = await supabase.from('users').select('*');
+            if (error) {
+                console.error('Error al obtener usuarios:', error);
+                throw error;
+            }
+            users = data || [];
+            console.log('Usuarios cargados:', users.length);
+        } catch (error) {
+            console.error('Error al cargar usuarios:', error);
+            alert('No se pudo cargar la lista de empleados. Por favor, recargue la página.');
+        }
+    }
+
     // --- Inicialización ---
-    try {
-        await initState();
-        users = getUsers();
-        console.log('Usuarios cargados:', users.length);
-    } catch (error) {
-        console.error('Error al inicializar el estado:', error);
-        alert('No se pudo cargar la lista de empleados. Por favor, recargue la página.');
+    await loadUsers();
+
+    // --- Configurar restricciones de fecha ---
+    function setupDateTimeRestrictions() {
+        const now = new Date();
+        const maxDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        fechaHoraInput.setAttribute('max', maxDateTime);
+        
+        // Actualizar el máximo cada minuto para mantenerlo actualizado
+        setInterval(() => {
+            const currentTime = new Date();
+            const maxTime = new Date(currentTime.getTime() - currentTime.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            fechaHoraInput.setAttribute('max', maxTime);
+        }, 60000);
+    }
+
+    // --- Validar fecha seleccionada ---
+    function validateDateTime() {
+        const selectedDateTime = new Date(fechaHoraInput.value);
+        const now = new Date();
+        
+        if (selectedDateTime > now) {
+            alert('No se pueden cargar registros de fechas futuras. Por favor, seleccione una fecha y hora actual o anterior.');
+            fechaHoraInput.value = '';
+            return false;
+        }
+        return true;
     }
 
     // --- Lógica de Autocompletado ---
@@ -123,6 +161,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         input.addEventListener('input', validateForm);
     });
 
+    // Agregar validación de fecha/hora
+    fechaHoraInput.addEventListener('change', () => {
+        validateDateTime();
+        validateForm();
+    });
+
     // Manejar selección de tipo de acceso
     toggleButtons.forEach(button => {
         button.addEventListener('click', function () {
@@ -194,39 +238,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelector('.btn-volver-menu').addEventListener('click', (e) => {
         e.preventDefault();
         window.location.href = "menu.html";
-    });
-
-    // --- Configurar restricciones de fecha ---
-    function setupDateTimeRestrictions() {
-        const now = new Date();
-        const maxDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-        fechaHoraInput.setAttribute('max', maxDateTime);
-        
-        // Actualizar el máximo cada minuto para mantenerlo actualizado
-        setInterval(() => {
-            const currentTime = new Date();
-            const maxTime = new Date(currentTime.getTime() - currentTime.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-            fechaHoraInput.setAttribute('max', maxTime);
-        }, 60000); // Actualizar cada minuto
-    }
-
-    // --- Validar fecha seleccionada ---
-    function validateDateTime() {
-        const selectedDateTime = new Date(fechaHoraInput.value);
-        const now = new Date();
-        
-        if (selectedDateTime > now) {
-            alert('No se pueden cargar registros de fechas futuras. Por favor, seleccione una fecha y hora actual o anterior.');
-            fechaHoraInput.value = '';
-            return false;
-        }
-        return true;
-    }
-
-    // Agregar validación de fecha/hora
-    fechaHoraInput.addEventListener('change', () => {
-        validateDateTime();
-        validateForm();
     });
 
     // Estado inicial
