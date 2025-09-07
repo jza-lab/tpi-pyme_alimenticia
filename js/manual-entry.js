@@ -188,6 +188,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // Validación de estado (no registrar ingreso si ya está dentro, etc.)
+        const allRecords = state.getAccessRecords();
+        const lastRecord = allRecords
+            .filter(r => r.codigo_empleado === selectedUser.codigo_empleado)
+            .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora))[0];
+
+        const lastStatus = lastRecord ? lastRecord.tipo : 'egreso';
+
+        if (selectedType === 'ingreso' && lastStatus === 'ingreso') {
+            alert(`Error: El empleado ${selectedUser.nombre} ya se encuentra dentro.`);
+            return;
+        }
+        if (selectedType === 'egreso' && lastStatus === 'egreso') {
+            alert(`Error: El empleado ${selectedUser.nombre} ya se encuentra fuera.`);
+            return;
+        }
+
         try {
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Registrando...';

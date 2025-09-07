@@ -1,4 +1,5 @@
-let statsChartInstance = null;
+import { getUsers, getAccessRecords } from './state.js';
+
 let userAllowedZones = null; // Almacenar las zonas permitidas a nivel de módulo
 
 // --- Helpers para Gráficos ---
@@ -68,7 +69,9 @@ function calculateOEE(procesamientoData) {
         const totalStopTime_hours = unplannedStopTime_hours + totalCleaningTime_hours;
         const actualRunTime_hours = dailyData.reduce((sum, p) => sum + p['Tiempo de Operación (en Horas)'], 0);
         const plannedProductionTime_hours = actualRunTime_hours + totalStopTime_hours;
-        const availability = (plannedProductionTime_hours > 0) ? actualRunTime_hours / plannedProductionTime_hours : 0;
+        let availability = (plannedProductionTime_hours > 0) ? actualRunTime_hours / plannedProductionTime_hours : 0;
+        availability = isNaN(availability) ? 0 : availability;
+
         let totalGoodCount = 0, totalCount = 0;
         dailyData.forEach(p => {
             const processedCount = p['Cantidades Procesadas (en Unidades)'];
@@ -76,13 +79,16 @@ function calculateOEE(procesamientoData) {
             totalGoodCount += processedCount * (1 - wastePercentage / 100);
             totalCount += processedCount;
         });
-        const quality = (totalCount > 0) ? totalGoodCount / totalCount : 0;
+        let quality = (totalCount > 0) ? totalGoodCount / totalCount : 0;
+        quality = isNaN(quality) ? 0 : quality;
+
         let totalNetRunTime_hours = 0;
         dailyData.forEach(p => {
             const idealCycle_seconds = idealCycleTimes_seconds[p.Producto];
             if (idealCycle_seconds) totalNetRunTime_hours += (idealCycle_seconds * p['Cantidades Procesadas (en Unidades)']) / 3600;
         });
-        const performance = (actualRunTime_hours > 0) ? totalNetRunTime_hours / actualRunTime_hours : 0;
+        let performance = (actualRunTime_hours > 0) ? totalNetRunTime_hours / actualRunTime_hours : 0;
+        performance = isNaN(performance) ? 0 : performance;
         results.datasets.availability.push(availability);
         results.datasets.performance.push(performance);
         results.datasets.quality.push(quality);
@@ -142,82 +148,128 @@ async function renderStage(stage) {
     const insightsList = document.getElementById('insights-list');
     const indicatorsView = document.getElementById('indicators-view');
     const stagesView = document.getElementById('stages-view');
+    const accessChartsView = document.getElementById('access-charts-view');
     const fallback = document.getElementById('statsFallback');
 
-    if (!insightsContainer || !insightsList || !indicatorsView || !stagesView) return;
+    if (!insightsContainer || !insightsList || !indicatorsView || !stagesView || !fallback || !accessChartsView) return;
 
     insightsContainer.style.display = 'none';
     insightsList.innerHTML = '';
     fallback.style.display = 'none';
+    indicatorsView.style.display = 'none';
+    stagesView.style.display = 'none';
+    accessChartsView.style.display = 'none';
 
     try {
-        const response = await fetch('data/statistics.json');
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        const allData = await response.json();
+        if (stage === 'Accesos') {
+            accessChartsView.style.display = 'block';
+            const users = getUsers();
+            const accessRecords = getAccessRecords();
 
-        if (stage === 'Indicadores') {
-            indicatorsView.style.display = 'block';
-            stagesView.style.display = 'none';
-
-            const oeeResults = calculateOEE(allData.Procesamiento);
-            const insights = generateInsights(allData, oeeResults);
-
-            if (insights.length > 0) {
-                insightsList.innerHTML = insights.map(insight => `<div class="employee-card" style="border-left-color: ${insight.level === 'alert' ? '#e74c3c' : insight.level === 'warning' ? '#f39c12' : '#27ae60'}"><p>${insight.text}</p></div>`).join('');
-                insightsContainer.style.display = 'block';
-            }
+            // Late vs On-time arrivals
+            const onTimeThreshold = 15; // 15 minutos de tolerancia
+            const arrivals = { onTime: 0, late: 0 };
+            const shiftStartTimes = { 'Mañana': 6, 'Tarde': 14, 'Noche': 22 };
             
-            // Crear los 3 gráficos de dona
-            const lastIndex = oeeResults.labels.length - 1;
-            chartInstances.availability = createDoughnutChart('availabilityChart', 'Disponibilidad', oeeResults.datasets.availability[lastIndex]);
-            chartInstances.performance = createDoughnutChart('performanceChart', 'Rendimiento', oeeResults.datasets.performance[lastIndex]);
-            chartInstances.quality = createDoughnutChart('qualityChart', 'Calidad', oeeResults.datasets.quality[lastIndex]);
-
-            // Crear el gráfico de tendencia OEE
-            const oeeTrendCtx = document.getElementById('oeeTrendChart').getContext('2d');
-            chartInstances.oeeTrend = new Chart(oeeTrendCtx, {
-                type: 'line',
-                data: {
-                    labels: oeeResults.labels,
-                    datasets: [{
-                        label: 'OEE',
-                        data: oeeResults.datasets.oee,
-                        borderColor: '#0b4730',
-                        backgroundColor: 'rgba(11, 71, 48, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { title: { display: false } },
-                    scales: { y: { beginAtZero: true, max: 1, ticks: { callback: v => (v * 100).toFixed(0) + '%' } } }
+            accessRecords.filter(r => r.tipo === 'ingreso').forEach(record => {
+                const user = users.find(u => u.codigo_empleado === record.codigo_empleado);
+                if (user && user.turno) {
+                    const recordDate = new Date(record.fecha_hora);
+                    const recordHour = recordDate.getHours();
+                    const recordMinute = recordDate.getMinutes();
+                    const shiftStartHour = shiftStartTimes[user.turno];
+                    if (recordHour > shiftStartHour || (recordHour === shiftStartHour && recordMinute > onTimeThreshold)) {
+                        arrivals.late++;
+                    } else {
+                        arrivals.onTime++;
+                    }
                 }
+            });
+            chartInstances.arrivals = new Chart(document.getElementById('arrivalsChart').getContext('2d'), {
+                type: 'pie',
+                data: { labels: ['En Horario', 'Tarde'], datasets: [{ data: [arrivals.onTime, arrivals.late], backgroundColor: ['#28a745', '#dc3545'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Puntualidad de Ingresos' } } }
+            });
+
+            // Employees per Shift
+            const employeesByShift = users.reduce((acc, user) => {
+                if (user.turno) {
+                    acc[user.turno] = (acc[user.turno] || 0) + 1;
+                }
+                return acc;
+            }, {});
+            chartInstances.shift = new Chart(document.getElementById('shiftChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: Object.keys(employeesByShift), datasets: [{ label: 'Nº de Empleados', data: Object.values(employeesByShift), backgroundColor: '#36a2eb' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Distribución por Turno' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+
+            // Employees per Role
+            const employeesByRole = users.reduce((acc, user) => {
+                const role = user.rol || 'No asignado';
+                acc[role] = (acc[role] || 0) + 1;
+                return acc;
+            }, {});
+            chartInstances.role = new Chart(document.getElementById('roleChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: Object.keys(employeesByRole), datasets: [{ label: 'Nº de Empleados', data: Object.values(employeesByRole), backgroundColor: '#ffce56' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Distribución por Rol' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
 
         } else {
-            indicatorsView.style.display = 'none';
-            stagesView.style.display = 'block';
-            
-            const stageData = allData[stage];
-            if (!stageData || stageData.length === 0) throw new Error(`No hay datos para "${stage}"`);
-            
-            const labels = [...new Set(stageData.map(item => item.Producto || item.Proveedor || item.Tipo))];
-            const data = labels.map(label => stageData.filter(item => (item.Producto || item.Proveedor || item.Tipo) === label).reduce((sum, item) => sum + (item['Cantidad Recibida (en Kg)'] || item['Cantidad almacenada (en Kg)'] || item['Cantidades Procesadas (en Unidades)'] || item['Cantidad envasada (en Unidades)'] || item['Cantidades despachadas (en unidades)']), 0));
-            
-            const stagesCtx = document.getElementById('stagesChart').getContext('2d');
-            chartInstances.stages = new Chart(stagesCtx, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{ label: `Datos para ${stage}`, data, backgroundColor: getColors(labels.length) }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: `Análisis de ${stage}` } } }
-            });
+            const response = await fetch('data/statistics.json');
+            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+            const allData = await response.json();
+
+            if (stage === 'Indicadores') {
+                indicatorsView.style.display = 'block';
+
+                const oeeResults = calculateOEE(allData.Procesamiento);
+                if (!oeeResults || oeeResults.labels.length === 0) throw new Error("No se pudieron calcular los datos de OEE.");
+                
+                const insights = generateInsights(allData, oeeResults);
+                if (insights.length > 0) {
+                    insightsList.innerHTML = insights.map(insight => `<div class="employee-card" style="border-left-color: ${insight.level === 'alert' ? '#e74c3c' : insight.level === 'warning' ? '#f39c12' : '#27ae60'}"><p>${insight.text}</p></div>`).join('');
+                    insightsContainer.style.display = 'block';
+                }
+                
+                const lastIndex = oeeResults.labels.length - 1;
+                chartInstances.availability = createDoughnutChart('availabilityChart', 'Disponibilidad', oeeResults.datasets.availability[lastIndex]);
+                chartInstances.performance = createDoughnutChart('performanceChart', 'Rendimiento', oeeResults.datasets.performance[lastIndex]);
+                chartInstances.quality = createDoughnutChart('qualityChart', 'Calidad', oeeResults.datasets.quality[lastIndex]);
+
+                const oeeTrendCtx = document.getElementById('oeeTrendChart').getContext('2d');
+                chartInstances.oeeTrend = new Chart(oeeTrendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: oeeResults.labels,
+                        datasets: [{ label: 'OEE', data: oeeResults.datasets.oee, borderColor: '#0b4730', backgroundColor: 'rgba(11, 71, 48, 0.1)', fill: true, tension: 0.4 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: false } }, scales: { y: { beginAtZero: true, max: 1, ticks: { callback: v => (v * 100).toFixed(0) + '%' } } } }
+                });
+
+            } else {
+                stagesView.style.display = 'block';
+                
+                const stageData = allData[stage];
+                if (!stageData || stageData.length === 0) throw new Error(`No hay datos para "${stage}"`);
+                
+                const labels = [...new Set(stageData.map(item => item.Producto || item.Proveedor || item.Tipo))];
+                const data = labels.map(label => stageData.filter(item => (item.Producto || item.Proveedor || item.Tipo) === label).reduce((sum, item) => sum + (item['Cantidad Recibida (en Kg)'] || item['Cantidad almacenada (en Kg)'] || item['Cantidades Procesadas (en Unidades)'] || item['Cantidad envasada (en Unidades)'] || item['Cantidades despachadas (en unidades)']), 0));
+                
+                const stagesCtx = document.getElementById('stagesChart').getContext('2d');
+                chartInstances.stages = new Chart(stagesCtx, {
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: `Datos para ${stage}`, data, backgroundColor: getColors(labels.length) }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: `Análisis de ${stage}` } } }
+                });
+            }
         }
     } catch (err) {
         console.error(`Error en renderStage para ${stage}:`, err);
+        indicatorsView.style.display = 'none';
+        stagesView.style.display = 'none';
+        accessChartsView.style.display = 'none';
         fallback.textContent = err.message;
         fallback.style.display = 'block';
     }

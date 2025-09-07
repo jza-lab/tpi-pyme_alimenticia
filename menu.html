@@ -377,6 +377,10 @@
                     <i class='bx bx-trending-up'></i>
                     <span data-i18n="indicators">Indicadores</span>
                 </button>
+                <button class="stage-btn" data-stage="Accesos">
+                    <i class='bx bx-time'></i>
+                    <span>Análisis de Accesos</span>
+                </button>
                 <button class="stage-btn" data-stage="Recepcion">
                     <i class='bx bx-package'></i>
                     <span>Recepción</span>
@@ -393,7 +397,7 @@
                     <i class='bx bx-refrigerator'></i>
                     <span>Conservación</span>
                 </button>
-                <button class="stage-btn" data-stage="Despacho">
+                <button class="stage-btn" data-stage="ServicioDespacho">
                     <i class='bx bx-truck'></i>
                     <span>Despacho</span>
                 </button>
@@ -421,6 +425,22 @@
             </div>
             <div id="stages-view" class="chart-container" style="display: none;">
                  <canvas id="stagesChart"></canvas>
+            </div>
+            <div id="access-charts-view" style="display: none;">
+                <div class="oee-components-grid">
+                    <div class="chart-card">
+                        <h3>Llegadas</h3>
+                        <canvas id="arrivalsChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Empleados por Turno</h3>
+                        <canvas id="shiftChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Empleados por Rol</h3>
+                        <canvas id="roleChart"></canvas>
+                    </div>
+                </div>
             </div>
             <div id="statsFallback" class="chart-fallback" data-i18n="stats_chart_fallback">Gráfico de estadísticas se mostraría aquí</div>
 
