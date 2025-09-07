@@ -1325,3 +1325,19 @@ select:focus-visible {
 .main-chart {
     height: 350px;
 }
+
+.stages-view {
+    display: block; /* Contenedor principal siempre visible */
+}
+
+.stage-charts-grid {
+    display: none; /* Ocultar grids de gráficos por defecto */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stage-charts-grid.active {
+    display: grid; /* Mostrar solo el grid activo */
+    animation: fadeIn 0.5s ease-out forwards;
+}

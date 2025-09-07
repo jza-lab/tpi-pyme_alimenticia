@@ -136,6 +136,71 @@ export async function registerAccess(employeeCode, type, fecha_hora = null) {
 }
 
 /**
+ * Obtiene todos los datos de recepción de la base de datos.
+ * @returns {Promise<Array>} Una lista de registros de recepción.
+ */
+export async function fetchRecepcionData() {
+    const { data, error } = await supabase.from('recepcion').select('*');
+    if (error) {
+        console.error('Error al obtener datos de recepción:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+/**
+ * Obtiene todos los datos de almacenamiento de la base de datos.
+ * @returns {Promise<Array>} Una lista de registros de almacenamiento.
+ */
+export async function fetchAlmacenamientoData() {
+    const { data, error } = await supabase.from('almacenamiento').select('*');
+    if (error) {
+        console.error('Error al obtener datos de almacenamiento:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+/**
+ * Obtiene todos los datos de procesamiento de la base de datos.
+ * @returns {Promise<Array>} Una lista de registros de procesamiento.
+ */
+export async function fetchProcesamientoData() {
+    const { data, error } = await supabase.from('procesamiento').select('*');
+    if (error) {
+        console.error('Error al obtener datos de procesamiento:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+/**
+ * Obtiene todos los datos de conservación de la base de datos.
+ * @returns {Promise<Array>} Una lista de registros de conservación.
+ */
+export async function fetchConservacionData() {
+    const { data, error } = await supabase.from('conservacion').select('*');
+    if (error) {
+        console.error('Error al obtener datos de conservación:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+/**
+ * Obtiene todos los datos de despacho de la base de datos.
+ * @returns {Promise<Array>} Una lista de registros de despacho.
+ */
+export async function fetchDespachoData() {
+    const { data, error } = await supabase.from('despacho').select('*');
+    if (error) {
+        console.error('Error al obtener datos de despacho:', error);
+        throw error;
+    }
+    return data || [];
+}
+
+/**
  * Solicita un acceso inmediato para un empleado cuando está fuera de turno.
  * Llama a la Edge Function `request-immediate-access` que contiene la lógica principal:
  * - Verifica si el usuario está bloqueado por rechazos previos.
