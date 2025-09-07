@@ -136,65 +136,14 @@ export async function registerAccess(employeeCode, type, fecha_hora = null) {
 }
 
 /**
- * Obtiene todos los datos de recepción de la base de datos.
- * @returns {Promise<Array>} Una lista de registros de recepción.
+ * Obtiene todos los datos de una tabla específica de la base de datos.
+ * @param {string} tableName - El nombre de la tabla de la que se obtendrán los datos.
+ * @returns {Promise<Array>} Una lista de registros de la tabla especificada.
  */
-export async function fetchRecepcionData() {
-    const { data, error } = await supabase.from('recepcion').select('*');
+export async function fetchTableData(tableName) {
+    const { data, error } = await supabase.from(tableName).select('*');
     if (error) {
-        console.error('Error al obtener datos de recepción:', error);
-        throw error;
-    }
-    return data || [];
-}
-
-/**
- * Obtiene todos los datos de almacenamiento de la base de datos.
- * @returns {Promise<Array>} Una lista de registros de almacenamiento.
- */
-export async function fetchAlmacenamientoData() {
-    const { data, error } = await supabase.from('almacenamiento').select('*');
-    if (error) {
-        console.error('Error al obtener datos de almacenamiento:', error);
-        throw error;
-    }
-    return data || [];
-}
-
-/**
- * Obtiene todos los datos de procesamiento de la base de datos.
- * @returns {Promise<Array>} Una lista de registros de procesamiento.
- */
-export async function fetchProcesamientoData() {
-    const { data, error } = await supabase.from('procesamiento').select('*');
-    if (error) {
-        console.error('Error al obtener datos de procesamiento:', error);
-        throw error;
-    }
-    return data || [];
-}
-
-/**
- * Obtiene todos los datos de conservación de la base de datos.
- * @returns {Promise<Array>} Una lista de registros de conservación.
- */
-export async function fetchConservacionData() {
-    const { data, error } = await supabase.from('conservacion').select('*');
-    if (error) {
-        console.error('Error al obtener datos de conservación:', error);
-        throw error;
-    }
-    return data || [];
-}
-
-/**
- * Obtiene todos los datos de despacho de la base de datos.
- * @returns {Promise<Array>} Una lista de registros de despacho.
- */
-export async function fetchDespachoData() {
-    const { data, error } = await supabase.from('despacho').select('*');
-    if (error) {
-        console.error('Error al obtener datos de despacho:', error);
+        console.error(`Error al obtener datos de la tabla ${tableName}:`, error);
         throw error;
     }
     return data || [];
@@ -277,12 +226,11 @@ export async function deletePendingAuthorization(recordId) {
 }
 
 /**
- * @deprecated La lógica ahora se maneja en el cliente con getTokenAndSendEmail.
  * Envía un token de inicio de sesión al empleado usando una Edge Function.
- * @note La función del servidor se encarga de generar el token y enviarlo por email/SMS.
+ * La función del servidor se encarga de generar el token y enviarlo por el medio configurado (ej: email).
  * @param {string} code - Legajo del empleado.
  * @param {string} dni - DNI del empleado.
- * @returns {Promise<void>}
+ * @returns {Promise<any>} El resultado de la función del servidor.
  */
 export async function sendLoginToken(code, dni) {
     const { data, error } = await supabase.functions.invoke('send-login-token', {
@@ -290,69 +238,16 @@ export async function sendLoginToken(code, dni) {
     });
 
     if (error) {
-        const err = await error.context.json()
-        throw new Error(err.error);
+        // Intenta parsear el error de la función para dar un mensaje más claro.
+        try {
+            const err = await error.context.json();
+            throw new Error(err.error || 'Error al enviar el token.');
+        } catch (e) {
+            // Si el parseo falla, lanza el error original.
+            throw new Error(error.message || 'Error desconocido al enviar el token.');
+        }
     }
     return data;
-}
-
-/**
- * NUEVA FUNCIÓN CON EMAILJS
- * Obtiene un token de la función de Supabase y lo envía por correo usando EmailJS.
- * @param {string} userCode - El código del empleado.
- * @param {string} userDni - El DNI del empleado.
- * @returns {Promise<void>}
- */
-export async function getTokenAndSendEmail(userCode, userDni) {
-  const SUPABASE_FUNCTION_URL = "https://xtruedkvobfabctfmyys.supabase.co/functions/v1/send-login-token"; 
-  const EMAILJS_PUBLIC_KEY = "JCioEYp4izZHGAoHd";
-  const EMAILJS_SERVICE_ID = "service_18gsj8g";
-  const EMAILJS_TEMPLATE_ID = "template_orviue9";
-
-  // EmailJS ya debería estar inicializado en app.js, pero lo hacemos aquí por seguridad.
-  // En una app más grande, esto se haría en un punto de entrada único.
-  if (typeof emailjs === 'undefined') {
-    console.error("EmailJS SDK no está cargado.");
-    throw new Error("EmailJS SDK no está cargado.");
-  }
-  
-  // No es necesario inicializarlo en cada llamada si ya se hizo globalmente.
-  // emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-
-  console.log("Solicitando token a Supabase...");
-  const response = await fetch(SUPABASE_FUNCTION_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_CONFIG.ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_CONFIG.ANON_KEY}`
-    },
-    body: JSON.stringify({ code: userCode, dni: userDni })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || 'Error al generar el token.');
-  }
-  
-  console.log("Token recibido. Enviando email con EmailJS...");
-
-  const templateParams = {
-    // to_email: data.email, // EmailJS no usa 'to_email' aquí, se configura en la plantilla
-    user_name: data.name,
-    login_token: data.token,
-    to_email: data.email
-  };
-
-  try {
-    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
-    // No devolvemos nada, el manejo de UI se hace en app.js
-  } catch (error) {
-    console.error('Error al enviar email con EmailJS:', error);
-    // Re-lanzamos el error para que el llamador (en app.js) pueda manejarlo
-    throw new Error('Hubo un problema al enviar el correo con el token.');
-  }
 }
 
 
