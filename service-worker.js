@@ -1,11 +1,14 @@
 // service-worker.js mejorado para evitar problemas de caché
 
-const CACHE_NAME = 'control-acceso-cache-v8'; // Incrementar versión
+const CACHE_NAME = 'control-acceso-cache-v9'; // Incrementar versión
 const urlsToCache = [
+  '/',
   'index.html',
   'menu.html',
-  'styles.css',
+  'manual-entry.html',
+  'index.css',
   'menu.css',
+  'manual-entry.css',
   'js/app.js',
   'js/menu.js',
   'js/api.js',
@@ -15,6 +18,7 @@ const urlsToCache = [
   'js/i18n.js',
   'js/i18n-logic.js',
   'js/statistics.js',
+  'js/manual-entry.js',
   'icono.png',
   'manifest.json'
 ];
@@ -53,10 +57,19 @@ self.addEventListener('fetch', event => {
 
   // Para archivos JS críticos, usar network-only para asegurar que siempre se obtiene la última versión.
   // Esto es crucial para evitar bugs por lógica de negocio desactualizada.
-  if (requestUrl.pathname.includes('js/app.js') ||
-    requestUrl.pathname.includes('js/api.js') ||
-    requestUrl.pathname.includes('js/state.js')) {
-    event.respondWith(fetch(event.request)); // Estrategia: Network Only
+  const criticalJSFiles = [
+    'js/app.js', 'js/api.js', 'js/state.js',
+    'js/menu.js', 'js/statistics.js', 'js/manual-entry.js',
+    'js/face.js', 'js/i18n-logic.js'
+  ];
+
+  if (criticalJSFiles.some(file => requestUrl.pathname.includes(file))) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        // En caso de que la red falle, intentar devolver desde la caché como fallback
+        return caches.match(event.request);
+      })
+    );
     return;
   }
 
