@@ -53,7 +53,7 @@
           <button class="mobile-side-item" data-section="accesos" data-i18n="access_history">Historial de Accesos</button>
           <button class="mobile-side-item" data-section="empleados" data-i18n="employee_management">Gestión de Empleados</button>
           <button class="mobile-side-item" data-section="autorizaciones" data-i18n="authorizations">Autorizaciones</button>
-          <button class="mobile-side-item" data-section="estadisticas" data-i18n="indicators">Indicadores</button>
+          <button class="mobile-side-item" data-section="estadisticas" data-i18n="statistics">Estadísticas</button>
         </nav>
         <div class="mobile-sidebar-footer">
           <button class="btn btn-secondary" onclick="logout()" data-i18n="logout">Salir</button>
@@ -69,7 +69,7 @@
       <button class="nav-btn active" data-section="accesos" aria-controls="accesos" data-i18n="access_history">Historial de Accesos</button>
       <button class="nav-btn" data-section="empleados" aria-controls="empleados" data-i18n="employee_management">Gestión de Empleados</button>
       <button class="nav-btn" data-section="autorizaciones" aria-controls="autorizaciones" data-i18n="authorizations">Autorizaciones</button>
-      <button class="nav-btn" data-section="estadisticas" aria-controls="estadisticas" data-i18n="indicators">Indicadores</button>
+      <button class="nav-btn" data-section="estadisticas" aria-controls="estadisticas" data-i18n="statistics">Estadísticas</button>
     </nav>
   </header>
 
@@ -130,6 +130,7 @@
         <h2 data-i18n="employee_management">Gestión de Empleados</h2>
         <button id="btn-nuevo-empleado" class="btn btn-primary" data-i18n="register_new_employee">Registrar Nuevo Empleado</button>
         <button id="btn-eliminar-empleado" class="btn btn-danger" data-i18n="delete_employee">Eliminar Empleado</button>
+        <button id="btn-carga-manual" class="btn btn-secondary">Carga Manual</button>
 
         <div class="filter-container">
           <select id="filter-employee-by-role">
@@ -250,12 +251,12 @@
 
       <!-- botones por etapa -->
       <div class="stage-buttons" role="tablist" aria-label="Etapas de proceso">
-        <button class="stage-btn active" data-stage="Recepcion" role="tab" data-i18n="zone_reception">Recepción</button>
+        <button class="stage-btn active" data-stage="Recepción" role="tab" data-i18n="zone_reception">Recepción</button>
         <button class="stage-btn" data-stage="Almacenamiento" role="tab" data-i18n="zone_storage">Almacenamiento</button>
         <button class="stage-btn" data-stage="Procesamiento" role="tab" data-i18n="zone_processing">Procesamiento</button>
-        <button class="stage-btn" data-stage="Conservacion" role="tab" data-i18n="zone_conservation">Conservación</button>
-        <button class="stage-btn" data-stage="ServicioDespacho" role="tab" data-i18n="zone_dispatch">Servicio y Despacho</button>
-        <button class="stage-btn" data-stage="Indicadores" role="tab" data-i18n="statistics">Indicadores</button>
+        <button class="stage-btn" data-stage="Conservación" role="tab" data-i18n="zone_conservation">Conservación</button>
+        <button class="stage-btn" data-stage="Despacho" role="tab" data-i18n="zone_dispatch">Despacho</button>
+        <button class="stage-btn" data-stage="Indicadores" role="tab" data-i18n="indicators">Indicadores</button>
       </div>
 
       <!-- Contenedor para insights -->

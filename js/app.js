@@ -329,12 +329,12 @@ function denyAccess(reason, user = null) {
     dom.denialReason.textContent = reason;
   }
 
-  // Handle supervisor re-entry logic
+  // Handle supervisor/analyst re-entry logic
   dom.supervisorMenuBtnDenied.style.display = 'none';
-  const isSupervisor = user && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.SUPERVISOR;
+  const isAnalystOrHigher = user && user.nivel_acceso >= APP_CONSTANTS.USER_LEVELS.ANALISTA;
   const isAlreadyInsideError = reason.toLowerCase().includes('dentro');
-  if (currentLoginType === 'ingreso' && isSupervisor && isAlreadyInsideError) {
-    sessionStorage.setItem('isSupervisor', 'true');
+  if (currentLoginType === 'ingreso' && isAnalystOrHigher && isAlreadyInsideError) {
+    sessionStorage.setItem('isSupervisor', 'true'); // Keep session variable name for consistency
     sessionStorage.setItem('supervisorCode', user.codigo_empleado);
     dom.supervisorMenuBtnDenied.style.display = 'block';
   }

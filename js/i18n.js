@@ -90,6 +90,7 @@ export const translations = {
     "surname_label": "Apellido:",
     "role_label": "Rol:",
     "select_role": "Seleccione un rol...",
+    "role_operator": "Operario (Nivel 1)",
     "role_employee": "Empleado (Nivel 1)",
     "role_analyst": "Analista (Nivel 2)",
     "role_manager": "Gerente (Nivel 4)",

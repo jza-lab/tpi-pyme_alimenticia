@@ -46,29 +46,46 @@ function applyRolePermissions() {
   const allButtons = {
     'btn-nuevo-empleado': document.getElementById('btn-nuevo-empleado'),
     'btn-eliminar-empleado': document.getElementById('btn-eliminar-empleado'),
+    'btn-carga-manual': document.getElementById('btn-carga-manual'),
   };
 
   // Ocultar todos los botones de navegación y de acción
   document.querySelectorAll('.nav-btn, .mobile-side-item').forEach(btn => btn.style.display = 'none');
-  Object.values(allButtons).forEach(btn => btn.style.display = 'none');
+  Object.values(allButtons).forEach(btn => {
+    if (btn) btn.style.display = 'none';
+  });
 
   let visibleSections = [];
+  let visibleButtons = [];
 
   switch (nivel_acceso) {
     case USER_LEVELS.GERENTE:
       visibleSections = allSections;
-      Object.values(allButtons).forEach(btn => btn.style.display = 'inline-block');
+      visibleButtons = ['btn-nuevo-empleado', 'btn-eliminar-empleado', 'btn-carga-manual'];
       break;
 
     case USER_LEVELS.SUPERVISOR:
       visibleSections = ['accesos', 'empleados', 'autorizaciones', 'estadisticas'];
-      // Supervisor no puede registrar ni eliminar, por lo que no se muestra ningún botón de acción.
+      visibleButtons = ['btn-carga-manual'];
       break;
 
     case USER_LEVELS.ANALISTA:
       visibleSections = ['estadisticas'];
       break;
   }
+
+  // Mostrar las secciones y botones correspondientes
+  visibleSections.forEach(sectionId => {
+    document.querySelectorAll(`.nav-btn[data-section="${sectionId}"], .mobile-side-item[data-section="${sectionId}"]`).forEach(btn => {
+      btn.style.display = 'block';
+    });
+  });
+
+  visibleButtons.forEach(buttonId => {
+    if (allButtons[buttonId]) {
+      allButtons[buttonId].style.display = 'inline-block';
+    }
+  });
 
   // Mostrar las secciones y botones correspondientes
   visibleSections.forEach(sectionId => {
@@ -495,6 +512,9 @@ function attachListeners() {
   }));
 
   document.getElementById('btn-nuevo-empleado')?.addEventListener('click', () => showEmployeeView('register-screen'));
+  document.getElementById('btn-carga-manual')?.addEventListener('click', () => {
+    window.location.href = 'manual-entry.html';
+  });
   dom.form.captureBtn.addEventListener('click', handleStartCaptureClick);
   dom.confirmCaptureBtn.addEventListener('click', confirmCapture);
   dom.form.backToEmployeesBtn.addEventListener('click', () => showEmployeeView('empleados-main-view'));
