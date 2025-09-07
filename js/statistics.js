@@ -1204,4 +1204,4 @@ function renderCurrentStatsView() {
     }
 }
 
-export { initializeStatistics, renderCurrentStatsView };
+export { initializeStatistics, renderCurrentStatsView, destroyCharts };

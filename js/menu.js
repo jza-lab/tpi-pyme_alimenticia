@@ -2,11 +2,7 @@ import { APP_CONSTANTS } from './config.js';
 import * as api from './api.js';
 import * as face from './face.js';
 import * as state from './state.js';
-import { APP_CONSTANTS } from './config.js';
-import * as api from './api.js';
-import * as face from './face.js';
-import * as state from './state.js';
-import { initializeStatistics, renderCurrentStatsView } from './statistics.js';
+import { initializeStatistics, renderCurrentStatsView, destroyCharts } from './statistics.js';
 import { t, updateUI } from './i18n-logic.js';
 
 // --- Estado local del menú ---
@@ -173,12 +169,20 @@ const dom = {
 };
 
 // --- Gestión de Vistas y Navegación ---
+let currentSection = '';
+
 function showSection(sectionId, isMainSection = true) {
+    if (currentSection === 'estadisticas' && sectionId !== 'estadisticas') {
+        destroyCharts();
+    }
+
     dom.sections.forEach(s => s.classList.remove('active'));
     const sectionElement = document.getElementById(sectionId);
     if (sectionElement) {
         sectionElement.classList.add('active');
     }
+
+    currentSection = sectionId;
 
     if (isMainSection) {
         dom.navButtons.forEach(b => b.classList.toggle('active', b.dataset.section === sectionId));
