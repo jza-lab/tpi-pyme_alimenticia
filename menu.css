@@ -1312,6 +1312,8 @@ select:focus-visible {
     padding: 20px;
     box-shadow: var(--shadow-light);
     text-align: center;
+    height: 250px; /* Altura fija para los gráficos pequeños */
+    position: relative;
 }
 
 .chart-card h3 {
