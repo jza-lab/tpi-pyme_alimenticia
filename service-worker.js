@@ -9,7 +9,9 @@ const urlsToCache = [
   'index.css',
   'menu.css',
   'manual-entry.css',
-  'js/app.js',
+  'js/main.js',
+  'js/ui.js',
+  'js/auth.js',
   'js/menu.js',
   'js/api.js',
   'js/config.js',
@@ -58,7 +60,7 @@ self.addEventListener('fetch', event => {
   // Para archivos JS críticos, usar network-only para asegurar que siempre se obtiene la última versión.
   // Esto es crucial para evitar bugs por lógica de negocio desactualizada.
   const criticalJSFiles = [
-    'js/app.js', 'js/api.js', 'js/state.js',
+    'js/main.js', 'js/ui.js', 'js/auth.js', 'js/api.js', 'js/state.js',
     'js/menu.js', 'js/statistics.js', 'js/manual-entry.js',
     'js/face.js', 'js/i18n-logic.js'
   ];
