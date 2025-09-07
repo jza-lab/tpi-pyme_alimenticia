@@ -149,6 +149,22 @@ const dom = {
     shift: document.getElementById('filter-employee-by-shift'),
     menuAccess: document.getElementById('filter-employee-by-menu-access'),
     clearBtn: document.getElementById('clear-employee-filters-btn')
+  },
+  manualEntry: {
+    legajoInput: document.getElementById('manual-legajo'),
+    searchBtn: document.getElementById('manual-search-btn'),
+    toggleButtons: document.querySelectorAll('.manual-toggle-btn'),
+    btnSubmit: document.getElementById('manual-submit-btn'),
+    fechaHoraInput: document.getElementById('manual-fecha-hora'),
+    typeError: document.getElementById('manual-type-error'),
+    employeeDetailsContainer: document.getElementById('manual-employee-details'),
+    employeeName: document.getElementById('manual-employee-name'),
+    employeeSurname: document.getElementById('manual-employee-surname'),
+    employeeDni: document.getElementById('manual-employee-dni'),
+    employeeShift: document.getElementById('manual-employee-shift'),
+    employeeRole: document.getElementById('manual-employee-role'),
+    employeeAccessLevel: document.getElementById('manual-employee-access-level'),
+    employeeNotFoundMsg: document.getElementById('manual-employee-not-found')
   }
 };
 
@@ -804,7 +820,7 @@ async function main() {
   // La sección a mostrar por defecto ya se establece en applyRolePermissions
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
+    navigator.serviceWorker.register('service-worker.js')
       .then(registration => {
         console.log('ServiceWorker registration successful');
         registration.update();

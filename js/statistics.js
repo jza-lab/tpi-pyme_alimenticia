@@ -1,4 +1,5 @@
 import { getUsers, getAccessRecords } from './state.js';
+import { t } from './i18n-logic.js';
 import {
     fetchRecepcionData,
     fetchAlmacenamientoData,
