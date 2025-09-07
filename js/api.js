@@ -207,6 +207,7 @@ export async function deletePendingAuthorization(recordId) {
 }
 
 /**
+ * @deprecated La lógica ahora se maneja en el cliente con getTokenAndSendEmail.
  * Envía un token de inicio de sesión al empleado usando una Edge Function.
  * @note La función del servidor se encarga de generar el token y enviarlo por email/SMS.
  * @param {string} code - Legajo del empleado.
@@ -224,6 +225,66 @@ export async function sendLoginToken(code, dni) {
     }
     return data;
 }
+
+/**
+ * NUEVA FUNCIÓN CON EMAILJS
+ * Obtiene un token de la función de Supabase y lo envía por correo usando EmailJS.
+ * @param {string} userCode - El código del empleado.
+ * @param {string} userDni - El DNI del empleado.
+ * @returns {Promise<void>}
+ */
+export async function getTokenAndSendEmail(userCode, userDni) {
+  // NOTA: Reemplaza la URL con la URL de tu Supabase Function.
+  const SUPABASE_FUNCTION_URL = "URL_DE_TU_FUNCION_SUPABASE"; // ¡¡¡ REEMPLAZAR ESTA URL !!!
+  const EMAILJS_PUBLIC_KEY = "JCioEYp4izZHGAoHd";
+  const EMAILJS_SERVICE_ID = "service_18gsj8g";
+  const EMAILJS_TEMPLATE_ID = "template_orviue9";
+
+  // EmailJS ya debería estar inicializado en app.js, pero lo hacemos aquí por seguridad.
+  // En una app más grande, esto se haría en un punto de entrada único.
+  if (typeof emailjs === 'undefined') {
+    console.error("EmailJS SDK no está cargado.");
+    throw new Error("EmailJS SDK no está cargado.");
+  }
+  
+  // No es necesario inicializarlo en cada llamada si ya se hizo globalmente.
+  // emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
+  console.log("Solicitando token a Supabase...");
+  const response = await fetch(SUPABASE_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // 'apikey': SUPABASE_CONFIG.ANON_KEY // La anon key es necesaria si la función no es 'public'
+    },
+    body: JSON.stringify({ code: userCode, dni: userDni })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Error al generar el token.');
+  }
+  
+  console.log("Token recibido. Enviando email con EmailJS...");
+
+  const templateParams = {
+    // to_email: data.email, // EmailJS no usa 'to_email' aquí, se configura en la plantilla
+    user_name: data.name,
+    login_token: data.token,
+    to_email: data.email
+  };
+
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
+    // No devolvemos nada, el manejo de UI se hace en app.js
+  } catch (error) {
+    console.error('Error al enviar email con EmailJS:', error);
+    // Re-lanzamos el error para que el llamador (en app.js) pueda manejarlo
+    throw new Error('Hubo un problema al enviar el correo con el token.');
+  }
+}
+
 
 /**
  * Verifica el token de inicio de sesión.
