@@ -1327,7 +1327,7 @@ select:focus-visible {
 }
 
 .stages-view {
-    display: block; /* Contenedor principal siempre visible */
+    /* This container is now managed by JS */
 }
 
 .stage-charts-grid {
