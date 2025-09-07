@@ -166,7 +166,7 @@ async function renderStage(stage) {
             const users = getUsers();
             const accessRecords = getAccessRecords();
 
-            // Late vs On-time arrivals
+            // Tarde vs En tiempo LLEGADAS
             const onTimeThreshold = 15; // 15 minutos de tolerancia
             const arrivals = { onTime: 0, late: 0 };
             const shiftStartTimes = { 'Mañana': 6, 'Tarde': 14, 'Noche': 22 };
@@ -191,7 +191,7 @@ async function renderStage(stage) {
                 options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Puntualidad de Ingresos' } } }
             });
 
-            // Employees per Shift
+            // Empleados por Turno
             const employeesByShift = users.reduce((acc, user) => {
                 if (user.turno) {
                     acc[user.turno] = (acc[user.turno] || 0) + 1;
@@ -204,7 +204,7 @@ async function renderStage(stage) {
                 options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Distribución por Turno' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
 
-            // Employees per Role
+            // Empleados por Rol
             const employeesByRole = users.reduce((acc, user) => {
                 const role = user.rol || 'No asignado';
                 acc[role] = (acc[role] || 0) + 1;
@@ -249,19 +249,71 @@ async function renderStage(stage) {
                 });
 
             } else {
+                const stageConfig = {
+                    'Recepcion': {
+                        label: 'Recepción',
+                        dataProperty: 'Cantidad Recibida (en Kg)',
+                        itemLabel: item => item.Proveedor
+                    },
+                    'Almacenamiento': {
+                        label: 'Almacenamiento',
+                        dataProperty: 'Cantidad almacenada (en Kg)',
+                        itemLabel: item => item.Tipo
+                    },
+                    'Procesamiento': {
+                        label: 'Procesamiento',
+                        dataProperty: 'Cantidades Procesadas (en Unidades)',
+                        itemLabel: item => item.Producto
+                    },
+                    'Conservacion': {
+                        label: 'Conservación',
+                        dataProperty: 'Cantidad envasada (en Unidades)',
+                        itemLabel: item => item.Producto
+                    },
+                    'ServicioDespacho': {
+                        label: 'Despacho',
+                        dataProperty: 'Cantidades despachadas (en unidades)',
+                        itemLabel: item => item.Producto
+                    }
+                };
+
+                const config = stageConfig[stage];
+                if (!config) throw new Error(`Configuración no encontrada para la etapa "${stage}"`);
+
                 stagesView.style.display = 'block';
-                
+
                 const stageData = allData[stage];
-                if (!stageData || stageData.length === 0) throw new Error(`No hay datos para "${stage}"`);
+                if (!stageData || stageData.length === 0) throw new Error(`No hay datos para "${config.label}"`);
+
+                const labels = [...new Set(stageData.map(config.itemLabel))].filter(Boolean);
                 
-                const labels = [...new Set(stageData.map(item => item.Producto || item.Proveedor || item.Tipo))];
-                const data = labels.map(label => stageData.filter(item => (item.Producto || item.Proveedor || item.Tipo) === label).reduce((sum, item) => sum + (item['Cantidad Recibida (en Kg)'] || item['Cantidad almacenada (en Kg)'] || item['Cantidades Procesadas (en Unidades)'] || item['Cantidad envasada (en Unidades)'] || item['Cantidades despachadas (en unidades)']), 0));
-                
+                const data = labels.map(label =>
+                    stageData
+                        .filter(item => config.itemLabel(item) === label)
+                        .reduce((sum, item) => sum + (item[config.dataProperty] || 0), 0)
+                );
+
                 const stagesCtx = document.getElementById('stagesChart').getContext('2d');
                 chartInstances.stages = new Chart(stagesCtx, {
                     type: 'bar',
-                    data: { labels, datasets: [{ label: `Datos para ${stage}`, data, backgroundColor: getColors(labels.length) }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: `Análisis de ${stage}` } } }
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: `Datos para ${config.label}`,
+                            data,
+                            backgroundColor: getColors(labels.length)
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Análisis de ${config.label}`
+                            }
+                        }
+                    }
                 });
             }
         }
@@ -311,7 +363,6 @@ export function initializeStatistics(allowedZones) {
         renderStage(initialActive.dataset.stage);
     }
 
-    // Add event listeners for alert configuration inputs
     document.getElementById('rejection-threshold').addEventListener('change', () => {
         if (document.querySelector('.stage-btn.active')?.dataset.stage === 'Indicadores') {
             renderStage('Indicadores');
