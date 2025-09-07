@@ -68,6 +68,12 @@ export async function refreshState() {
     // Forzar la reinicialización
     state.isInitialized = false;
     await initState();
+    // Si el face matcher existía, lo reseteamos y reconstruimos para que
+    // use la nueva lista de usuarios que se acaba de cargar.
+    if (state.faceMatcher) {
+        state.faceMatcher = null; // Resetear
+        initFaceMatcher();      // Reconstruir
+    }
 }
 
 // "Getters" para acceder al estado de forma segura y controlada desde otros módulos.
