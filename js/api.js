@@ -234,8 +234,7 @@ export async function sendLoginToken(code, dni) {
  * @returns {Promise<void>}
  */
 export async function getTokenAndSendEmail(userCode, userDni) {
-  // NOTA: Reemplaza la URL con la URL de tu Supabase Function.
-  const SUPABASE_FUNCTION_URL = "URL_DE_TU_FUNCION_SUPABASE"; // ¡¡¡ REEMPLAZAR ESTA URL !!!
+  const SUPABASE_FUNCTION_URL = "https://xtruedkvobfabctfmyys.supabase.co/functions/v1/send-login-token"; 
   const EMAILJS_PUBLIC_KEY = "JCioEYp4izZHGAoHd";
   const EMAILJS_SERVICE_ID = "service_18gsj8g";
   const EMAILJS_TEMPLATE_ID = "template_orviue9";
