@@ -19,7 +19,8 @@
         <div class="container">
             <div class="main-header">
                 <h1 data-i18n="app_title">Control de Acceso por Reconocimiento Facial</h1>
-                <p class="subtitle" data-i18n="intro">Sistema de reconocimiento facial para registro y autenticación de usuarios</p>
+                <p class="subtitle" data-i18n="intro">Sistema de reconocimiento facial para registro y autenticación de
+                    usuarios</p>
             </div>
 
             <div class="welcome-card">
@@ -51,7 +52,6 @@
                 </div>
             </div>
 
-
             <div class="language-toggle">
                 <label class="toggle-container">
                     <span class="toggle-label">ES</span>
@@ -62,9 +62,7 @@
             </div>
         </div>
     </div>
-  
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script type="module" src="js/app.js"></script>
+
 
     <!-- Pantalla de Login/Reconocimiento -->
     <div class="screen" id="login-screen">
@@ -86,7 +84,7 @@
 
             <div id="manual-login" class="manual-login">
                 <h3 data-i18n="manual_login">Inicio de Sesión Manual</h3>
-                
+
                 <div id="credentials-form" class="credentials-form">
                     <div class="input-group">
                         <label for="manual-operator-code" data-i18n="operator_code_label">Legajo:</label>
@@ -96,7 +94,8 @@
                         <label for="manual-operator-dni" data-i18n="operator_dni_label">DNI:</label>
                         <input type="text" id="manual-operator-dni" placeholder="Ingrese su DNI" required>
                     </div>
-                    <button id="manual-login-btn" class="btn btn-primary" data-i18n="manual_login_button">Iniciar Sesión</button>
+                    <button id="manual-login-btn" class="btn btn-primary" data-i18n="manual_login_button">Iniciar
+                        Sesión</button>
                 </div>
 
                 <div id="token-form" class="token-form">
@@ -111,7 +110,8 @@
                     <button id="verify-token-btn" class="btn btn-primary">Verificar Token</button>
                 </div>
 
-                <button id="retry-facial-login-btn" class="btn btn-secondary" data-i18n="retry_facial_login">Reintentar</button>
+                <button id="retry-facial-login-btn" class="btn btn-secondary"
+                    data-i18n="retry_facial_login">Reintentar</button>
             </div>
 
         </div>
@@ -126,13 +126,14 @@
                 </div>
                 <h2 data-i18n="access_granted_title">¡Registro Exitoso!</h2>
                 <p id="welcome-message" class="result-message">Su acceso ha sido registrado correctamente.</p>
-                
+
                 <div class="result-actions">
                     <button id="supervisor-menu-btn" class="btn btn-primary supervisor-btn">
                         <i class='bx bx-user-pin'></i>
                         <span data-i18n="supervisor_menu">Menú Supervisor</span>
                     </button>
-                    <button id="back-after-access" class="btn btn-secondary" data-i18n="back_to_home">Volver al Inicio</button>
+                    <button id="back-after-access" class="btn btn-secondary" data-i18n="back_to_home">Volver al
+                        Inicio</button>
                 </div>
             </div>
         </div>
@@ -147,14 +148,16 @@
                 </div>
                 <h2 id="denial-title" data-i18n="access_denied_title">Acceso Denegado</h2>
                 <p id="denial-reason" class="result-message">No se pudo procesar su solicitud de acceso.</p>
-                
+
                 <div class="result-actions">
                     <button id="supervisor-menu-btn-denied" class="btn btn-primary supervisor-btn">
                         <i class='bx bx-user-pin'></i>
                         <span data-i18n="supervisor_menu">Menú Supervisor</span>
                     </button>
-                    <button id="try-again-btn" class="btn btn-primary" data-i18n="try_again">Intentar Nuevamente</button>
-                    <button id="back-to-home-from-denied" class="btn btn-secondary" data-i18n="back_to_home">Volver al Inicio</button>
+                    <button id="try-again-btn" class="btn btn-primary" data-i18n="try_again">Intentar
+                        Nuevamente</button>
+                    <button id="back-to-home-from-denied" class="btn btn-secondary" data-i18n="back_to_home">Volver al
+                        Inicio</button>
                 </div>
             </div>
         </div>
@@ -168,10 +171,12 @@
                     <i class='bx bx-time-five'></i>
                 </div>
                 <h2 data-i18n="access_granted_pending_title">Ingreso Registrado</h2>
-                <p data-i18n="access_granted_pending_message">Su ingreso ha sido registrado, pero está fuera de su turno y será revisado por un supervisor.</p>
-                
+                <p data-i18n="access_granted_pending_message">Su ingreso ha sido registrado, pero está fuera de su turno
+                    y será revisado por un supervisor.</p>
+
                 <div class="result-actions">
-                    <button id="back-after-pending-review" class="btn btn-primary" data-i18n="understood">Entendido</button>
+                    <button id="back-after-pending-review" class="btn btn-primary"
+                        data-i18n="understood">Entendido</button>
                 </div>
             </div>
         </div>
@@ -185,16 +190,19 @@
                     <i class='bx bx-hourglass'></i>
                 </div>
                 <h2 data-i18n="pending_authorization_title">Solicitud Enviada</h2>
-                <p id="pending-auth-message" data-i18n="pending_authorization_message">Su solicitud de acceso ha sido enviada a un supervisor para su aprobación.</p>
-                
+                <p id="pending-auth-message" data-i18n="pending_authorization_message">Su solicitud de acceso ha sido
+                    enviada a un supervisor para su aprobación.</p>
+
                 <div class="result-actions">
-                    <button id="back-to-home-from-pending" class="btn btn-primary" data-i18n="understood">Entendido</button>
+                    <button id="back-to-home-from-pending" class="btn btn-primary"
+                        data-i18n="understood">Entendido</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/main.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </body>
 
 </html>
