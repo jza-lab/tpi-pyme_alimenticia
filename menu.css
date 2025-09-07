@@ -554,6 +554,54 @@ h2.subsection-title {
     letter-spacing: 1px;
 }
 
+.final-oee-container {
+    text-align: center;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-medium);
+    margin-bottom: 30px;
+}
+
+.final-oee-value {
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.final-oee-value.good {
+    color: var(--success-color);
+}
+
+.final-oee-value.medium {
+    color: var(--warning-color);
+}
+
+.final-oee-value.bad {
+    color: var(--error-color);
+}
+
+.oee-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.legend-color {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+}
+
 
 /* ==========================================
    FORMULARIOS Y CONTROLES

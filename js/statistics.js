@@ -38,7 +38,7 @@ function generateSimulatedOEEData() {
     for (let i = 6; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
-        labels.push(date.toLocaleDateString('es-ES'));
+        labels.push(date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }));
 
         // Generar valores simulados realistas
         const avail = 0.75 + Math.random() * 0.20; // 75-95%
@@ -63,6 +63,28 @@ function generateSimulatedOEEData() {
 }
 
 // --- Lógica de Negocio para Estadísticas ---
+
+// Parsea una fecha en formato DD/MM/YYYY o YYYY-MM-DD
+function parseDate(dateString) {
+    if (!dateString || typeof dateString !== 'string') return null;
+
+    // Intentar formato DD/MM/YYYY
+    let parts = dateString.split('/');
+    if (parts.length === 3) {
+        const [day, month, year] = parts.map(p => parseInt(p, 10));
+        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+            return new Date(year, month - 1, day);
+        }
+    }
+
+    // Intentar otros formatos (ej. YYYY-MM-DD) que new Date() puede manejar
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+
+    return null; // Retornar null si no se puede parsear
+}
 
 // Función para verificar si los datos de procesamiento son válidos para OEE
 function isOEEDataUsable(data) {
@@ -93,18 +115,24 @@ function calculateRejectionRate(recepcionData) {
 }
 
 function calculateYield(procesamientoData) {
-    if (!isOEEDataUsable(procesamientoData)) return 0;
+    if (!isOEEDataUsable(procesamientoData)) {
+        return 0.88 + Math.random() * 0.08; // Simulación: 88% a 96%
+    }
+    
     let totalGoodCount = 0;
     let totalCount = 0;
+
     procesamientoData.forEach(p => {
-        const processedCount = parseFloat(p['Cantidades Procesadas (en Unidades)']) || 0;
-        const wastePercentage = parseFloat(p['Desperdicio (en %)']) || 0;
+        const processedCount = parseFloat(p['Cantidades Procesadas (en Unidades)']);
+        const wastePercentage = parseFloat(p['Desperdicio (en %)']);
+        
         if (!isNaN(processedCount) && !isNaN(wastePercentage)) {
             totalGoodCount += processedCount * (1 - wastePercentage / 100);
             totalCount += processedCount;
         }
     });
-    return totalCount > 0 ? totalGoodCount / totalCount : 0.92; // Retornar un valor por defecto si no hay datos
+
+    return totalCount > 0 ? totalGoodCount / totalCount : 0.88 + Math.random() * 0.08;
 }
 
 function calculateDocumentationCompliance(despachoData) {
@@ -178,16 +206,26 @@ function calculateOEE(procesamientoData) {
         'Albóndigas': 3.5, 'Nuggets': 5, 'Medallones': 5.5 
     };
     
-    const dates = [...new Set(procesamientoData.map(p => p.Fecha))].sort((a, b) => new Date(a) - new Date(b));
+    const dates = [...new Set(procesamientoData.map(p => p.Fecha))]
+        .map(parseDate)
+        .filter(d => d !== null) // Filtrar fechas nulas
+        .sort((a, b) => a - b);
+
+    const uniqueDates = [...new Set(dates.map(d => d.toISOString().split('T')[0]))];
+    
     const results = { labels: [], datasets: { availability: [], performance: [], quality: [], oee: [] } };
 
-    if (dates.length === 0) return generateSimulatedOEEData();
+    if (uniqueDates.length === 0) return generateSimulatedOEEData();
 
-    dates.forEach(date => {
-        const dailyData = procesamientoData.filter(p => p.Fecha === date);
+    uniqueDates.forEach(dateStr => {
+        const dailyData = procesamientoData.filter(p => {
+            const parsedDate = parseDate(p.Fecha);
+            return parsedDate && parsedDate.toISOString().split('T')[0] === dateStr;
+        });
+
         if (dailyData.length === 0) return;
         
-        results.labels.push(new Date(date).toLocaleDateString('es-ES'));
+        results.labels.push(new Date(dateStr).toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }));
         
         const unplannedStopTime_hours = 1;
         const cleaningTimePerProcess_hours = 0.5;
@@ -1008,6 +1046,20 @@ async function renderStage(stage) {
                 
                 const docCompliance = calculateDocumentationCompliance(allData.Despacho);
                 chartInstances.docCompliance = createDoughnutChart('documentationComplianceChart', 'Cumplimiento', docCompliance);
+
+                // Final OEE Indicator
+                const finalOeeValueEl = document.getElementById('final-oee-value');
+                const latestOee = oeeResults.datasets.oee[lastIndex] || 0;
+                finalOeeValueEl.textContent = `${(latestOee * 100).toFixed(1)}%`;
+                
+                finalOeeValueEl.classList.remove('good', 'medium', 'bad');
+                if (latestOee >= 0.85) {
+                    finalOeeValueEl.classList.add('good');
+                } else if (latestOee >= 0.60) {
+                    finalOeeValueEl.classList.add('medium');
+                } else {
+                    finalOeeValueEl.classList.add('bad');
+                }
 
                 const oeeTrendCanvas = document.getElementById('oeeTrendChart');
                 if (oeeTrendCanvas) {
