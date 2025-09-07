@@ -455,9 +455,21 @@ function handleSupervisorMenuClick() {
 function attachListeners() {
   const el = id => document.getElementById(id);
 
+  // Manejar la restauración desde bfcache (navegación atrás/adelante)
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      console.log('Page was restored from bfcache. Re-initializing state.');
+      const loginScreen = document.getElementById('login-screen');
+      if (loginScreen.classList.contains('active')) {
+        // Si el usuario vuelve a la pantalla de login, reiniciar el reconocimiento.
+        // `currentLoginType` se conserva en la memoria del script.
+        startFacialLogin(currentLoginType);
+      }
+    }
+  });
+
   el('ingreso-btn')?.addEventListener('click', () => startFacialLogin('ingreso'));
   el('egreso-btn')?.addEventListener('click', () => startFacialLogin('egreso'));
-  el('back-to-home-from-login')?.addEventListener('click', () => window.history.back());
 
   ['back-to-home-from-denied', 'back-after-access', 'back-to-home-from-pending'].forEach(id => {
     el(id)?.addEventListener('click', () => showScreen('home-screen'));
