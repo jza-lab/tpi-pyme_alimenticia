@@ -458,9 +458,12 @@ function attachListeners() {
   el('ingreso-btn')?.addEventListener('click', () => startFacialLogin('ingreso'));
   el('egreso-btn')?.addEventListener('click', () => startFacialLogin('egreso'));
 
-  ['back-to-home-from-denied', 'back-to-home-from-denied-2', 'back-after-access', 'back-to-home-from-pending', 'back-after-pending-review'].forEach(id => {
+  ['back-to-home-from-denied', 'back-after-access', 'back-to-home-from-pending'].forEach(id => {
     el(id)?.addEventListener('click', () => showScreen('home-screen'));
   });
+
+  // Modificado para que, en lugar de volver al inicio, intente registrar un ingreso de nuevo.
+  el('back-after-pending-review')?.addEventListener('click', () => startFacialLogin('ingreso'));
 
   el('try-again-btn')?.addEventListener('click', () => startFacialLogin(currentLoginType));
   el('manual-login-btn')?.addEventListener('click', attemptManualLogin);
