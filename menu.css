@@ -1279,3 +1279,21 @@ select:focus-visible {
     outline: 2px solid var(--accent-green);
     outline-offset: 2px;
 }
+
+/* Estilo para campos de formulario inválidos */
+.form-group input.is-invalid,
+.form-group select.is-invalid {
+    border-color: var(--error-color);
+    background-color: #fff6f6;
+}
+
+.form-group input.is-invalid:focus,
+.form-group select.is-invalid:focus {
+    border-color: var(--error-color);
+    box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.1);
+}
+
+.form-group input.is-invalid::placeholder {
+    color: var(--error-color);
+    opacity: 0.8;
+}

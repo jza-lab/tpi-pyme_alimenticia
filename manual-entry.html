@@ -23,7 +23,12 @@
 
             <div class="form-group">
                 <label for="legajo">Legajo</label>
-                <input type="text" id="legajo" placeholder="Ingrese el legajo" name="legajo" required>
+                <div class="input-with-button">
+                    <input type="text" id="legajo" placeholder="Ingrese el legajo y presione Buscar" name="legajo" required>
+                    <button type="button" id="search-btn" class="btn-search">
+                        <i class='bx bx-search'></i> Buscar
+                    </button>
+                </div>
                 <small class="error-msg">El legajo es obligatorio.</small>
             </div>
 

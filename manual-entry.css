@@ -451,3 +451,33 @@ h1 {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+
+/* Input con botón de búsqueda */
+.input-with-button {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.input-with-button input {
+    flex-grow: 1;
+}
+
+.btn-search {
+    padding: 15px 20px;
+    background: var(--button-secondary-bg);
+    color: white;
+    border: none;
+    border-radius: var(--radius-medium);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-search:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-light);
+}
