@@ -606,6 +606,7 @@ async function main() {
   try {
     // El estado ya fue inicializado en checkAuth, solo necesitamos cargar modelos de face-api
     await face.loadModels();
+    state.initFaceMatcher(); // Cargar el modelo de face-api después de tener los datos
     console.log('Panel de administración inicializado.');
     
     // Renderizar el contenido inicial
