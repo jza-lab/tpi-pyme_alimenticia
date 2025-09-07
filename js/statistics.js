@@ -814,6 +814,13 @@ function renderRecepcionCharts(stageData) {
 
 async function renderStage(stage) {
     destroyCharts();
+
+    // Gestionar la visibilidad de la configuración de alertas
+    const alertsConfigContainer = document.getElementById('alerts-config-container');
+    if (alertsConfigContainer) {
+        alertsConfigContainer.style.display = stage === 'Indicadores' ? 'block' : 'none';
+    }
+
     const insightsContainer = document.getElementById('insights-container');
     const insightsList = document.getElementById('insights-list');
     const indicatorsView = document.getElementById('indicators-view');

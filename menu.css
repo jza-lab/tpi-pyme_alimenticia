@@ -1301,7 +1301,8 @@ select:focus-visible {
 /* OEE Components Grid */
 .oee-components-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    /* Usamos auto-fill para un comportamiento de grilla más predecible en anchos variables. */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 20px;
     margin-bottom: 30px;
 }
@@ -1312,8 +1313,16 @@ select:focus-visible {
     padding: 20px;
     box-shadow: var(--shadow-light);
     text-align: center;
-    height: 250px; /* Altura fija para los gráficos pequeños */
+    /* Se quita la altura fija y se usa aspect-ratio para un diseño responsive. */
+    aspect-ratio: 4 / 3;
     position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-card canvas {
+    flex-grow: 1;
+    min-height: 0;
 }
 
 .chart-card h3 {
@@ -1332,7 +1341,8 @@ select:focus-visible {
 
 .stage-charts-grid {
     display: none; /* Ocultar grids de gráficos por defecto */
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* Usamos auto-fill para un comportamiento de grilla más predecible en anchos variables. */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
     margin-bottom: 30px;
 }
