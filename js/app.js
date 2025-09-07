@@ -473,6 +473,13 @@ async function main() {
   // Detectar y manejar problemas de caché al inicio
   detectAndHandleCacheIssues();
   
+  // Inicializar EmailJS con la Public Key
+  try {
+    emailjs.init({ publicKey: "JCioEYp4izZHGAoHd" });
+  } catch (e) {
+    console.error('Error al inicializar EmailJS. Asegúrate de que el SDK esté cargado y la Public Key sea correcta.', e);
+  }
+
   attachListeners();
   showScreen('home-screen');
 
