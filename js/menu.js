@@ -134,7 +134,6 @@ const dom = {
   refreshRecordsBtn: document.getElementById('refresh-records'),
   mobile: {
     openBtn: document.getElementById("mobile-menu-btn"),
-    closeBtn: document.getElementById("mobile-sidebar-close"),
     overlay: document.getElementById("mobile-sidebar-overlay")
   },
   filters: {
@@ -447,6 +446,14 @@ function validateRegistrationForm() {
   if (email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
     markInvalid(email, 'invalid_email_format');
   }
+  // Validación para nombre y apellido para que solo contengan letras y espacios
+  const textOnlyRegex = /^[A-Za-zÀ-ÿ\s]+$/;
+  if (name.value && !textOnlyRegex.test(name.value)) {
+    markInvalid(name, 'invalid_name_format');
+  }
+  if (surname.value && !textOnlyRegex.test(surname.value)) {
+    markInvalid(surname, 'invalid_surname_format');
+  }
 
   return isValid;
 }
@@ -625,7 +632,6 @@ function attachListeners() {
 
   // Menu responsive
   dom.mobile.openBtn?.addEventListener("click", () => document.body.classList.add("sidebar-open"));
-  dom.mobile.closeBtn?.addEventListener("click", () => document.body.classList.remove("sidebar-open"));
   dom.mobile.overlay?.addEventListener("click", () => document.body.classList.remove("sidebar-open"));
 
   // --- Listeners para validación de inputs en tiempo real ---
