@@ -62,70 +62,126 @@ function generateSimulatedOEEData() {
     };
 }
 
-// --- Lógica de Negocio para Estadísticas (OEE, Insights) ---
-function generateInsights(allData, oeeResults) {
-    const insights = [];
-    
-    // Leer umbrales desde los inputs
-    const rejectionThreshold = parseFloat(document.getElementById('rejection-threshold').value) / 100;
-    const wasteThresholdMultiplier = parseFloat(document.getElementById('waste-threshold').value) / 100;
+// --- Lógica de Negocio para Estadísticas ---
 
-    const latestOeeData = oeeResults.datasets.oee.length > 0 ? oeeResults.datasets.oee[oeeResults.datasets.oee.length - 1] : null;
-
-    if (latestOeeData && latestOeeData >= 0.85) {
-        insights.push({ text: `¡Excelente! El OEE del último día (${(latestOeeData * 100).toFixed(1)}%) es de clase mundial.`, level: 'success' });
-    } else if (latestOeeData && latestOeeData < 0.60) {
-        insights.push({ text: `ALERTA: El OEE del último día (${(latestOeeData * 100).toFixed(1)}%) está por debajo del nivel aceptable.`, level: 'alert' });
-    } else if (latestOeeData) {
-        insights.push({ text: `El OEE actual (${(latestOeeData * 100).toFixed(1)}%) tiene margen de mejora. Meta: >85%`, level: 'warning' });
-    }
-
-    const recepcionData = allData.Recepcion || [];
-    if (recepcionData.length > 0) {
-        const totalRecibido = recepcionData.reduce((sum, item) => sum + item['Cantidad Recibida (en Kg)'], 0);
-        const totalRechazado = recepcionData.filter(item => item.Decisión === 'Rechazado').reduce((sum, item) => sum + item['Cantidad Recibida (en Kg)'], 0);
-        const rechazoRate = (totalRecibido > 0) ? (totalRechazado / totalRecibido) : 0;
-        if (rechazoRate > rejectionThreshold) {
-            insights.push({ text: `ALERTA: Tasa de rechazo de materia prima (${(rechazoRate * 100).toFixed(1)}%) supera el umbral del ${rejectionThreshold * 100}%.`, level: 'alert' });
-        }
-    } else {
-        insights.push({ text: `Los datos de OEE mostrados son simulados. Conecte con la base de datos de procesamiento para obtener métricas reales.`, level: 'warning' });
-    }
-
-    const procesamientoData = allData.Procesamiento || [];
-    if (procesamientoData.length > 0) {
-        const promedioDesperdicio = procesamientoData.reduce((sum, item) => sum + item['Desperdicio (en %)'], 0) / procesamientoData.length;
-        const productosConAltoDesperdicio = procesamientoData.filter(item => item['Desperdicio (en %)'] > (promedioDesperdicio * (1 + wasteThresholdMultiplier)));
-        if (productosConAltoDesperdicio.length > 0) {
-            const nombres = productosConAltoDesperdicio.map(p => `${p.Producto} (${p['Desperdicio (en %)']}%)`).join(', ');
-            insights.push({ text: `ADVERTENCIA: Productos con desperdicio un ${wasteThresholdMultiplier * 100}% por encima del promedio: ${nombres}.`, level: 'warning' });
-        }
-    }
-    return insights;
+// Función para verificar si los datos de procesamiento son válidos para OEE
+function isOEEDataUsable(data) {
+    return data && data.length > 0 &&
+        data.every(p =>
+            p.hasOwnProperty('Fecha') &&
+            p.hasOwnProperty('Tiempo de Operación (en Horas)') &&
+            p.hasOwnProperty('Cantidades Procesadas (en Unidades)') &&
+            p.hasOwnProperty('Desperdicio (en %)') &&
+            p.hasOwnProperty('Producto')
+        );
 }
 
+// Funciones de cálculo para KPIs individuales
+function calculateRejectionRate(recepcionData) {
+    if (!recepcionData || recepcionData.length === 0) return 0;
+    const totalRecibido = recepcionData.reduce((sum, item) => {
+        const cantidad = parseFloat(item['Cantidad Recibida (en Kg)']);
+        return sum + (isNaN(cantidad) ? 0 : cantidad);
+    }, 0);
+    const totalRechazado = recepcionData
+        .filter(item => item.Decisión === 'Rechazado')
+        .reduce((sum, item) => {
+            const cantidad = parseFloat(item['Cantidad Recibida (en Kg)']);
+            return sum + (isNaN(cantidad) ? 0 : cantidad);
+        }, 0);
+    return totalRecibido > 0 ? totalRechazado / totalRecibido : 0;
+}
+
+function calculateYield(procesamientoData) {
+    if (!isOEEDataUsable(procesamientoData)) return 0;
+    let totalGoodCount = 0;
+    let totalCount = 0;
+    procesamientoData.forEach(p => {
+        const processedCount = parseFloat(p['Cantidades Procesadas (en Unidades)']) || 0;
+        const wastePercentage = parseFloat(p['Desperdicio (en %)']) || 0;
+        if (!isNaN(processedCount) && !isNaN(wastePercentage)) {
+            totalGoodCount += processedCount * (1 - wastePercentage / 100);
+            totalCount += processedCount;
+        }
+    });
+    return totalCount > 0 ? totalGoodCount / totalCount : 0.92; // Retornar un valor por defecto si no hay datos
+}
+
+function calculateDocumentationCompliance(despachoData) {
+    if (!despachoData || despachoData.length === 0) return 0.95; // Retornar un valor por defecto
+    const totalDespachos = despachoData.length;
+    const completos = despachoData.filter(item => item['Documentación completa'] === 'Si').length;
+    return totalDespachos > 0 ? completos / totalDespachos : 0;
+}
+
+
+// Genera alertas y observaciones basadas en los datos
+function generateInsights(allData, oeeResults) {
+    const insights = [];
+    const alerts = {
+        rejectionRate: false,
+        oee: 'ok'
+    };
+
+    const rejectionThreshold = parseFloat(document.getElementById('rejection-threshold').value) / 100;
+    const wasteThresholdMultiplier = parseFloat(document.getElementById('waste-threshold').value) / 100;
+    
+    const latestOee = oeeResults.datasets.oee.length > 0 ? oeeResults.datasets.oee[oeeResults.datasets.oee.length - 1] : null;
+    if (latestOee !== null) {
+        if (latestOee >= 0.85) {
+            insights.push({ text: `¡Excelente! El OEE del último día (${(latestOee * 100).toFixed(1)}%) es de clase mundial.`, level: 'success' });
+            alerts.oee = 'success';
+        } else if (latestOee < 0.60) {
+            insights.push({ text: `ALERTA: El OEE del último día (${(latestOee * 100).toFixed(1)}%) está por debajo del nivel aceptable.`, level: 'alert' });
+            alerts.oee = 'alert';
+        } else {
+            insights.push({ text: `El OEE actual (${(latestOee * 100).toFixed(1)}%) tiene margen de mejora. Meta: >85%`, level: 'warning' });
+            alerts.oee = 'warning';
+        }
+    }
+
+    const rejectionRate = calculateRejectionRate(allData.Recepcion);
+    if (rejectionRate > rejectionThreshold) {
+        insights.push({ text: `ALERTA: Tasa de rechazo de materia prima (${(rejectionRate * 100).toFixed(1)}%) supera el umbral del ${rejectionThreshold * 100}%.`, level: 'alert', kpi: 'rejectionRate' });
+        alerts.rejectionRate = true;
+    }
+
+    if (isOEEDataUsable(allData.Procesamiento)) {
+        const wasteValues = allData.Procesamiento.map(p => parseFloat(p['Desperdicio (en %)'])).filter(v => !isNaN(v));
+        if (wasteValues.length > 0) {
+            const avgWaste = wasteValues.reduce((s, v) => s + v, 0) / wasteValues.length;
+            const highWasteProducts = allData.Procesamiento.filter(p => {
+                const waste = parseFloat(p['Desperdicio (en %)']);
+                return !isNaN(waste) && waste > avgWaste * (1 + wasteThresholdMultiplier);
+            });
+            if (highWasteProducts.length > 0) {
+                const names = highWasteProducts.map(p => `${p.Producto} (${p['Desperdicio (en %)']}%)`).join(', ');
+                insights.push({ text: `ADVERTENCIA: Productos con desperdicio un ${wasteThresholdMultiplier * 100}% por encima del promedio: ${names}.`, level: 'warning' });
+            }
+        }
+    } else if (!allData.Procesamiento) {
+         insights.push({ text: `Los datos de OEE mostrados son simulados. Conecte con la base de datos de procesamiento para obtener métricas reales.`, level: 'warning' });
+    }
+    
+    return { insights, alerts };
+}
+
+
 function calculateOEE(procesamientoData) {
-    // Si no hay datos de procesamiento, usar datos simulados
-    if (!procesamientoData || procesamientoData.length === 0) {
-        console.warn('No hay datos de procesamiento disponibles. Usando datos simulados.');
+    if (!isOEEDataUsable(procesamientoData)) {
+        console.warn('Datos de procesamiento no disponibles o con formato incorrecto. Usando datos simulados para OEE.');
         return generateSimulatedOEEData();
     }
 
     const idealCycleTimes_seconds = { 
-        'Hamburguesas': 6, 
-        'Milanesas': 6.5, 
-        'Salchichas': 13, 
-        'Albóndigas': 3.5, 
-        'Nuggets': 5, 
-        'Medallones': 5.5 
+        'Hamburguesas': 6, 'Milanesas': 6.5, 'Salchichas': 13, 
+        'Albóndigas': 3.5, 'Nuggets': 5, 'Medallones': 5.5 
     };
     
-    const dates = [...new Set(procesamientoData.map(p => p.Fecha))];
+    const dates = [...new Set(procesamientoData.map(p => p.Fecha))].sort((a, b) => new Date(a) - new Date(b));
     const results = { labels: [], datasets: { availability: [], performance: [], quality: [], oee: [] } };
 
-    if (dates.length === 0) {
-        return generateSimulatedOEEData();
-    }
+    if (dates.length === 0) return generateSimulatedOEEData();
 
     dates.forEach(date => {
         const dailyData = procesamientoData.filter(p => p.Fecha === date);
@@ -134,36 +190,40 @@ function calculateOEE(procesamientoData) {
         results.labels.push(new Date(date).toLocaleDateString('es-ES'));
         
         const unplannedStopTime_hours = 1;
-        const cleaningTimePerProcess_hours = 0.75;
+        const cleaningTimePerProcess_hours = 0.5;
         const numProcesses = dailyData.length;
         const totalCleaningTime_hours = (numProcesses > 1) ? (numProcesses - 1) * cleaningTimePerProcess_hours : 0;
         const totalStopTime_hours = unplannedStopTime_hours + totalCleaningTime_hours;
-        const actualRunTime_hours = dailyData.reduce((sum, p) => sum + (p['Tiempo de Operación (en Horas)'] || 8), 0);
+
+        const actualRunTime_hours = dailyData.reduce((sum, p) => {
+            const time = parseFloat(p['Tiempo de Operación (en Horas)']);
+            return sum + (isNaN(time) ? 8 : time);
+        }, 0);
+
         const plannedProductionTime_hours = actualRunTime_hours + totalStopTime_hours;
-        
         let availability = (plannedProductionTime_hours > 0) ? actualRunTime_hours / plannedProductionTime_hours : 0;
-        availability = Math.min(1, Math.max(0, availability)); // Clamp entre 0 y 1
+        availability = Math.min(1, Math.max(0, availability));
 
         let totalGoodCount = 0, totalCount = 0;
         dailyData.forEach(p => {
-            const processedCount = p['Cantidades Procesadas (en Unidades)'] || 100;
-            const wastePercentage = p['Desperdicio (en %)'] || 5;
+            const processedCount = parseFloat(p['Cantidades Procesadas (en Unidades)']) || 100;
+            const wastePercentage = parseFloat(p['Desperdicio (en %)']) || 5;
             totalGoodCount += processedCount * (1 - wastePercentage / 100);
             totalCount += processedCount;
         });
         
         let quality = (totalCount > 0) ? totalGoodCount / totalCount : 0.95;
-        quality = Math.min(1, Math.max(0, quality)); // Clamp entre 0 y 1
+        quality = Math.min(1, Math.max(0, quality));
 
         let totalNetRunTime_hours = 0;
         dailyData.forEach(p => {
             const idealCycle_seconds = idealCycleTimes_seconds[p.Producto] || 6;
-            const processedCount = p['Cantidades Procesadas (en Unidades)'] || 100;
+            const processedCount = parseFloat(p['Cantidades Procesadas (en Unidades)']) || 100;
             totalNetRunTime_hours += (idealCycle_seconds * processedCount) / 3600;
         });
         
         let performance = (actualRunTime_hours > 0) ? totalNetRunTime_hours / actualRunTime_hours : 0.80;
-        performance = Math.min(1, Math.max(0, performance)); // Clamp entre 0 y 1
+        performance = Math.min(1, Math.max(0, performance));
         
         results.datasets.availability.push(availability);
         results.datasets.performance.push(performance);
@@ -171,11 +231,7 @@ function calculateOEE(procesamientoData) {
         results.datasets.oee.push(availability * performance * quality);
     });
 
-    // Si no se generaron resultados, usar datos simulados
-    if (results.labels.length === 0) {
-        return generateSimulatedOEEData();
-    }
-
+    if (results.labels.length === 0) return generateSimulatedOEEData();
     return results;
 }
 
@@ -184,29 +240,29 @@ let chartInstances = {};
 
 function destroyCharts() {
     Object.values(chartInstances).forEach(chart => {
-        if (chart && typeof chart.destroy === 'function') {
-            chart.destroy();
-        }
+        if (chart && typeof chart.destroy === 'function') chart.destroy();
     });
     chartInstances = {};
 }
 
-function createDoughnutChart(canvasId, label, value) {
+function createDoughnutChart(canvasId, label, value, inverted = false) {
     try {
         const canvas = document.getElementById(canvasId);
         if (!canvas) {
             console.error(`Canvas con ID ${canvasId} no encontrado`);
             return null;
         }
-
         const ctx = canvas.getContext('2d');
+        
+        const displayValue = inverted ? 1 - value : value;
         const percentage = (value * 100).toFixed(1);
+        
         const data = {
             labels: [label, 'Restante'],
             datasets: [{
-                data: [value, 1 - value],
-                backgroundColor: [getColorForPercentage(value), '#e9ecef'],
-                borderColor: [getColorForPercentage(value), '#e9ecef'],
+                data: [displayValue, 1 - displayValue],
+                backgroundColor: [getColorForPercentage(value, inverted), '#e9ecef'],
+                borderColor: [getColorForPercentage(value, inverted), '#e9ecef'],
                 borderWidth: 1,
                 circumference: 180,
                 rotation: 270,
@@ -224,9 +280,7 @@ function createDoughnutChart(canvasId, label, value) {
                     tooltip: { 
                         enabled: true,
                         callbacks: {
-                            label: function(context) {
-                                return `${context.label}: ${(context.parsed * 100).toFixed(1)}%`;
-                            }
+                            label: (context) => `${context.label}: ${(value * 100).toFixed(1)}%`
                         }
                     },
                     title: { 
@@ -246,10 +300,22 @@ function createDoughnutChart(canvasId, label, value) {
     }
 }
 
-function getColorForPercentage(value) {
-    if (value >= 0.85) return '#28a745'; // Verde (Bueno)
-    if (value >= 0.70) return '#ffc107'; // Amarillo (Regular)
+function getColorForPercentage(value, inverted = false) {
+    const score = inverted ? 1 - value : value;
+    if (score >= 0.85) return '#28a745'; // Verde (Bueno)
+    if (score >= 0.70) return '#ffc107'; // Amarillo (Regular)
     return '#dc3545'; // Rojo (Malo)
+}
+
+function setChartAlertState(cardId, isAlert) {
+    const card = document.getElementById(cardId);
+    if (card) {
+        if (isAlert) {
+            card.classList.add('alert-active');
+        } else {
+            card.classList.remove('alert-active');
+        }
+    }
 }
 
 // [Las funciones render específicas se mantienen igual...]
@@ -815,7 +881,6 @@ function renderRecepcionCharts(stageData) {
 async function renderStage(stage) {
     destroyCharts();
 
-    // Gestionar la visibilidad de la configuración de alertas
     const alertsConfigContainer = document.getElementById('alerts-config-container');
     if (alertsConfigContainer) {
         alertsConfigContainer.style.display = stage === 'Indicadores' ? 'block' : 'none';
@@ -833,7 +898,6 @@ async function renderStage(stage) {
         return;
     }
 
-    // Ocultar todas las vistas
     insightsContainer.style.display = 'none';
     insightsList.innerHTML = '';
     fallback.style.display = 'none';
@@ -847,7 +911,6 @@ async function renderStage(stage) {
             const users = getUsers();
             const accessRecords = getAccessRecords();
 
-            // Gráfico de puntualidad
             const onTimeThreshold = 15;
             const arrivals = { onTime: 0, late: 0 };
             const shiftStartTimes = { 'Mañana': 6, 'Tarde': 14, 'Noche': 22 };
@@ -871,31 +934,13 @@ async function renderStage(stage) {
             if (arrivalsCanvas) {
                 chartInstances.arrivals = new Chart(arrivalsCanvas.getContext('2d'), {
                     type: 'pie',
-                    data: { 
-                        labels: ['En Horario', 'Tarde'], 
-                        datasets: [{ 
-                            data: [arrivals.onTime, arrivals.late], 
-                            backgroundColor: ['#28a745', '#dc3545'] 
-                        }] 
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        plugins: { 
-                            title: { 
-                                display: true, 
-                                text: 'Puntualidad de Ingresos' 
-                            } 
-                        } 
-                    }
+                    data: { labels: ['En Horario', 'Tarde'], datasets: [{ data: [arrivals.onTime, arrivals.late], backgroundColor: ['#28a745', '#dc3545'] }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Puntualidad de Ingresos' } } }
                 });
             }
 
-            // Empleados por Turno
             const employeesByShift = users.reduce((acc, user) => {
-                if (user.turno) {
-                    acc[user.turno] = (acc[user.turno] || 0) + 1;
-                }
+                if (user.turno) acc[user.turno] = (acc[user.turno] || 0) + 1;
                 return acc;
             }, {});
 
@@ -903,34 +948,11 @@ async function renderStage(stage) {
             if (shiftCanvas) {
                 chartInstances.shift = new Chart(shiftCanvas.getContext('2d'), {
                     type: 'bar',
-                    data: { 
-                        labels: Object.keys(employeesByShift), 
-                        datasets: [{ 
-                            label: 'Nº de Empleados', 
-                            data: Object.values(employeesByShift), 
-                            backgroundColor: '#36a2eb' 
-                        }] 
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        plugins: { 
-                            title: { 
-                                display: true, 
-                                text: 'Distribución por Turno' 
-                            } 
-                        }, 
-                        scales: { 
-                            y: { 
-                                beginAtZero: true, 
-                                ticks: { stepSize: 1 } 
-                            } 
-                        } 
-                    }
+                    data: { labels: Object.keys(employeesByShift), datasets: [{ label: 'Nº de Empleados', data: Object.values(employeesByShift), backgroundColor: '#36a2eb' }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Distribución por Turno' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
                 });
             }
 
-            // Empleados por Rol
             const employeesByRole = users.reduce((acc, user) => {
                 const role = user.rol || 'No asignado';
                 acc[role] = (acc[role] || 0) + 1;
@@ -941,30 +963,8 @@ async function renderStage(stage) {
             if (roleCanvas) {
                 chartInstances.role = new Chart(roleCanvas.getContext('2d'), {
                     type: 'bar',
-                    data: { 
-                        labels: Object.keys(employeesByRole), 
-                        datasets: [{ 
-                            label: 'Nº de Empleados', 
-                            data: Object.values(employeesByRole), 
-                            backgroundColor: '#ffce56' 
-                        }] 
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        plugins: { 
-                            title: { 
-                                display: true, 
-                                text: 'Distribución por Rol' 
-                            } 
-                        }, 
-                        scales: { 
-                            y: { 
-                                beginAtZero: true, 
-                                ticks: { stepSize: 1 } 
-                            } 
-                        } 
-                    }
+                    data: { labels: Object.keys(employeesByRole), datasets: [{ label: 'Nº de Empleados', data: Object.values(employeesByRole), backgroundColor: '#ffce56' }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Distribución por Rol' } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
                 });
             }
 
@@ -972,20 +972,16 @@ async function renderStage(stage) {
             indicatorsView.style.display = 'block';
             
             try {
-                const [recepcionData, procesamientoData] = await Promise.all([
+                const [recepcionData, procesamientoData, despachoData] = await Promise.all([
                     fetchRecepcionData(),
-                    fetchProcesamientoData()
+                    fetchProcesamientoData(),
+                    fetchDespachoData()
                 ]);
 
-                const allData = {
-                    Recepcion: recepcionData,
-                    Procesamiento: procesamientoData
-                };
-
+                const allData = { Recepcion: recepcionData, Procesamiento: procesamientoData, Despacho: despachoData };
                 const oeeResults = calculateOEE(allData.Procesamiento);
-                console.log('OEE Results:', oeeResults);
+                const { insights, alerts } = generateInsights(allData, oeeResults);
 
-                const insights = generateInsights(allData, oeeResults);
                 if (insights.length > 0) {
                     insightsList.innerHTML = insights.map(insight => 
                         `<div class="employee-card" style="border-left-color: ${
@@ -998,24 +994,21 @@ async function renderStage(stage) {
 
                 const lastIndex = oeeResults.labels.length - 1;
                 
-                // Crear gráficos circulares
-                chartInstances.availability = createDoughnutChart(
-                    'availabilityChart', 
-                    'Disponibilidad', 
-                    oeeResults.datasets.availability[lastIndex] || 0
-                );
-                chartInstances.performance = createDoughnutChart(
-                    'performanceChart', 
-                    'Rendimiento', 
-                    oeeResults.datasets.performance[lastIndex] || 0
-                );
-                chartInstances.quality = createDoughnutChart(
-                    'qualityChart', 
-                    'Calidad', 
-                    oeeResults.datasets.quality[lastIndex] || 0
-                );
+                chartInstances.availability = createDoughnutChart('availabilityChart', 'Disponibilidad', oeeResults.datasets.availability[lastIndex] || 0);
+                chartInstances.performance = createDoughnutChart('performanceChart', 'Rendimiento', oeeResults.datasets.performance[lastIndex] || 0);
+                chartInstances.quality = createDoughnutChart('qualityChart', 'Calidad', oeeResults.datasets.quality[lastIndex] || 0);
 
-                // Crear gráfico de tendencia OEE
+                // Renderizar KPIs adicionales
+                const rejectionRate = calculateRejectionRate(allData.Recepcion);
+                chartInstances.rejectionRate = createDoughnutChart('rejectionRateChart', 'Rechazo', rejectionRate, true);
+                setChartAlertState('rejectionRateChartCard', alerts.rejectionRate);
+
+                const yieldRate = calculateYield(allData.Procesamiento);
+                chartInstances.yieldRate = createDoughnutChart('yieldChart', 'Rendimiento', yieldRate);
+                
+                const docCompliance = calculateDocumentationCompliance(allData.Despacho);
+                chartInstances.docCompliance = createDoughnutChart('documentationComplianceChart', 'Cumplimiento', docCompliance);
+
                 const oeeTrendCanvas = document.getElementById('oeeTrendChart');
                 if (oeeTrendCanvas) {
                     chartInstances.oeeTrend = new Chart(oeeTrendCanvas.getContext('2d'), {
@@ -1032,22 +1025,9 @@ async function renderStage(stage) {
                             }]
                         },
                         options: { 
-                            responsive: true, 
-                            maintainAspectRatio: false, 
-                            plugins: { 
-                                title: { 
-                                    display: false 
-                                } 
-                            }, 
-                            scales: { 
-                                y: { 
-                                    beginAtZero: true, 
-                                    max: 1, 
-                                    ticks: { 
-                                        callback: v => (v * 100).toFixed(0) + '%' 
-                                    } 
-                                } 
-                            } 
+                            responsive: true, maintainAspectRatio: false, 
+                            plugins: { title: { display: false } }, 
+                            scales: { y: { beginAtZero: true, max: 1, ticks: { callback: v => (v * 100).toFixed(0) + '%' } } } 
                         }
                     });
                 }
@@ -1058,64 +1038,25 @@ async function renderStage(stage) {
             }
 
         } else {
-            // Otras etapas (Recepción, Almacenamiento, etc.)
             const stageConfig = {
-                'Recepcion': {
-                    label: 'Recepción',
-                    fetcher: fetchRecepcionData,
-                    renderer: renderRecepcionCharts,
-                    chartContainerId: 'recepcion-charts',
-                },
-                'Almacenamiento': {
-                    label: 'Almacenamiento',
-                    fetcher: fetchAlmacenamientoData,
-                    renderer: renderAlmacenamientoCharts,
-                    chartContainerId: 'almacenamiento-charts',
-                },
-                'Procesamiento': {
-                    label: 'Procesamiento',
-                    fetcher: fetchProcesamientoData,
-                    renderer: renderProcesamientoCharts,
-                    chartContainerId: 'procesamiento-charts',
-                },
-                'Conservacion': {
-                    label: 'Conservación',
-                    fetcher: fetchConservacionData,
-                    renderer: renderConservacionCharts,
-                    chartContainerId: 'conservacion-charts',
-                },
-                'ServicioDespacho': {
-                    label: 'Despacho',
-                    fetcher: fetchDespachoData,
-                    renderer: renderDespachoCharts,
-                    chartContainerId: 'despacho-charts',
-                }
+                'Recepcion': { label: 'Recepción', fetcher: fetchRecepcionData, renderer: renderRecepcionCharts, chartContainerId: 'recepcion-charts' },
+                'Almacenamiento': { label: 'Almacenamiento', fetcher: fetchAlmacenamientoData, renderer: renderAlmacenamientoCharts, chartContainerId: 'almacenamiento-charts' },
+                'Procesamiento': { label: 'Procesamiento', fetcher: fetchProcesamientoData, renderer: renderProcesamientoCharts, chartContainerId: 'procesamiento-charts' },
+                'Conservacion': { label: 'Conservación', fetcher: fetchConservacionData, renderer: renderConservacionCharts, chartContainerId: 'conservacion-charts' },
+                'ServicioDespacho': { label: 'Despacho', fetcher: fetchDespachoData, renderer: renderDespachoCharts, chartContainerId: 'despacho-charts' }
             };
 
             const config = stageConfig[stage];
-            if (!config) {
-                throw new Error(`Configuración no encontrada para la etapa "${stage}"`);
-            }
+            if (!config) throw new Error(`Configuración no encontrada para la etapa "${stage}"`);
 
             stagesView.style.display = 'block';
-            
-            // Ocultar todos los contenedores de gráficos
-            document.querySelectorAll('.stage-charts-grid').forEach(grid => {
-                grid.classList.remove('active');
-            });
-            
-            // Mostrar el contenedor correspondiente
+            document.querySelectorAll('.stage-charts-grid').forEach(grid => grid.classList.remove('active'));
             const chartContainer = document.getElementById(config.chartContainerId);
-            if (chartContainer) {
-                chartContainer.classList.add('active');
-            }
+            if (chartContainer) chartContainer.classList.add('active');
 
             try {
                 const stageData = await config.fetcher();
-                if (!stageData || stageData.length === 0) {
-                    throw new Error(`No hay datos disponibles para "${config.label}"`);
-                }
-
+                if (!stageData || stageData.length === 0) throw new Error(`No hay datos disponibles para "${config.label}"`);
                 config.renderer(stageData);
             } catch (error) {
                 console.error(`Error cargando datos para ${stage}:`, error);

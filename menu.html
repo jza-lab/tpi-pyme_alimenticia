@@ -407,23 +407,46 @@
                 <div class="oee-components-grid">
                     <div class="chart-wrapper">
                         <h3 class="chart-title-outside" data-i18n="chart_title_availability">Disponibilidad</h3>
-                        <div class="chart-card">
+                        <div class="chart-card" id="availabilityChartCard">
                             <canvas id="availabilityChart"></canvas>
                         </div>
                     </div>
                     <div class="chart-wrapper">
                         <h3 class="chart-title-outside" data-i18n="chart_title_performance">Rendimiento</h3>
-                        <div class="chart-card">
+                        <div class="chart-card" id="performanceChartCard">
                             <canvas id="performanceChart"></canvas>
                         </div>
                     </div>
                     <div class="chart-wrapper">
                         <h3 class="chart-title-outside" data-i18n="chart_title_quality">Calidad</h3>
-                        <div class="chart-card">
+                        <div class="chart-card" id="qualityChartCard">
                             <canvas id="qualityChart"></canvas>
                         </div>
                     </div>
                 </div>
+                <hr class="section-divider">
+                <h2 class="subsection-title" data-i18n="additional_kpis_title">Otros Indicadores Clave de Proceso</h2>
+                <div class="oee-components-grid">
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="kpi_rejection_rate">Tasa de Rechazo (Materia Prima)</h3>
+                        <div class="chart-card" id="rejectionRateChartCard">
+                            <canvas id="rejectionRateChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="kpi_yield">Rendimiento General (Procesamiento)</h3>
+                        <div class="chart-card" id="yieldChartCard">
+                            <canvas id="yieldChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="kpi_documentation">Cumplimiento de Documentación (Despacho)</h3>
+                        <div class="chart-card" id="documentationComplianceChartCard">
+                            <canvas id="documentationComplianceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <hr class="section-divider">
                 <div class="chart-wrapper">
                     <h3 class="chart-title-outside" data-i18n="chart_title_oee_trend">Tendencia OEE General</h3>
                     <div class="chart-container main-chart">

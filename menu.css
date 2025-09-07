@@ -533,6 +533,28 @@ body {
     max-height: 100%;
 }
 
+.chart-card.alert-active {
+    border-color: var(--error-color);
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.3);
+}
+
+hr.section-divider {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 40px 0;
+}
+
+h2.subsection-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    text-align: center;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+
 /* ==========================================
    FORMULARIOS Y CONTROLES
    ========================================== */
