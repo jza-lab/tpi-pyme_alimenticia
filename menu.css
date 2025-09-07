@@ -149,9 +149,11 @@ body {
     margin-top: var(--header-height);
     padding: 30px;
     min-height: calc(100vh - var(--header-height));
-    width: 100%;
     box-sizing: border-box;
-    overflow-x: auto;
+    /* Se elimina width: 100% para que el ancho se ajuste automáticamente 
+       al espacio restante junto al sidebar. Se usa overflow-x: hidden 
+       para evitar barras de desplazamiento horizontales no deseadas. */
+    overflow-x: hidden;
 }
 
 /* ==========================================
@@ -509,8 +511,8 @@ body {
     box-shadow: var(--shadow-light);
     border: 1px solid var(--border-color);
     text-align: center;
-    height: 280px;
-    position: relative;
+    /* Se elimina la altura fija y se usa aspect-ratio para un diseño responsive. */
+    aspect-ratio: 4 / 3;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -526,8 +528,8 @@ body {
 
 .chart-card canvas {
     flex: 1;
-    max-width: 100% !important;
-    max-height: calc(100% - 40px) !important;
+    /* Se eliminan los !important y se añade min-height: 0 para un correcto escalado en flexbox. */
+    min-height: 0;
 }
 
 /* ==========================================
@@ -805,9 +807,18 @@ body {
 
 .filters-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    /* Usamos auto-fill para evitar que el último elemento en una fila se estire de forma extraña.
+       minmax(220px, 1fr) da un poco más de espacio base a los filtros. */
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 20px;
     align-items: end;
+}
+
+/* Ajustar el botón de limpiar filtros para que se alinee mejor con los inputs */
+.filters-grid .btn {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    width: 100%;
 }
 
 .form-grid {
@@ -825,7 +836,8 @@ body {
 
 .oee-components-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    /* Usamos auto-fill para un comportamiento de grilla más predecible en anchos variables. */
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
     margin-bottom: 30px;
     width: 100%;
@@ -834,7 +846,8 @@ body {
 
 .stage-charts-grid {
     display: none;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    /* Usamos auto-fill para un comportamiento de grilla más predecible en anchos variables. */
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 25px;
     margin-bottom: 30px;
     width: 100%;
@@ -1055,18 +1068,16 @@ body.sidebar-open .mobile-sidebar-overlay {
     }
     
     .oee-components-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
         gap: 15px;
     }
     
     .stage-charts-grid {
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 20px;
     }
     
-    .chart-card {
-        height: 260px;
-    }
+    /* La altura del chart-card ahora es responsive con aspect-ratio, no se necesita altura fija. */
 }
 
 /* Mobile */
@@ -1115,9 +1126,7 @@ body.sidebar-open .mobile-sidebar-overlay {
         height: 350px;
     }
     
-    .chart-card {
-        height: 280px;
-    }
+    /* La altura del chart-card ahora es responsive con aspect-ratio, no se necesita altura fija. */
     
     .stats-controls {
         padding: 20px;
@@ -1190,8 +1199,8 @@ body.sidebar-open .mobile-sidebar-overlay {
     }
     
     .chart-card {
-        height: 250px;
         padding: 15px;
+        /* La altura del chart-card ahora es responsive con aspect-ratio, no se necesita altura fija. */
     }
     
     .chart-container {
