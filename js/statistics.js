@@ -90,12 +90,6 @@ function calculateOEE(procesamientoData) {
 
 // --- Renderizado de Gráficos ---
 async function renderStage(stage) {
-    // **Validación de Seguridad**: Comprobar si el usuario tiene permiso para ver esta etapa
-    if (userAllowedZones && stage !== 'Indicadores' && !userAllowedZones.includes(stage)) {
-        console.warn(`Acceso no autorizado a la etapa "${stage}" denegado.`);
-        document.getElementById('statsFallback').textContent = `No tiene permiso para ver la etapa: ${stage}.`;
-        return;
-    }
 
     const canvas = document.getElementById('statsCanvas');
     const ctx = canvas.getContext('2d');
@@ -141,18 +135,12 @@ export function initializeStatistics(allowedZones) {
     userAllowedZones = allowedZones; // Almacenar las zonas para uso en renderStage
     const stageButtons = document.querySelectorAll('.stage-btn');
     
-    // Si se proporcionan zonas permitidas (para un Supervisor o Analista), filtrar los botones
-    if (userAllowedZones && Array.isArray(userAllowedZones)) {
-        stageButtons.forEach(btn => {
-            const stage = btn.dataset.stage;
-            // El botón de Indicadores siempre es visible para quienes tienen acceso a estadísticas.
-            if (stage !== 'Indicadores' && !userAllowedZones.includes(stage)) {
-                btn.style.display = 'none';
-                btn.classList.add('hidden-by-role');
-            }
-        });
-    }
-    // Si no se proporcionan allowedZones (Gerente), todos los botones permanecen visibles.
+    // Ya no se filtra por zona, todos los botones son visibles por defecto si se tiene acceso a la sección.
+    // Asegurarse de que los botones que podrían haber sido ocultados previamente ahora sean visibles.
+    stageButtons.forEach(btn => {
+        btn.style.display = '';
+        btn.classList.remove('hidden-by-role');
+    });
 
     stageButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {

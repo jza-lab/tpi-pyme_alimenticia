@@ -35,6 +35,11 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Ignorar solicitudes que no sean http/https, como las de extensiones de Chrome
+  if (!event.request.url.startsWith('http')) {
+    return;
+  }
+
   const requestUrl = new URL(event.request.url);
   const supabaseUrl = 'https://xtruedkvobfabctfmyys.supabase.co';
 
