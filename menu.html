@@ -110,46 +110,46 @@
 
             <!-- FILTROS -->
             <div class="filters-card">
-                <h3>Filtros</h3>
+                <h3 data-i18n="filters_title">Filtros</h3>
                 <div class="filters-grid">
                     <div class="filter-group">
-                        <label for="filter-by-name">Nombre</label>
-                        <input type="text" id="filter-by-name" placeholder="Filtrar por nombre...">
+                        <label for="filter-by-name" data-i18n="filter_label_name">Nombre</label>
+                        <input type="text" id="filter-by-name" data-i18n-placeholder="filter_placeholder_name">
                     </div>
                     
                     <div class="filter-group">
-                        <label for="filter-by-id">Legajo</label>
-                        <input type="text" id="filter-by-id" placeholder="Filtrar por legajo...">
+                        <label for="filter-by-id" data-i18n="filter_label_id">Legajo</label>
+                        <input type="text" id="filter-by-id" data-i18n-placeholder="filter_placeholder_id">
                     </div>
                     
                     <div class="filter-group">
-                        <label for="filter-by-shift">Turno</label>
+                        <label for="filter-by-shift" data-i18n="filter_label_shift">Turno</label>
                         <select id="filter-by-shift">
-                            <option value="">Todos los turnos</option>
-                            <option value="Mañana">Mañana</option>
-                            <option value="Tarde">Tarde</option>
-                            <option value="Noche">Noche</option>
+                            <option value="" data-i18n="all_shifts">Todos los turnos</option>
+                            <option value="Mañana" data-i18n="shift_morning">Mañana</option>
+                            <option value="Tarde" data-i18n="shift_afternoon">Tarde</option>
+                            <option value="Noche" data-i18n="shift_night">Noche</option>
                         </select>
                     </div>
                     
                     <div class="filter-group">
-                        <label for="filter-by-type">Tipo</label>
+                        <label for="filter-by-type" data-i18n="filter_label_type">Tipo</label>
                         <select id="filter-by-type">
-                            <option value="">Todos los tipos</option>
-                            <option value="ingreso">Ingreso</option>
-                            <option value="egreso">Egreso</option>
+                            <option value="" data-i18n="all_types">Todos los tipos</option>
+                            <option value="ingreso" data-i18n="entry_type">Ingreso</option>
+                            <option value="egreso" data-i18n="exit_type">Egreso</option>
                         </select>
                     </div>
                     
                     <div class="filter-group">
-                        <label for="filter-by-date">Fecha</label>
+                        <label for="filter-by-date" data-i18n="filter_label_date">Fecha</label>
                         <input type="date" id="filter-by-date">
                     </div>
                     
                     <div class="filter-group">
                         <button id="clear-filters-btn" class="btn btn-outline">
                             <i class='bx bx-x'></i>
-                            Limpiar Filtros
+                            <span data-i18n="clear_filters">Limpiar Filtros</span>
                         </button>
                     </div>
                 </div>
@@ -195,41 +195,41 @@
 
                 <!-- FILTROS DE EMPANADAS -->
                 <div class="filters-card">
-                    <h3>Filtros de Empleados</h3>
+                    <h3 data-i18n="employee_filters_title">Filtros de Empleados</h3>
                     <div class="filters-grid">
                         <div class="filter-group">
-                            <label for="filter-employee-by-role">Rol</label>
+                            <label for="filter-employee-by-role" data-i18n="filter_label_role">Rol</label>
                             <select id="filter-employee-by-role">
-                                <option value="">Todos los roles</option>
-                                <option value="Operario">Operario</option>
-                                <option value="Analista">Analista</option>
-                                <option value="Supervisor">Supervisor</option>
-                                <option value="Gerente">Gerente</option>
+                                <option value="" data-i18n="all_roles">Todos los roles</option>
+                                <option value="Operario" data-i18n="role_operator_label">Operario</option>
+                                <option value="Analista" data-i18n="role_analyst_label">Analista</option>
+                                <option value="Supervisor" data-i18n="role_supervisor_label">Supervisor</option>
+                                <option value="Gerente" data-i18n="role_manager_label">Gerente</option>
                             </select>
                         </div>
                         
                         <div class="filter-group">
-                            <label for="filter-employee-by-shift">Turno</label>
+                            <label for="filter-employee-by-shift" data-i18n="filter_label_shift">Turno</label>
                             <select id="filter-employee-by-shift">
-                                <option value="">Todos los turnos</option>
-                                <option value="Mañana">Mañana</option>
-                                <option value="Tarde">Tarde</option>
-                                <option value="Noche">Noche</option>
+                                <option value="" data-i18n="all_shifts">Todos los turnos</option>
+                                <option value="Mañana" data-i18n="shift_morning">Mañana</option>
+                                <option value="Tarde" data-i18n="shift_afternoon">Tarde</option>
+                                <option value="Noche" data-i18n="shift_night">Noche</option>
                             </select>
                         </div>
                         
                         <div class="filter-group">
-                            <label for="filter-employee-by-menu-access">Acceso al Menú</label>
+                            <label for="filter-employee-by-menu-access" data-i18n="filter_label_menu_access">Acceso al Menú</label>
                             <select id="filter-employee-by-menu-access">
-                                <option value="">Todos los niveles</option>
-                                <option value="true">Con Acceso al Menú (Nivel 3+)</option>
+                                <option value="" data-i18n="all_access_levels">Todos los niveles</option>
+                                <option value="true" data-i18n="with_menu_access">Con Acceso al Menú (Nivel 3+)</option>
                             </select>
                         </div>
                         
                         <div class="filter-group">
                             <button id="clear-employee-filters-btn" class="btn btn-outline">
                                 <i class='bx bx-x'></i>
-                                Limpiar Filtros
+                                <span data-i18n="clear_filters">Limpiar Filtros</span>
                             </button>
                         </div>
                     </div>
@@ -394,7 +394,7 @@
                     <span data-i18n="stats_processing">Procesamiento</span>
                 </button>
                 <button class="stage-btn" data-stage="Conservacion">
-                    <i class='bx bx-refrigerator'></i>
+                    <i class='bx bx-fridge'></i>
                     <span data-i18n="stats_conservation">Conservación</span>
                 </button>
                 <button class="stage-btn" data-stage="ServicioDespacho">
@@ -405,22 +405,30 @@
 
             <div id="indicators-view">
                 <div class="oee-components-grid">
-                    <div class="chart-card">
-                        <h3>Disponibilidad</h3>
-                        <canvas id="availabilityChart"></canvas>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_availability">Disponibilidad</h3>
+                        <div class="chart-card">
+                            <canvas id="availabilityChart"></canvas>
+                        </div>
                     </div>
-                    <div class="chart-card">
-                        <h3>Rendimiento</h3>
-                        <canvas id="performanceChart"></canvas>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_performance">Rendimiento</h3>
+                        <div class="chart-card">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
                     </div>
-                    <div class="chart-card">
-                        <h3>Calidad</h3>
-                        <canvas id="qualityChart"></canvas>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_quality">Calidad</h3>
+                        <div class="chart-card">
+                            <canvas id="qualityChart"></canvas>
+                        </div>
                     </div>
                 </div>
-                <div class="chart-container main-chart">
-                    <h3>Tendencia OEE General</h3>
-                    <canvas id="oeeTrendChart"></canvas>
+                <div class="chart-wrapper">
+                    <h3 class="chart-title-outside" data-i18n="chart_title_oee_trend">Tendencia OEE General</h3>
+                    <div class="chart-container main-chart">
+                        <canvas id="oeeTrendChart"></canvas>
+                    </div>
                 </div>
             </div>
             <div id="stages-view" class="stages-view" style="display: none;">
@@ -452,17 +460,23 @@
             </div>
             <div id="access-charts-view" style="display: none;">
                 <div class="oee-components-grid">
-                    <div class="chart-card">
-                        <h3>Llegadas</h3>
-                        <canvas id="arrivalsChart"></canvas>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_arrivals">Llegadas</h3>
+                        <div class="chart-card">
+                            <canvas id="arrivalsChart"></canvas>
+                        </div>
                     </div>
-                    <div class="chart-card">
-                        <h3>Empleados por Turno</h3>
-                        <canvas id="shiftChart"></canvas>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_employees_by_shift">Empleados por Turno</h3>
+                        <div class="chart-card">
+                            <canvas id="shiftChart"></canvas>
+                        </div>
                     </div>
-                    <div class="chart-card">
-                        <h3>Empleados por Rol</h3>
-                        <canvas id="roleChart"></canvas>
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title-outside" data-i18n="chart_title_employees_by_role">Empleados por Rol</h3>
+                        <div class="chart-card">
+                            <canvas id="roleChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -476,14 +490,14 @@
             </div>
 
             <div id="alerts-config-container" class="filters-card">
-                <h3>Configuración de Alertas</h3>
+                <h3 data-i18n="alerts_config_title">Configuración de Alertas</h3>
                 <div class="filters-grid">
                     <div class="filter-group">
-                        <label for="rejection-threshold">Umbral de Rechazo de Materia Prima (%)</label>
+                        <label for="rejection-threshold" data-i18n="alert_label_rejection">Umbral de Rechazo de Materia Prima (%)</label>
                         <input type="number" id="rejection-threshold" value="20" min="0" max="100">
                     </div>
                     <div class="filter-group">
-                        <label for="waste-threshold">Umbral de Desperdicio en Procesamiento (%)</label>
+                        <label for="waste-threshold" data-i18n="alert_label_waste">Umbral de Desperdicio en Procesamiento (%)</label>
                         <input type="number" id="waste-threshold" value="25" min="0" max="100">
                     </div>
                 </div>

@@ -457,6 +457,7 @@ function attachListeners() {
 
   el('ingreso-btn')?.addEventListener('click', () => startFacialLogin('ingreso'));
   el('egreso-btn')?.addEventListener('click', () => startFacialLogin('egreso'));
+  el('back-to-home-from-login')?.addEventListener('click', () => window.history.back());
 
   ['back-to-home-from-denied', 'back-after-access', 'back-to-home-from-pending'].forEach(id => {
     el(id)?.addEventListener('click', () => showScreen('home-screen'));

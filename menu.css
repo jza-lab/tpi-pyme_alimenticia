@@ -1315,38 +1315,27 @@ select:focus-visible {
     margin-bottom: 30px;
 }
 
+.chart-title-outside {
+    text-align: center;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
 .chart-card {
     background: var(--card-bg);
     border-radius: var(--radius-medium);
-    padding: 20px;
+    padding: 10px; /* Reducido para dar más espacio al canvas */
     box-shadow: var(--shadow-light);
     text-align: center;
-    /* Se establece una altura base y se ajusta con media queries. */
-    height: 300px;
-    position: relative;
+    height: 300px; /* Altura base para desktop */
+    position: relative; /* Para que Chart.js pueda posicionar el canvas */
 }
 
 .chart-card canvas {
-    flex-grow: 1;
-    min-height: 0;
-}
-
-.chart-card h3 {
-    font-size: 1.1rem;
-    margin-bottom: 15px;
-    color: var(--text-dark);
-    /* Aseguramos que el título no interfiera con el posicionamiento absoluto del gráfico */
-    position: relative;
-    z-index: 1;
-}
-
-/* Hacemos que el contenedor del canvas (creado por Chart.js) ocupe el espacio restante */
-.chart-card > div {
-    position: absolute;
-    top: 50px; /* Espacio para el título */
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
+    max-width: 100%;
+    max-height: 100%;
 }
 
 .main-chart {
