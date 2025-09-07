@@ -1104,6 +1104,10 @@ body.sidebar-open .mobile-sidebar-overlay {
 }
 
 @media (max-width: 1024px) {
+    .chart-card {
+        height: 280px;
+    }
+
     .hamburger {
         display: block;
     }
@@ -1145,6 +1149,10 @@ body.sidebar-open .mobile-sidebar-overlay {
 }
 
 @media (max-width: 768px) {
+    .chart-card {
+        height: 250px;
+    }
+
     .main-content {
         padding: 20px 15px;
     }
@@ -1313,11 +1321,9 @@ select:focus-visible {
     padding: 20px;
     box-shadow: var(--shadow-light);
     text-align: center;
-    /* Se quita la altura fija y se usa aspect-ratio para un diseño responsive. */
-    aspect-ratio: 4 / 3;
+    /* Se establece una altura base y se ajusta con media queries. */
+    height: 300px;
     position: relative;
-    display: flex;
-    flex-direction: column;
 }
 
 .chart-card canvas {
@@ -1329,6 +1335,18 @@ select:focus-visible {
     font-size: 1.1rem;
     margin-bottom: 15px;
     color: var(--text-dark);
+    /* Aseguramos que el título no interfiera con el posicionamiento absoluto del gráfico */
+    position: relative;
+    z-index: 1;
+}
+
+/* Hacemos que el contenedor del canvas (creado por Chart.js) ocupe el espacio restante */
+.chart-card > div {
+    position: absolute;
+    top: 50px; /* Espacio para el título */
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
 }
 
 .main-chart {
