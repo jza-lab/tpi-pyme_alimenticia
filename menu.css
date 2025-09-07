@@ -551,7 +551,9 @@ body {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.filter-group input,
+.filter-group select {
     padding: 15px 18px;
     border: 2px solid var(--border-color);
     border-radius: var(--radius-medium);
@@ -807,16 +809,14 @@ body {
 }
 
 .filters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 20px;
-    align-items: end;
+    align-items: flex-end;
 }
 
-.filters-grid .btn {
-    padding-top: 15px;
-    padding-bottom: 15px;
-    width: 100%;
+.filters-grid .filter-group {
+    flex: 1 1 200px;
 }
 
 .form-grid {
