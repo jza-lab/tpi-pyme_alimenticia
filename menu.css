@@ -149,9 +149,8 @@ body {
     margin-top: var(--header-height);
     padding: 30px;
     min-height: calc(100vh - var(--header-height));
-    width: 100%;
     box-sizing: border-box;
-    overflow-x: auto;
+    overflow-x: hidden;
 }
 
 /* ==========================================
@@ -399,7 +398,14 @@ body {
 .form-card,
 .capture-card,
 .chart-container {
-    @extend .card-base;
+    background: var(--card-bg);
+    border-radius: var(--radius-large);
+    padding: 30px;
+    box-shadow: var(--shadow-medium);
+    border: 1px solid var(--border-color);
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
 }
 
 /* Tarjetas de estadísticas */
@@ -802,9 +808,15 @@ body {
 
 .filters-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 20px;
     align-items: end;
+}
+
+.filters-grid .btn {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    width: 100%;
 }
 
 .form-grid {
