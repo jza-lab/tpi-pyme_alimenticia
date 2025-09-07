@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cargar Ingreso/Egreso</title>
+    <title>Carga de Ingreso/Egreso Manual</title>
     <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&family=Montserrat:ital,wght@0,200;1,200&family=Raleway:ital,wght@0,200;1,200&family=Rubik:ital,wght@0,300;1,300&display=swap"
@@ -14,7 +14,7 @@
 
 <body>
     <div class="container">
-        <h1>Cargar ingreso/egreso</h1>
+        <h1>Carga de Ingreso/Egreso Manual</h1>
         <p class="subtitle">Registra aquí todos los ingresos y egresos de manera manual.</p>
 
         <div class="form-card">
@@ -62,12 +62,17 @@
                 <small id="employee-not-found" class="error-msg">Empleado no encontrado.</small>
             </div>
 
-
             <div class="form-group">
                 <label>Tipo de acceso</label>
                 <div class="toggle-buttons">
-                    <button class="toggle-btn" data-type="ingreso">Ingreso</button>
-                    <button class="toggle-btn" data-type="egreso">Egreso</button>
+                    <button type="button" class="toggle-btn" data-type="ingreso">
+                        <i class='bx bx-log-in'></i>
+                        Ingreso
+                    </button>
+                    <button type="button" class="toggle-btn" data-type="egreso">
+                        <i class='bx bx-log-out'></i>
+                        Egreso
+                    </button>
                 </div>
                 <small class="error-msg" id="type-error">Debe seleccionar un tipo de acceso.</small>
             </div>
@@ -77,12 +82,15 @@
                 <input type="datetime-local" id="fecha-hora" name="fecha-hora" required>
             </div>
 
-            <button class="btn-submit" disabled>
+            <button type="button" class="btn-submit disabled" disabled>
                 <i class='bx bx-check'></i> Complete todos los campos
             </button>
         </div>
 
-        <button class="btn-volver-menu">Volver al menú</button>
+        <button class="btn-volver-menu">
+            <i class='bx bx-arrow-back'></i>
+            Volver al Menú
+        </button>
     </div>
 
     <script type="module" src="js/manual-entry.js"></script>
