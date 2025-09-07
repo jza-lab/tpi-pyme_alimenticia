@@ -153,16 +153,158 @@ const dom = {
 };
 
 // --- Gestión de Vistas y Navegación ---
-function showSection(sectionId) {
-  dom.sections.forEach(s => s.classList.remove('active'));
-  document.getElementById(sectionId)?.classList.add('active');
+function showSection(sectionId, isMainSection = true) {
+    dom.sections.forEach(s => s.classList.remove('active'));
+    const sectionElement = document.getElementById(sectionId);
+    if (sectionElement) {
+        sectionElement.classList.add('active');
+    }
 
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.section === sectionId));
+    if (isMainSection) {
+        dom.navButtons.forEach(b => b.classList.toggle('active', b.dataset.section === sectionId));
+    }
 
-  if (sectionId === 'accesos') renderRecords();
-  if (sectionId === 'empleados') renderEmployees();
-  if (sectionId === 'autorizaciones') renderAuthorizations();
+    // Lógica de renderizado específica de la sección
+    if (sectionId === 'accesos') renderRecords();
+    if (sectionId === 'empleados') renderEmployees();
+    if (sectionId === 'autorizaciones') renderAuthorizations();
+    if (sectionId === 'estadisticas') initializeStatistics(currentUser.zonas_permitidas);
 }
+
+function initializeManualEntry() {
+    let selectedType = null;
+    let selectedUser = null;
+
+    const me = dom.manualEntry; // Alias para el sub-objeto del DOM
+
+    function setupDateTimeRestrictions() {
+        const now = new Date();
+        const maxDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        me.fechaHoraInput.setAttribute('max', maxDateTime);
+    }
+
+    function validateDateTime() {
+        const selectedDateTime = new Date(me.fechaHoraInput.value);
+        if (selectedDateTime > new Date()) {
+            alert(t('future_date_error'));
+            me.fechaHoraInput.value = '';
+            return false;
+        }
+        return true;
+    }
+
+    function clearEmployeeDetails() {
+        me.employeeName.textContent = '-';
+        me.employeeSurname.textContent = '-';
+        me.employeeDni.textContent = '-';
+        me.employeeShift.textContent = '-';
+        me.employeeRole.textContent = '-';
+        me.employeeAccessLevel.textContent = '-';
+        me.employeeDetailsContainer.classList.remove('found');
+        me.employeeNotFoundMsg.style.display = 'none';
+        me.legajoInput.parentElement.querySelector('.error-msg').classList.remove('show');
+    }
+
+    function searchEmployee(legajo) {
+        clearEmployeeDetails();
+        selectedUser = null;
+        if (!legajo) return validateForm();
+
+        const user = state.getUsers().find(u => u.codigo_empleado === legajo);
+        if (user) {
+            selectedUser = user;
+            me.employeeName.textContent = user.nombre || '-';
+            me.employeeSurname.textContent = user.apellido || '-';
+            me.employeeDni.textContent = user.dni || '-';
+            me.employeeShift.textContent = user.turno || '-';
+            me.employeeRole.textContent = user.rol || '-';
+            me.employeeAccessLevel.textContent = `Nivel ${user.nivel_acceso || '-'}`;
+            me.employeeDetailsContainer.classList.add('found');
+        } else {
+            me.employeeNotFoundMsg.style.display = 'block';
+        }
+        validateForm();
+    }
+
+    function validateForm() {
+        const isUserFound = selectedUser !== null;
+        const isTypeSelected = selectedType !== null;
+        const isDateValid = me.fechaHoraInput.value !== '';
+
+        if (isUserFound && isTypeSelected && isDateValid) {
+            me.btnSubmit.disabled = false;
+            const typeText = selectedType === 'ingreso' ? t('entry_button') : t('exit_button');
+            me.btnSubmit.querySelector('span').textContent = t('register_type_manual_button', { type: typeText });
+            me.btnSubmit.classList.remove('disabled');
+        } else {
+            me.btnSubmit.disabled = true;
+            me.btnSubmit.querySelector('span').textContent = t('complete_all_fields');
+            me.btnSubmit.classList.add('disabled');
+        }
+    }
+
+    me.legajoInput.addEventListener('input', () => searchEmployee(me.legajoInput.value.trim()));
+    me.searchBtn.addEventListener('click', () => searchEmployee(me.legajoInput.value.trim()));
+    me.fechaHoraInput.addEventListener('change', () => {
+        validateDateTime();
+        validateForm();
+    });
+
+    me.toggleButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            me.toggleButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            selectedType = this.dataset.type;
+            me.typeError.classList.remove('show');
+            validateForm();
+        });
+    });
+
+    me.btnSubmit.addEventListener('click', async () => {
+        if (!selectedUser || !selectedType || !me.fechaHoraInput.value) {
+            alert(t('check_form_errors'));
+            return;
+        }
+
+        const lastRecord = state.getAccessRecords()
+            .filter(r => r.codigo_empleado === selectedUser.codigo_empleado)
+            .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora))[0];
+        const lastStatus = lastRecord ? lastRecord.tipo : 'egreso';
+
+        if (selectedType === lastStatus) {
+            alert(t('employee_already_in_status', { name: selectedUser.nombre, status: lastStatus }));
+            return;
+        }
+
+        try {
+            me.btnSubmit.disabled = true;
+            me.btnSubmit.querySelector('span').textContent = t('registering');
+            const isoDate = new Date(me.fechaHoraInput.value).toISOString();
+            await api.registerAccess(selectedUser.codigo_empleado, selectedType, isoDate);
+            alert(t('registration_saved_success', { type: selectedType.toUpperCase(), name: selectedUser.nombre, legajo: selectedUser.codigo_empleado }));
+            
+            // Reset
+            me.legajoInput.value = '';
+            me.fechaHoraInput.value = '';
+            me.toggleButtons.forEach(btn => btn.classList.remove('active'));
+            selectedType = null;
+            selectedUser = null;
+            clearEmployeeDetails();
+            validateForm();
+            await state.refreshState(); // Actualizar el estado global
+        } catch (error) {
+            alert(t('registration_save_error', { error: error.message }));
+        } finally {
+            validateForm();
+        }
+    });
+
+    // Estado inicial del formulario
+    clearEmployeeDetails();
+    setupDateTimeRestrictions();
+    validateForm();
+}
+
 
 async function renderAuthorizations() {
   const authorizationsList = document.getElementById('authorizations-list');
@@ -572,17 +714,18 @@ function stopVideoStream() {
 function attachListeners() {
   dom.navButtons.forEach(btn => btn.addEventListener('click', (e) => {
     const sectionId = e.currentTarget.dataset.section;
-    showSection(sectionId);
-    // Cierra el menú responsive si se hace clic en un item
+    showSection(sectionId, true);
     if (document.body.classList.contains('sidebar-open')) {
       document.body.classList.remove("sidebar-open");
     }
   }));
 
   document.getElementById('btn-nuevo-empleado')?.addEventListener('click', () => showEmployeeView('register-screen'));
-  document.getElementById('btn-carga-manual')?.addEventListener('click', () => {
-    window.location.href = 'manual-entry.html';
-  });
+  
+  // Navegación SPA para Carga Manual
+  document.getElementById('btn-carga-manual')?.addEventListener('click', () => showSection('manual-entry', false));
+  document.getElementById('back-to-menu-from-manual')?.addEventListener('click', () => showSection('empleados', true));
+
   dom.form.captureBtn.addEventListener('click', handleStartCaptureClick);
   dom.form.backToEmployeesBtn.addEventListener('click', () => showEmployeeView('empleados-main-view'));
   dom.backToRegisterBtn.addEventListener('click', () => showEmployeeView('register-screen'));
@@ -679,8 +822,9 @@ async function main() {
     renderRecords();
     renderEmployees();
 
-    // Inicializar estadísticas pasando las zonas permitidas del usuario
+    // Inicializar módulos
     initializeStatistics(currentUser.zonas_permitidas);
+    initializeManualEntry();
 
     updateUI();
   } catch (error) {

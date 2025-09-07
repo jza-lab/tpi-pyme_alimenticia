@@ -348,6 +348,98 @@
                 </div>
             </div>
         </section>
+        
+        <!-- CARGA MANUAL -->
+        <section id="manual-entry" class="content-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-i18n="manual_entry_title">Carga de Ingreso/Egreso Manual</h2>
+                    <div class="section-actions">
+                         <button id="back-to-menu-from-manual" class="btn btn-outline">
+                            <i class='bx bx-arrow-back'></i>
+                            <span data-i18n="back_to_menu">Volver al Menú</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <p class="subtitle" data-i18n="manual_entry_subtitle">Registra aquí todos los ingresos y egresos de manera manual.</p>
+        
+                <div class="form-card">
+                    <h2 data-i18n="new_manual_registration">Nuevo registro manual</h2>
+                    <p class="form-subtitle" data-i18n="manual_form_subtitle">Complete los datos para registrar un acceso manual</p>
+        
+                    <div class="form-group">
+                        <label for="manual-legajo" data-i18n="legajo_label">Legajo</label>
+                        <div class="input-with-button">
+                            <input type="text" id="manual-legajo" data-i18n-placeholder="legajo_placeholder" name="legajo" required>
+                            <button type="button" id="manual-search-btn" class="btn-search">
+                                <i class='bx bx-search'></i> <span data-i18n="search_button">Buscar</span>
+                            </button>
+                        </div>
+                        <small class="error-msg" data-i18n="legajo_required">El legajo es obligatorio.</small>
+                    </div>
+        
+                    <!-- Contenedor para detalles del empleado -->
+                    <div id="manual-employee-details" class="employee-details">
+                        <div class="detail-row">
+                            <div class="detail-item">
+                                <label data-i18n="employee_name_label">Nombre</label>
+                                <span id="manual-employee-name">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label data-i18n="employee_surname_label">Apellido</label>
+                                <span id="manual-employee-surname">-</span>
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-item">
+                                <label data-i18n="employee_dni_label">DNI</label>
+                                <span id="manual-employee-dni">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label data-i18n="employee_shift_label">Turno</label>
+                                <span id="manual-employee-shift">-</span>
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-item">
+                                <label data-i18n="employee_role_label">Rol</label>
+                                <span id="manual-employee-role">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label data-i18n="employee_access_level_label">Nivel de Acceso</label>
+                                <span id="manual-employee-access-level">-</span>
+                            </div>
+                        </div>
+                        <small id="manual-employee-not-found" class="error-msg" data-i18n="employee_not_found">Empleado no encontrado.</small>
+                    </div>
+        
+                    <div class="form-group">
+                        <label data-i18n="access_type_label">Tipo de acceso</label>
+                        <div class="toggle-buttons">
+                            <button type="button" class="toggle-btn manual-toggle-btn" data-type="ingreso">
+                                <i class='bx bx-log-in'></i>
+                                <span data-i18n="entry_button">Ingreso</span>
+                            </button>
+                            <button type="button" class="toggle-btn manual-toggle-btn" data-type="egreso">
+                                <i class='bx bx-log-out'></i>
+                                <span data-i18n="exit_button">Egreso</span>
+                            </button>
+                        </div>
+                        <small class="error-msg" id="manual-type-error" data-i18n="access_type_required">Debe seleccionar un tipo de acceso.</small>
+                    </div>
+        
+                    <div class="form-group">
+                        <label for="manual-fecha-hora" data-i18n="datetime_label">Fecha y Hora</label>
+                        <input type="datetime-local" id="manual-fecha-hora" name="fecha-hora" required>
+                    </div>
+        
+                    <button type="button" id="manual-submit-btn" class="btn-submit disabled" disabled>
+                        <i class='bx bx-check'></i> <span data-i18n="complete_all_fields">Complete todos los campos</span>
+                    </button>
+                </div>
+            </div>
+        </section>
 
         <!-- AUTORIZACIONES -->
         <section id="autorizaciones" class="content-section">
@@ -451,9 +543,9 @@
                     <h2 class="subsection-title" data-i18n="final_oee_title">OEE General Actual</h2>
                     <div id="final-oee-value" class="final-oee-value">--%</div>
                     <div class="oee-legend">
-                        <div class="legend-item"><span class="legend-color" style="background-color: #dc3545;"></span> &lt; 60% (Malo)</div>
-                        <div class="legend-item"><span class="legend-color" style="background-color: #ffc107;"></span> 60% - 85% (Aceptable)</div>
-                        <div class="legend-item"><span class="legend-color" style="background-color: #28a745;"></span> &gt; 85% (Excelente)</div>
+                        <div class="legend-item"><span class="legend-color" style="background-color: #dc3545;"></span><span data-i18n="oee_legend_bad">&lt; 60% (Malo)</span></div>
+                        <div class="legend-item"><span class="legend-color" style="background-color: #ffc107;"></span><span data-i18n="oee_legend_acceptable">60% - 85% (Aceptable)</span></div>
+                        <div class="legend-item"><span class="legend-color" style="background-color: #28a745;"></span><span data-i18n="oee_legend_excellent">&gt; 85% (Excelente)</span></div>
                     </div>
                 </div>
                 <hr class="section-divider">
