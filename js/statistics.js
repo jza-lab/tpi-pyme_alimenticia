@@ -1,12 +1,6 @@
 import { getUsers, getAccessRecords } from './state.js';
 import { t } from './i18n-logic.js';
-import {
-    fetchRecepcionData,
-    fetchAlmacenamientoData,
-    fetchProcesamientoData,
-    fetchConservacionData,
-    fetchDespachoData
-} from './api.js';
+import { fetchTableData } from './api.js';
 
 let userAllowedZones = null;
 
@@ -1027,9 +1021,9 @@ async function renderStage(stage) {
             
             try {
                 const [recepcionData, procesamientoData, despachoData] = await Promise.all([
-                    fetchRecepcionData(),
-                    fetchProcesamientoData(),
-                    fetchDespachoData()
+                    fetchTableData('recepcion'),
+                    fetchTableData('procesamiento'),
+                    fetchTableData('despacho')
                 ]);
 
                 const allData = { Recepcion: recepcionData, Procesamiento: procesamientoData, Despacho: despachoData };
@@ -1107,11 +1101,11 @@ async function renderStage(stage) {
 
         } else {
             const stageConfig = {
-                'Recepcion': { label: 'Recepción', fetcher: fetchRecepcionData, renderer: renderRecepcionCharts, chartContainerId: 'recepcion-charts' },
-                'Almacenamiento': { label: 'Almacenamiento', fetcher: fetchAlmacenamientoData, renderer: renderAlmacenamientoCharts, chartContainerId: 'almacenamiento-charts' },
-                'Procesamiento': { label: 'Procesamiento', fetcher: fetchProcesamientoData, renderer: renderProcesamientoCharts, chartContainerId: 'procesamiento-charts' },
-                'Conservacion': { label: 'Conservación', fetcher: fetchConservacionData, renderer: renderConservacionCharts, chartContainerId: 'conservacion-charts' },
-                'ServicioDespacho': { label: 'Despacho', fetcher: fetchDespachoData, renderer: renderDespachoCharts, chartContainerId: 'despacho-charts' }
+                'Recepcion': { label: 'Recepción', fetcher: () => fetchTableData('recepcion'), renderer: renderRecepcionCharts, chartContainerId: 'recepcion-charts' },
+                'Almacenamiento': { label: 'Almacenamiento', fetcher: () => fetchTableData('almacenamiento'), renderer: renderAlmacenamientoCharts, chartContainerId: 'almacenamiento-charts' },
+                'Procesamiento': { label: 'Procesamiento', fetcher: () => fetchTableData('procesamiento'), renderer: renderProcesamientoCharts, chartContainerId: 'procesamiento-charts' },
+                'Conservacion': { label: 'Conservación', fetcher: () => fetchTableData('conservacion'), renderer: renderConservacionCharts, chartContainerId: 'conservacion-charts' },
+                'ServicioDespacho': { label: 'Despacho', fetcher: () => fetchTableData('despacho'), renderer: renderDespachoCharts, chartContainerId: 'despacho-charts' }
             };
 
             const config = stageConfig[stage];
