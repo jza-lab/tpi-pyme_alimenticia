@@ -254,7 +254,8 @@ export async function getTokenAndSendEmail(userCode, userDni) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      // 'apikey': SUPABASE_CONFIG.ANON_KEY // La anon key es necesaria si la función no es 'public'
+      'apikey': SUPABASE_CONFIG.ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_CONFIG.ANON_KEY}`
     },
     body: JSON.stringify({ code: userCode, dni: userDni })
   });
