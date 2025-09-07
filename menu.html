@@ -399,15 +399,49 @@
                 </button>
             </div>
 
-            <div class="chart-container">
-                <canvas id="statsCanvas"></canvas>
-                <div id="statsFallback" class="chart-fallback" data-i18n="stats_chart_fallback">Gráfico de estadísticas se mostraría aquí</div>
+            <div id="indicators-view">
+                <div class="oee-components-grid">
+                    <div class="chart-card">
+                        <h3>Disponibilidad</h3>
+                        <canvas id="availabilityChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Rendimiento</h3>
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Calidad</h3>
+                        <canvas id="qualityChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container main-chart">
+                    <h3>Tendencia OEE General</h3>
+                    <canvas id="oeeTrendChart"></canvas>
+                </div>
             </div>
+            <div id="stages-view" class="chart-container" style="display: none;">
+                 <canvas id="stagesChart"></canvas>
+            </div>
+            <div id="statsFallback" class="chart-fallback" data-i18n="stats_chart_fallback">Gráfico de estadísticas se mostraría aquí</div>
 
             <div id="insights-container" class="insights-container">
                 <h3 data-i18n="key_alerts_observations">Alertas y Observaciones Clave</h3>
                 <div id="insights-list" class="insights-list">
                     <!-- Los indicadores se cargan aqui -->
+                </div>
+            </div>
+
+            <div id="alerts-config-container" class="filters-card">
+                <h3>Configuración de Alertas</h3>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="rejection-threshold">Umbral de Rechazo de Materia Prima (%)</label>
+                        <input type="number" id="rejection-threshold" value="20" min="0" max="100">
+                    </div>
+                    <div class="filter-group">
+                        <label for="waste-threshold">Umbral de Desperdicio en Procesamiento (%)</label>
+                        <input type="number" id="waste-threshold" value="25" min="0" max="100">
+                    </div>
                 </div>
             </div>
         </section>

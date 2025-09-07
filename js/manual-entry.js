@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Navegación ---
     document.querySelector('.btn-volver-menu').addEventListener('click', (e) => {
         e.preventDefault();
-        window.location.href = "menu.html";
+        window.history.back();
     });
 
     // Estado inicial
