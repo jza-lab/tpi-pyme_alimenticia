@@ -401,7 +401,28 @@ body {
 .form-card,
 .capture-card,
 .chart-container {
-    @extend .card-base;
+    background: var(--card-bg);
+    border-radius: var(--radius-large);
+    padding: 30px;
+    box-shadow: var(--shadow-medium);
+    border: 1px solid var(--border-color);
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.filters-card::before,
+.table-card::before,
+.form-card::before,
+.capture-card::before,
+.chart-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
 }
 
 /* Tarjetas de estadísticas */
