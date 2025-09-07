@@ -340,9 +340,16 @@ async function attemptManualLogin() {
   const dni = dom.manualLogin.dni.value;
   if (!code || !dni) return alert(t('Rellene ambos campos'));
 
+  // Cambiamos el estado de la UI para dar feedback inmediato al usuario
+  dom.loginStatus.textContent = t('sending_token');
+  dom.loginStatus.className = 'status info';
+  dom.manualLogin.loginBtn.disabled = true;
+
   try {
-    await api.sendLoginToken(code, dni);
+    // Llamamos a la nueva función que usa EmailJS
+    await api.getTokenAndSendEmail(code, dni);
     
+    // Si la llamada tiene éxito, mostramos el formulario del token
     dom.manualLogin.credentialsForm.style.display = 'none';
     dom.manualLogin.tokenForm.style.display = 'block';
     dom.loginStatus.textContent = t('Token Enviado');
