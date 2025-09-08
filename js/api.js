@@ -145,6 +145,20 @@ export async function registerAccess(employeeCode, type, details, metodo_autenti
 }
 
 /**
+ * Obtiene las estadísticas de acceso (conteo por método de autenticación).
+ * @returns {Promise<{credenciales: number, reconocimiento_facial: number}>}
+ */
+export async function fetchAccessStats() {
+    const { data, error } = await supabase.functions.invoke('get-access-stats');
+
+    if (error) {
+        console.error('Error al obtener estadísticas de acceso:', error);
+        throw error;
+    }
+    return data;
+}
+
+/**
  * Obtiene todos los datos de una tabla específica de la base de datos.
  * @param {string} tableName - El nombre de la tabla de la que se obtendrán los datos.
  * @returns {Promise<Array>} Una lista de registros de la tabla especificada.
