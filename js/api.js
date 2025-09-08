@@ -185,10 +185,19 @@ export async function requestImmediateAccess(employeeCode, type, details) {
         body: { codigo_empleado: employeeCode, tipo: type, details: details }
     });
 
-    if (error) {
+    // La función puede devolver un código no-2xx para indicar un estado pendiente,
+    // lo cual es un éxito para el flujo del frontend. No debemos tratarlo como un error duro.
+    if (error && error.context && error.context.status !== 409) { // 409 Conflict podría ser un error real (ej. ya existe una solicitud)
+        console.warn('Función request-immediate-access devolvió un estado no-2xx, pero se asume como flujo normal pendiente:', error);
+    }
+    
+    // Si hay un error, pero también hay datos, priorizamos los datos.
+    // Esto permite que el backend señale un estado pendiente devolviendo un cuerpo de respuesta junto con un código de estado no-2xx.
+    if (error && !data) {
         console.error('Error en requestImmediateAccess:', error);
         throw error;
     }
+
     return data;
 }
 

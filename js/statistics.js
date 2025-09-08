@@ -138,13 +138,19 @@ function calculateYield(procesamientoData) {
 }
 
 function calculateDocumentationCompliance(despachoData) {
-    if (!despachoData || despachoData.length === 0) return 0; // Devolver 0 si no hay datos.
+    if (!despachoData || despachoData.length === 0) return 0;
     const totalDespachos = despachoData.length;
-    // Se hace la comparación insensible a mayúsculas/minúsculas y se eliminan espacios en blanco.
+    
     const completos = despachoData.filter(item => {
         const docStatus = item['Documentación completa'];
-        return docStatus && docStatus.trim().toUpperCase() === 'SI';
+        if (typeof docStatus === 'string') {
+            const upperStatus = docStatus.trim().toUpperCase();
+            return upperStatus === 'SI' || upperStatus === 'TRUE';
+        }
+        // También maneja el caso de que el valor sea un booleano `true`
+        return docStatus === true;
     }).length;
+
     return totalDespachos > 0 ? completos / totalDespachos : 0;
 }
 
@@ -154,11 +160,13 @@ function generateInsights(allData, oeeResults) {
     const insights = [];
     const alerts = {
         rejectionRate: false,
-        oee: 'ok'
+        oee: 'ok',
+        facialRecognition: false
     };
 
     const rejectionThreshold = parseFloat(document.getElementById('rejection-threshold').value) / 100;
     const wasteThresholdMultiplier = parseFloat(document.getElementById('waste-threshold').value) / 100;
+    const facialThreshold = parseInt(document.getElementById('facial-recognition-threshold').value, 10);
     
     const latestOee = oeeResults.datasets.oee.length > 0 ? oeeResults.datasets.oee[oeeResults.datasets.oee.length - 1] : null;
     if (latestOee !== null) {
@@ -203,6 +211,21 @@ function generateInsights(allData, oeeResults) {
         }
     } else if (!allData.Procesamiento) {
          insights.push({ text: t('alert_simulation_active'), level: 'warning' });
+    }
+
+    // Alerta de Reconocimiento Facial
+    if (allData.AccessStats) {
+        const { credenciales, reconocimiento_facial } = allData.AccessStats;
+        if (credenciales > reconocimiento_facial + facialThreshold) {
+            insights.push({
+                text: t('alert_facial_recognition_warning', {
+                    credentials_count: credenciales,
+                    facial_count: reconocimiento_facial
+                }),
+                level: 'warning'
+            });
+            alerts.facialRecognition = true;
+        }
     }
     
     return { insights, alerts };
@@ -309,6 +332,23 @@ function calculateOEE(procesamientoData) {
  * @param {string} suffix - El sufijo para los IDs de los elementos HTML ('-indicators' o '-access').
  */
 async function renderAccessStats(suffix) {
+    const container = document.getElementById('access-charts-view');
+    if (!container) return;
+
+    // Crear el título y el divisor si no existen
+    if (!container.querySelector('.subsection-title')) {
+        const title = document.createElement('h2');
+        title.className = 'subsection-title';
+        title.textContent = t('access_method_title', 'Estadísticas por Método de Acceso');
+        
+        const divider = document.createElement('hr');
+        divider.className = 'section-divider';
+
+        const statsGrid = container.querySelector('.access-stats-grid');
+        container.insertBefore(title, statsGrid);
+        container.insertBefore(divider, statsGrid.nextSibling); // Poner el divisor después de la grilla
+    }
+
     const credsEl = document.querySelector(`#access-stats-credentials${suffix} .stat-value`);
     const facialEl = document.querySelector(`#access-stats-facial${suffix} .stat-value`);
     const totalEl = document.querySelector(`#access-stats-total${suffix} .stat-value`);
@@ -1072,16 +1112,21 @@ async function renderStage(stage) {
 
         } else if (stage === 'Indicadores') {
             indicatorsView.style.display = 'block';
-            renderAccessStats('-indicators'); // Cargar estadísticas de acceso
             
             try {
-                const [recepcionData, procesamientoData, despachoData] = await Promise.all([
+                const [recepcionData, procesamientoData, despachoData, accessStats] = await Promise.all([
                     fetchTableData('recepcion'),
                     fetchTableData('procesamiento'),
-                    fetchTableData('despacho')
+                    fetchTableData('despacho'),
+                    fetchAccessStats()
                 ]);
 
-                const allData = { Recepcion: recepcionData, Procesamiento: procesamientoData, Despacho: despachoData };
+                const allData = { 
+                    Recepcion: recepcionData, 
+                    Procesamiento: procesamientoData, 
+                    Despacho: despachoData,
+                    AccessStats: accessStats
+                };
                 const oeeResults = calculateOEE(allData.Procesamiento);
                 const { insights, alerts } = generateInsights(allData, oeeResults);
 
