@@ -70,6 +70,24 @@ export function addUser(newUser) {
     console.log(`Usuario ${newUser.codigo_empleado} agregado al estado local.`);
 }
 
+/**
+ * Forzosamente refresca todos los datos del estado volviendo a llamar a la API.
+ * Esto es útil después de realizar una acción que modifica datos en el backend,
+ * como aprobar una autorización o añadir un registro manual.
+ */
+export async function refreshState() {
+    // Forzar la reinicialización estableciendo la promesa a null
+    state.initializationPromise = null;
+    await initState();
+    
+    // Si el face matcher existía, lo reseteamos y reconstruimos para que
+    // use la nueva lista de usuarios que se acaba de cargar.
+    if (state.faceMatcher) {
+        state.faceMatcher = null; // Resetear
+        initFaceMatcher();      // Reconstruir
+    }
+}
+
 // "Getters" para acceder al estado de forma segura y controlada desde otros módulos.
 // Se devuelven copias de los arrays para promover la inmutabilidad y evitar efectos secundarios.
 export const getUsers = () => [...state.users];

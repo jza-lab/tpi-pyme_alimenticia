@@ -14,7 +14,7 @@ let detectionInterval = null;
 async function checkAuthAndApplyPermissions() {
   // Forzar la actualización del estado para asegurar que los datos de roles y
   // accesos están siempre actualizados al cargar el menú.
-  await state.refreshState();
+  await state.initState();
   const userCode = sessionStorage.getItem('supervisorCode');
 
   // --- DEBUGGING ---
@@ -320,7 +320,7 @@ function initializeManualEntry() {
             selectedUser = null;
             clearEmployeeDetails();
             validateForm();
-            await state.refreshState(); // Actualizar el estado global
+            await state.refreshState(); // Forzar la recarga de datos
         } catch (error) {
             alert(t('registration_save_error', { error: error.message }));
         } finally {
