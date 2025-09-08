@@ -20,7 +20,7 @@ async function handleAccessRequest(user, loginType, authMethod, isOutOfShift) {
             turno_intento: getCurrentShift(),
             motivo: t('out_of_shift_attempt')
         };
-        return api.requestImmediateAccess(user.codigo_empleado, loginType, details);
+        return api.requestImmediateAccess(user.codigo_empleado, loginType, details, authMethod);
     } else {
         return api.registerAccess(user.codigo_empleado, loginType, authMethod);
     }
@@ -34,10 +34,13 @@ export async function grantAccess(user, appState, authMethod) {
         const currentShift = getCurrentShift();
         const isOutOfShift = (appState.currentLoginType === 'ingreso' && user.turno && user.turno !== currentShift);
 
-        await handleAccessRequest(user, appState.currentLoginType, authMethod, isOutOfShift);
+        const response = await handleAccessRequest(user, appState.currentLoginType, authMethod, isOutOfShift);
         await state.refreshState();
 
-        ui.displayAccessGranted(user, appState.currentLoginType, isOutOfShift);
+        // Determinar si mostrar la pantalla de pendiente. Ocurre si el acceso es fuera de turno
+        // O si la API nos informa que ya existía una solicitud pendiente.
+        const showPendingScreen = isOutOfShift || (response && response.status === 'already_pending');
+        ui.displayAccessGranted(user, appState.currentLoginType, showPendingScreen);
 
     } catch (error) {
         console.error(t('grant_access_error'), error);
