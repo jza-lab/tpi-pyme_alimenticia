@@ -18,6 +18,7 @@ const urlsToCache = [
   'js/i18n.js',
   'js/i18n-logic.js',
   'js/statistics.js',
+  'js/manual-entry.js',
   'icono.png',
   'manifest.json'
 ];
@@ -38,8 +39,8 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Ignorar solicitudes que no sean http/https, como las de extensiones de Chrome
-  if (!event.request.url.startsWith('http')) {
+  // Ignorar solicitudes de extensiones de Chrome para evitar errores en la consola
+  if (event.request.url.startsWith('chrome-extension://')) {
     return;
   }
 

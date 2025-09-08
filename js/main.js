@@ -89,7 +89,7 @@ async function startFacialLogin(type) {
 
     try {
         await startVideoStream(loginVideo);
-        runFacialRecognition('facial'); // Pasar el método de autenticación
+        runFacialRecognition('reconocimiento_facial'); // Usar el valor correcto esperado por el backend
     } catch (error) {
         ui.updateStatus(t('camera_access_error'), 'error');
         ui.showManualLoginOption(appState.currentLoginType);
