@@ -5,11 +5,11 @@ const urlsToCache = [
   '/',
   'index.html',
   'menu.html',
-  'manual-entry.html',
   'index.css',
   'menu.css',
-  'manual-entry.css',
-  'js/app.js',
+  'js/main.js',
+  'js/ui.js',
+  'js/auth.js',
   'js/menu.js',
   'js/api.js',
   'js/config.js',
@@ -18,9 +18,9 @@ const urlsToCache = [
   'js/i18n.js',
   'js/i18n-logic.js',
   'js/statistics.js',
-  'js/manual-entry.js',
   'icono.png',
-  'manifest.json'
+  'manifest.json',
+  'https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css'
 ];
 
 self.addEventListener('install', event => {
@@ -39,8 +39,8 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Ignorar solicitudes que no sean http/https, como las de extensiones de Chrome
-  if (!event.request.url.startsWith('http')) {
+  // Ignorar solicitudes de extensiones de Chrome para evitar errores en la consola
+  if (event.request.url.startsWith('chrome-extension://')) {
     return;
   }
 
@@ -58,7 +58,7 @@ self.addEventListener('fetch', event => {
   // Para archivos JS críticos, usar network-only para asegurar que siempre se obtiene la última versión.
   // Esto es crucial para evitar bugs por lógica de negocio desactualizada.
   const criticalJSFiles = [
-    'js/app.js', 'js/api.js', 'js/state.js',
+    'js/main.js', 'js/ui.js', 'js/auth.js', 'js/api.js', 'js/state.js',
     'js/menu.js', 'js/statistics.js', 'js/manual-entry.js',
     'js/face.js', 'js/i18n-logic.js'
   ];

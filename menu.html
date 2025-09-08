@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
     <link rel="stylesheet" href="menu.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -27,10 +28,10 @@
             <div class="header-right">
                 <div class="language-toggle">
                     <label class="toggle-container">
-                        <span class="toggle-label">ES</span>
+                        <span class="toggle-label"><span class="fi fi-es"></span> ESP</span>
                         <input type="checkbox" id="language-toggle">
                         <span class="slider"></span>
-                        <span class="toggle-label">EN</span>
+                        <span class="toggle-label">ENG <span class="fi fi-us"></span></span>
                     </label>
                 </div>
                 <button class="logout-btn" data-i18n="logout">
@@ -180,7 +181,7 @@
         <section id="empleados" class="content-section">
             <div id="empleados-main-view">
                 <div class="section-header">
-                    <h2 data-i18n="employee_management">Gestión de Empleados</h2>
+                    <h2 data-i18n="employee_management_title">Gestión de Empleados</h2>
                     <div class="section-actions">
                         <button id="btn-nuevo-empleado" class="btn btn-primary">
                             <i class='bx bx-user-plus'></i>
@@ -188,7 +189,7 @@
                         </button>
                         <button id="btn-carga-manual" class="btn btn-secondary">
                             <i class='bx bx-edit'></i>
-                            <span>Carga de Ingreso/Egreso Manual</span>
+                            <span data-i18n="manual_access_charge">Carga de Acceso Manual</span>
                         </button>
                     </div>
                 </div>
@@ -461,7 +462,7 @@
         <!-- ESTADISTICAS -->
         <section id="estadisticas" class="content-section">
             <div class="section-header">
-                <h2 data-i18n="statistics">Estadísticas</h2>
+                <h2 data-i18n="statistics_title">Estadísticas</h2>
             </div>
 
             <div class="stats-controls">
@@ -584,6 +585,24 @@
                 </div>
             </div>
             <div id="access-charts-view" style="display: none;">
+                <div id="access-stats-placeholder"></div>
+
+                <div id="access-insights-container" class="insights-container" style="display: none;">
+                    <h3 data-i18n="key_alerts_observations">Alertas y Observaciones Clave</h3>
+                    <div id="access-insights-list" class="insights-list"></div>
+                </div>
+
+                <div class="filters-card">
+                    <h3 data-i18n="access_alerts_config_title">Configuración de Alertas de Acceso</h3>
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label for="facial-recognition-threshold" data-i18n="alert_label_facial_recognition">Umbral de Alerta de Reconocimiento Facial (%)</label>
+                            <input type="number" id="facial-recognition-threshold" value="50" min="0" max="100">
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="section-divider">
                 <div class="oee-components-grid">
                     <div class="chart-wrapper">
                         <h3 class="chart-title-outside" data-i18n="chart_title_arrivals">Llegadas</h3>
@@ -607,14 +626,12 @@
             </div>
             <div id="statsFallback" class="chart-fallback" data-i18n="stats_chart_fallback">Gráfico de estadísticas se mostraría aquí</div>
 
-            <div id="insights-container" class="insights-container">
+            <div id="indicator-insights-container" class="insights-container" style="display: none;">
                 <h3 data-i18n="key_alerts_observations">Alertas y Observaciones Clave</h3>
-                <div id="insights-list" class="insights-list">
-                    <!-- Los indicadores se cargan aqui -->
-                </div>
+                <div id="indicator-insights-list" class="insights-list"></div>
             </div>
-
-            <div id="alerts-config-container" class="filters-card">
+            
+            <div id="indicator-alerts-config-container" class="filters-card" style="display: none;">
                 <h3 data-i18n="alerts_config_title">Configuración de Alertas</h3>
                 <div class="filters-grid">
                     <div class="filter-group">
