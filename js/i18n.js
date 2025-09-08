@@ -252,7 +252,17 @@ export const translations = {
     "access_method_title": "Estadísticas por Método de Acceso",
     "access_alerts_config_title": "Configuración de Alertas de Acceso",
     "alert_label_facial_recognition": "Umbral de Alerta de Reconocimiento Facial (%)",
-    "alert_low_facial_recognition_usage": "Alerta: El uso de reconocimiento facial está en un {{percentage}}%, por debajo del umbral de {{threshold}}%."
+    "alert_low_facial_recognition_usage": "Alerta: El uso de reconocimiento facial está en un {{percentage}}%, por debajo del umbral de {{threshold}}%.",
+    
+    "access_provisional_title": "Acceso Provisional Concedido",
+    "access_provisional_message": "Su acceso ha sido registrado. Será revisado por un supervisor ya que está fuera de su turno.",
+    "continue_to_menu": "Continuar al Menú",
+
+    "manual_access_charge": "Carga de Acceso Manual",
+    
+    "by_credentials": "por Credenciales",
+    "by_facial_recognition": "por Reconocimiento Facial",
+    "total_accesses": "Total de Accesos"
   },
   en: {
     // index.html
@@ -499,6 +509,16 @@ export const translations = {
     "access_method_title": "Access Method Statistics",
     "access_alerts_config_title": "Access Alert Configuration",
     "alert_label_facial_recognition": "Facial Recognition Alert Threshold (%)",
-    "alert_low_facial_recognition_usage": "Alert: Facial recognition usage is at {{percentage}}%, below the {{threshold}}% threshold."
+    "alert_low_facial_recognition_usage": "Alert: Facial recognition usage is at {{percentage}}%, below the {{threshold}}% threshold.",
+
+    "access_provisional_title": "Provisional Access Granted",
+    "access_provisional_message": "Your access has been logged. It will be reviewed by a supervisor as it is outside of your shift.",
+    "continue_to_menu": "Continue to Menu",
+
+    "manual_access_charge": "Manual Access Load",
+
+    "by_credentials": "by Credentials",
+    "by_facial_recognition": "by Facial Recognition",
+    "total_accesses": "Total Accesses"
   }
 };

@@ -340,15 +340,15 @@ async function renderAccessStats() {
             <div class="access-stats-grid">
                 <div class="stat-card-access" id="access-stats-credentials-access">
                     <div class="stat-icon"><i class='bx bx-id-card'></i></div>
-                    <div class="stat-content"><h3 class="stat-value">--</h3><p>por Credenciales</p></div>
+                    <div class="stat-content"><h3 class="stat-value">--</h3><p data-i18n="by_credentials">por Credenciales</p></div>
                 </div>
                 <div class="stat-card-access" id="access-stats-facial-access">
                     <div class="stat-icon"><i class='bx bx-face'></i></div>
-                    <div class="stat-content"><h3 class="stat-value">--</h3><p>por Reconocimiento Facial</p></div>
+                    <div class="stat-content"><h3 class="stat-value">--</h3><p data-i18n="by_facial_recognition">por Reconocimiento Facial</p></div>
                 </div>
                 <div class="stat-card-access" id="access-stats-total-access">
                     <div class="stat-icon"><i class='bx bx-bar-chart-alt'></i></div>
-                    <div class="stat-content"><h3 class="stat-value">--</h3><p>Total de Accesos</p></div>
+                    <div class="stat-content"><h3 class="stat-value">--</h3><p data-i18n="total_accesses">Total de Accesos</p></div>
                 </div>
             </div>
             <hr class="section-divider">

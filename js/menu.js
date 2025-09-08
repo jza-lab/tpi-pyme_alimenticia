@@ -488,7 +488,7 @@ function renderRecords() {
     const user = userMap.get(record.codigo_empleado);
     const userName = user ? `${user.nombre} ${user.apellido || ''}` : t('unknown_employee');
 
-    const capitalizedTipo = record.tipo.charAt(0).toUpperCase() + record.tipo.slice(1);
+    const capitalizedTipo = t(record.tipo);
     const localDateTime = new Date(record.fecha_hora + 'Z').toLocaleString('es-ES');
 
     let estadoDisplay;
@@ -545,9 +545,17 @@ function renderEmployees() {
     return roleMatch && shiftMatch && menuAccessMatch;
   });
 
+  const roleMap = {
+    'Operario': 'role_operator_label',
+    'Analista': 'role_analyst_label',
+    'Supervisor': 'role_supervisor_label',
+    'Gerente': 'role_manager_label'
+  };
+
   dom.employeesList.innerHTML = filteredUsers.map(employee => {
     // Usar el campo 'rol' si existe, de lo contrario, usar la lógica de nivel de acceso como fallback.
-    const roleText = employee.rol || t('role_operator');
+    const roleKey = roleMap[employee.rol] || 'role_operator_label';
+    const roleText = t(roleKey);
     // Crear una clase CSS a partir del nombre del rol para poder darle estilos únicos.
     const roleClass = (employee.rol || 'default').toLowerCase().replace(/\s+/g, '-');
 
