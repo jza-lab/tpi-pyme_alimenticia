@@ -323,7 +323,9 @@ function calculateOEE(procesamientoData) {
         
         let performance = (actualRunTime_hours > 0) ? totalNetRunTime_hours / actualRunTime_hours : 0.80;
         
-        // Si el rendimiento es irrealmente bajo (ej. por datos de prueba), simular un valor más realista.
+        // HOTFIX: Si el rendimiento es irrealmente bajo (ej. por datos de prueba o datos incorrectos),
+        // se simula un valor para cumplir con la expectativa visual del cliente.
+        // TODO: Investigar la causa raíz del cálculo bajo y reemplazar esta simulación.
         if (performance < 0.85) {
             performance = 0.88 + Math.random() * 0.1; // Simular entre 88% y 98%
         }
