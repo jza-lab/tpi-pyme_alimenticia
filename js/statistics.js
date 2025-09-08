@@ -582,6 +582,7 @@ function renderDespachoCharts(stageData) {
             }
         });
     }
+
 }
 
 function renderConservacionCharts(stageData) {
@@ -692,6 +693,14 @@ function renderConservacionCharts(stageData) {
             }
         });
     }
+
+    // Listener para refrescar la vista de estadísticas cuando cambia el idioma
+    document.addEventListener('language-changed', () => {
+        // Solo refresca si la pestaña de estadísticas está activa
+        if (document.getElementById('estadisticas')?.style.display !== 'none') {
+            renderCurrentStatsView();
+        }
+    });
 }
 
 function renderProcesamientoCharts(stageData) {

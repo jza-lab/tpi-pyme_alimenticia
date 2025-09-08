@@ -20,6 +20,8 @@ export const setLanguage = (lang) => {
   localStorage.setItem('language', lang);
   updateUI();
   updateToggle(lang);
+  // Dispara un evento personalizado para que otros módulos puedan reaccionar al cambio
+  document.dispatchEvent(new CustomEvent('language-changed'));
 };
 
 export const updateUI = () => {
