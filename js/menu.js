@@ -152,7 +152,6 @@ const dom = {
   },
   manualEntry: {
     legajoInput: document.getElementById('manual-legajo'),
-    searchBtn: document.getElementById('manual-search-btn'),
     toggleButtons: document.querySelectorAll('.manual-toggle-btn'),
     btnSubmit: document.getElementById('manual-submit-btn'),
     fechaHoraInput: document.getElementById('manual-fecha-hora'),
