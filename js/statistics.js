@@ -1,6 +1,6 @@
 import { getUsers, getAccessRecords } from './state.js';
 import { t } from './i18n-logic.js';
-import { fetchTableData } from './api.js';
+import { fetchTableData, fetchAccessStats } from './api.js';
 
 let userAllowedZones = null;
 

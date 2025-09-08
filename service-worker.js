@@ -18,9 +18,9 @@ const urlsToCache = [
   'js/i18n.js',
   'js/i18n-logic.js',
   'js/statistics.js',
-  'js/manual-entry.js',
   'icono.png',
-  'manifest.json'
+  'manifest.json',
+  'https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css'
 ];
 
 self.addEventListener('install', event => {
