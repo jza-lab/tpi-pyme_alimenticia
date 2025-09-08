@@ -1,3 +1,4 @@
+// js/ui.js
 import { t } from './i18n-logic.js';
 import { APP_CONSTANTS } from './config.js';
 
@@ -142,7 +143,7 @@ export function displayAccessGranted(user, currentLoginType, isOutOfShift) {
 }
 
 function setDenialReason(reason, user) {
-    dom.denialTitle.textContent = t('access_denied_title'); 
+    dom.denialTitle.textContent = t('Acceso Denegado');
     let reasonText = reason;
 
     const lowerCaseReason = reason.toLowerCase();

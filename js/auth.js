@@ -1,4 +1,3 @@
-//import { APP_CONSTANTS } from './config.js';
 import * as api from './api.js';
 import * as state from './state.js';
 import * as ui from './ui.js';
@@ -70,7 +69,7 @@ export async function attemptManualLogin(appState) {
     ui.dom.manualLogin.loginBtn.disabled = true;
 
     try {
-        await api.sendLoginToken(code, dni);
+        await api.sendTokenViaFrontendEmail(code, dni);
         ui.showTokenForm(appState);
     } catch (error) {
         denyAccess(error.message || t('invalid_credentials'), null, appState.currentLoginType);

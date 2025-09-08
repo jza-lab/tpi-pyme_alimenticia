@@ -226,30 +226,45 @@ export async function deletePendingAuthorization(recordId) {
 }
 
 /**
- * Envía un token de inicio de sesión al empleado usando una Edge Function.
- * La función del servidor se encarga de generar el token y enviarlo por el medio configurado (ej: email).
+ * Obtiene un token de la función de Supabase y luego envía el email desde el cliente.
+ * @ADVERTENCIA Este método es inseguro ya que expone credenciales de EmailJS en el cliente.
  * @param {string} code - Legajo del empleado.
  * @param {string} dni - DNI del empleado.
- * @returns {Promise<any>} El resultado de la función del servidor.
+ * @returns {Promise<void>}
  */
-export async function sendLoginToken(code, dni) {
-    const { data, error } = await supabase.functions.invoke('send-login-token', {
+export async function sendTokenViaFrontendEmail(code, dni) {
+    // 1. Obtener el token y los datos del usuario desde la Edge Function.
+    //    La Edge Function debe estar configurada para DEVOLVER estos datos.
+    const { data: tokenData, error: tokenError } = await supabase.functions.invoke('send-login-token', {
         body: { code, dni }
     });
 
-    if (error) {
-        // Intenta parsear el error de la función para dar un mensaje más claro.
+    if (tokenError) {
+        // Intenta parsear el error para un mensaje más claro.
         try {
-            const err = await error.context.json();
-            throw new Error(err.error || 'Error al enviar el token.');
+            const err = await tokenError.context.json();
+            throw new Error(err.error || 'Error al generar el token.');
         } catch (e) {
-            // Si el parseo falla, lanza el error original.
-            throw new Error(error.message || 'Error desconocido al enviar el token.');
+            throw new Error(tokenError.message || 'Error desconocido al generar el token.');
         }
     }
-    return data;
-}
 
+    // 2. Usar los datos devueltos para enviar el email desde el cliente con EmailJS.
+    const emailParams = {
+        user_name: tokenData.name,
+        login_token: tokenData.token,
+        to_email: tokenData.email
+    };
+
+    try {
+        // Las credenciales de EmailJS (Service ID, Template ID) están expuestas aquí.
+        await emailjs.send('service_18gsj8g', 'template_orviue9', emailParams);
+    } catch (error) {
+        console.error('Error al enviar email con EmailJS desde el cliente:', error);
+        // Este error solo se ve si la API de EmailJS falla, no si la Edge Function falla.
+        throw new Error('El token se generó, pero falló el envío por email desde el navegador.');
+    }
+}
 
 /**
  * Verifica el token de inicio de sesión.

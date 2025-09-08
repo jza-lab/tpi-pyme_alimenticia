@@ -1,5 +1,4 @@
 // Importar todos los módulos necesarios
-//import * as api from './api.js';
 import * as face from './face.js';
 import * as state from './state.js';
 import * as ui from './ui.js';
