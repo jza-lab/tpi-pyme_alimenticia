@@ -309,7 +309,7 @@ function initializeManualEntry() {
             me.btnSubmit.disabled = true;
             me.btnSubmit.querySelector('span').textContent = t('registering');
             const isoDate = new Date(me.fechaHoraInput.value).toISOString();
-            await api.registerAccess(selectedUser.codigo_empleado, selectedType, isoDate);
+            await api.registerAccess(selectedUser.codigo_empleado, selectedType, {}, 'manual', isoDate);
             alert(t('registration_saved_success', { type: selectedType.toUpperCase(), name: selectedUser.nombre, legajo: selectedUser.codigo_empleado }));
             
             // Reset
