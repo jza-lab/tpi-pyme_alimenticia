@@ -44,17 +44,25 @@ export async function grantAccess(user, appState, metodo_autenticacion) {
         ui.displayAccessGranted(user, appState.currentLoginType, isOutOfShift);
 
     } catch (error) {
-        console.error(t('grant_access_error'), error);
-        let errorMessage = t('unknown_registration_error');
-        if (error.context && typeof error.context.json === 'function') {
-            try {
-                const jsonError = await error.context.json();
-                errorMessage = jsonError.error || errorMessage;
-            } catch (e) { errorMessage = error.message; }
+        // Primero, verificar si es un error de tipo 409 (Conflicto)
+        if (error.context && error.context.status === 409) {
+            console.warn('Se detectó un conflicto (409). El usuario ya tiene una solicitud pendiente.');
+            // Mostrar la pantalla de acceso provisional, ya que la solicitud original sigue siendo válida.
+            ui.showScreen('pending-review-screen');
         } else {
-            errorMessage = error.message;
+            // Si es cualquier otro tipo de error, usar la lógica existente.
+            console.error(t('grant_access_error'), error);
+            let errorMessage = t('unknown_registration_error');
+            if (error.context && typeof error.context.json === 'function') {
+                try {
+                    const jsonError = await error.context.json();
+                    errorMessage = jsonError.error || errorMessage;
+                } catch (e) { errorMessage = error.message; }
+            } else {
+                errorMessage = error.message;
+            }
+            denyAccess(errorMessage, user, appState.currentLoginType);
         }
-        denyAccess(errorMessage, user, appState.currentLoginType);
     } finally {
         appState.isProcessingAccess = false;
     }
