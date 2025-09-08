@@ -81,14 +81,14 @@ async function startFacialLogin(type) {
 
     try {
         await startVideoStream(loginVideo);
-        runFacialRecognition();
+        runFacialRecognition('facial'); // Pasar el método de autenticación
     } catch (error) {
         ui.updateStatus(t('camera_access_error'), 'error');
         ui.showManualLoginOption(appState.currentLoginType);
     }
 }
 
-function runFacialRecognition() {
+function runFacialRecognition(metodo_autenticacion) {
     ui.updateStatus(t('searching_for_match'), 'info');
     let recognitionAttempts = 0;
     const maxAttempts = 15;
@@ -117,7 +117,7 @@ function runFacialRecognition() {
                     if (user) {
                         stopFacialRecognition();
                         ui.updateStatus(t('user_recognized', { name: user.nombre }), 'success');
-                        auth.grantAccess(user, appState);
+                        auth.grantAccess(user, appState, metodo_autenticacion);
                     }
                 }
             }

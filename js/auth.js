@@ -13,20 +13,24 @@ function getCurrentShift() {
     return getShiftForHour(new Date().getHours());
 }
 
-async function handleAccessRequest(user, loginType, authMethod, isOutOfShift) {
-    if (isOutOfShift) {
-        const details = {
+async function handleAccessRequest(user, loginType, isOutOfShift, metodo_autenticacion) {
+    const details = isOutOfShift
+        ? {
             turno_correspondiente: user.turno,
             turno_intento: getCurrentShift(),
             motivo: t('out_of_shift_attempt')
-        };
-        return api.requestImmediateAccess(user.codigo_empleado, loginType, details, authMethod);
+        }
+        : { motivo: t('in_shift_entry_reason') };
+
+    // La función que se llama depende de si está fuera de turno o no
+    if (isOutOfShift) {
+        return api.requestImmediateAccess(user.codigo_empleado, loginType, details, metodo_autenticacion);
     } else {
-        return api.registerAccess(user.codigo_empleado, loginType, authMethod);
+        return api.registerAccess(user.codigo_empleado, loginType, details, metodo_autenticacion);
     }
 }
 
-export async function grantAccess(user, appState, authMethod) {
+export async function grantAccess(user, appState, metodo_autenticacion) {
     if (appState.isProcessingAccess) return;
     appState.isProcessingAccess = true;
 
@@ -34,13 +38,10 @@ export async function grantAccess(user, appState, authMethod) {
         const currentShift = getCurrentShift();
         const isOutOfShift = (appState.currentLoginType === 'ingreso' && user.turno && user.turno !== currentShift);
 
-        const response = await handleAccessRequest(user, appState.currentLoginType, authMethod, isOutOfShift);
+        await handleAccessRequest(user, appState.currentLoginType, isOutOfShift, metodo_autenticacion);
         await state.refreshState();
 
-        // Determinar si mostrar la pantalla de pendiente. Ocurre si el acceso es fuera de turno
-        // O si la API nos informa que ya existía una solicitud pendiente.
-        const showPendingScreen = isOutOfShift || (response && response.status === 'already_pending');
-        ui.displayAccessGranted(user, appState.currentLoginType, showPendingScreen);
+        ui.displayAccessGranted(user, appState.currentLoginType, isOutOfShift);
 
     } catch (error) {
         console.error(t('grant_access_error'), error);
@@ -91,8 +92,7 @@ export async function verifyToken(appState) {
     try {
         const { user } = await api.verifyLoginToken(token, code, dni);
         if (appState.tokenTimerInterval) clearInterval(appState.tokenTimerInterval);
-        // Se pasa 'credenciales' como método de autenticación
-        grantAccess(user, appState, 'credenciales');
+        grantAccess(user, appState, 'credenciales'); // Pasar método 'credenciales'
     } catch (error) {
         denyAccess(error.message || t('invalid_or_expired_token'), null, appState.currentLoginType);
     }
