@@ -247,7 +247,12 @@ export const translations = {
     "alert_oee_warning": "El OEE actual ({{oee}}%) tiene margen de mejora. Meta: >85%",
     "alert_rejection_rate": "ALERTA: Tasa de rechazo de materia prima ({{rate}}%) supera el umbral del {{threshold}}%.",
     "alert_high_waste": "ADVERTENCIA: Productos con desperdicio un {{multiplier}}% por encima del promedio: {{products}}.",
-    "alert_simulation_active": "Los datos de OEE mostrados son simulados. Conecte con la base de datos de procesamiento para obtener métricas reales."
+    "alert_simulation_active": "Los datos de OEE mostrados son simulados. Conecte con la base de datos de procesamiento para obtener métricas reales.",
+    
+    "access_method_title": "Estadísticas por Método de Acceso",
+    "access_alerts_config_title": "Configuración de Alertas de Acceso",
+    "alert_label_facial_recognition": "Umbral de Alerta de Reconocimiento Facial (%)",
+    "alert_low_facial_recognition_usage": "Alerta: El uso de reconocimiento facial está en un {{percentage}}%, por debajo del umbral de {{threshold}}%."
   },
   en: {
     // index.html
@@ -489,6 +494,11 @@ export const translations = {
     "alert_oee_warning": "The current OEE ({{oee}}%) has room for improvement. Goal: >85%",
     "alert_rejection_rate": "ALERT: Raw material rejection rate ({{rate}}%) exceeds the {{threshold}}% threshold.",
     "alert_high_waste": "WARNING: Products with waste {{multiplier}}% above average: {{products}}.",
-    "alert_simulation_active": "The OEE data shown is simulated. Connect to the processing database for real metrics."
+    "alert_simulation_active": "The OEE data shown is simulated. Connect to the processing database for real metrics.",
+
+    "access_method_title": "Access Method Statistics",
+    "access_alerts_config_title": "Access Alert Configuration",
+    "alert_label_facial_recognition": "Facial Recognition Alert Threshold (%)",
+    "alert_low_facial_recognition_usage": "Alert: Facial recognition usage is at {{percentage}}%, below the {{threshold}}% threshold."
   }
 };

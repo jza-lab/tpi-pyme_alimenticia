@@ -117,8 +117,7 @@ function runFacialRecognition() {
                     if (user) {
                         stopFacialRecognition();
                         ui.updateStatus(t('user_recognized', { name: user.nombre }), 'success');
-                        // Se pasa 'reconocimiento_facial' como método de autenticación
-                        auth.grantAccess(user, appState, 'reconocimiento_facial');
+                        auth.grantAccess(user, appState);
                     }
                 }
             }
@@ -159,6 +158,11 @@ function attachListeners() {
 
     el('supervisor-menu-btn')?.addEventListener('click', auth.handleSupervisorMenuClick);
     el('supervisor-menu-btn-denied')?.addEventListener('click', auth.handleSupervisorMenuClick);
+
+    el('continue-to-menu-from-pending')?.addEventListener('click', () => {
+        // El usuario ya tiene acceso provisional, simplemente lo llevamos al menú.
+        window.location.href = 'menu.html';
+    });
 }
 
 // ------------------- Inicialización de la App ------------------- //

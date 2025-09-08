@@ -1,6 +1,6 @@
 import { getUsers, getAccessRecords } from './state.js';
 import { t } from './i18n-logic.js';
-import { fetchTableData, fetchAccessStats } from './api.js';
+import { fetchTableData } from './api.js';
 
 let userAllowedZones = null;
 
@@ -138,19 +138,9 @@ function calculateYield(procesamientoData) {
 }
 
 function calculateDocumentationCompliance(despachoData) {
-    if (!despachoData || despachoData.length === 0) return 0;
+    if (!despachoData || despachoData.length === 0) return 0.95; // Retornar un valor por defecto
     const totalDespachos = despachoData.length;
-    
-    const completos = despachoData.filter(item => {
-        const docStatus = item['Documentación completa'];
-        if (typeof docStatus === 'string') {
-            const upperStatus = docStatus.trim().toUpperCase();
-            return upperStatus === 'SI' || upperStatus === 'TRUE';
-        }
-        // También maneja el caso de que el valor sea un booleano `true`
-        return docStatus === true;
-    }).length;
-
+    const completos = despachoData.filter(item => item['Documentación completa'] === 'Si').length;
     return totalDespachos > 0 ? completos / totalDespachos : 0;
 }
 
@@ -160,13 +150,11 @@ function generateInsights(allData, oeeResults) {
     const insights = [];
     const alerts = {
         rejectionRate: false,
-        oee: 'ok',
-        facialRecognition: false
+        oee: 'ok'
     };
 
     const rejectionThreshold = parseFloat(document.getElementById('rejection-threshold').value) / 100;
     const wasteThresholdMultiplier = parseFloat(document.getElementById('waste-threshold').value) / 100;
-    const facialThreshold = parseInt(document.getElementById('facial-recognition-threshold').value, 10);
     
     const latestOee = oeeResults.datasets.oee.length > 0 ? oeeResults.datasets.oee[oeeResults.datasets.oee.length - 1] : null;
     if (latestOee !== null) {
@@ -212,23 +200,49 @@ function generateInsights(allData, oeeResults) {
     } else if (!allData.Procesamiento) {
          insights.push({ text: t('alert_simulation_active'), level: 'warning' });
     }
-
-    // Alerta de Reconocimiento Facial
-    if (allData.AccessStats) {
-        const { credenciales, reconocimiento_facial } = allData.AccessStats;
-        if (credenciales > reconocimiento_facial + facialThreshold) {
-            insights.push({
-                text: t('alert_facial_recognition_warning', {
-                    credentials_count: credenciales,
-                    facial_count: reconocimiento_facial
-                }),
-                level: 'warning'
-            });
-            alerts.facialRecognition = true;
-        }
-    }
     
     return { insights, alerts };
+}
+
+async function generateAccessInsights() {
+    const insightsContainer = document.getElementById('insights-container');
+    const insightsList = document.getElementById('insights-list');
+
+    try {
+        // Asegurarse de que el contenedor de insights esté visible en la pestaña de Accesos
+        if (insightsContainer) insightsContainer.style.display = 'block';
+
+        const stats = await fetchAccessStats();
+        const facialThresholdInput = document.getElementById('facial-recognition-threshold');
+        
+        if (!facialThresholdInput || !insightsList) return;
+
+        // Limpiar alertas faciales previas
+        const existingAlert = insightsList.querySelector('[data-alert-type="facial"]');
+        if (existingAlert) existingAlert.remove();
+
+        const facialThreshold = parseInt(facialThresholdInput.value, 10);
+        const totalAccesses = (stats.credenciales || 0) + (stats.reconocimiento_facial || 0);
+
+        if (totalAccesses === 0) return; // No hay datos para analizar
+
+        const facialPercentage = (stats.reconocimiento_facial / totalAccesses) * 100;
+
+        if (facialPercentage < facialThreshold) {
+            const insightText = t('alert_low_facial_recognition_usage', {
+                percentage: facialPercentage.toFixed(1),
+                threshold: facialThreshold
+            });
+            
+            const alertWrapper = document.createElement('div');
+            alertWrapper.setAttribute('data-alert-type', 'facial');
+            alertWrapper.innerHTML = `<div class="employee-card" style="border-left-color: #f39c12;"><p>${insightText}</p></div>`;
+            
+            insightsList.appendChild(alertWrapper);
+        }
+    } catch (error) {
+        console.error("Error al generar alerta de acceso:", error);
+    }
 }
 
 
@@ -290,30 +304,15 @@ function calculateOEE(procesamientoData) {
         let quality = (totalCount > 0) ? totalGoodCount / totalCount : 0.95;
         quality = Math.min(1, Math.max(0, quality));
 
-        // --- Cálculo de Rendimiento (Performance) ---
-        // Se prioriza usar el dato pre-calculado 'Rendimiento (en %)' si existe,
-        // ya que es más fiable que el cálculo manual.
-        const performanceValues = dailyData
-            .map(p => parseFloat(p['Rendimiento (en %)']))
-            .filter(v => !isNaN(v));
-
-        let performance;
-        if (performanceValues.length > 0) {
-            // Calcular el promedio del día y convertir de % a decimal
-            const sum = performanceValues.reduce((a, b) => a + b, 0);
-            performance = (sum / performanceValues.length) / 100;
-        } else {
-            // Fallback al cálculo manual si la columna no está disponible
-            let totalNetRunTime_hours = 0;
-            dailyData.forEach(p => {
-                const idealCycle_seconds = idealCycleTimes_seconds[p.Producto] || 6;
-                const processedCount = parseFloat(p['Cantidades Procesadas (en Unidades)']) || 100;
-                totalNetRunTime_hours += (idealCycle_seconds * processedCount) / 3600;
-            });
-            performance = (actualRunTime_hours > 0) ? totalNetRunTime_hours / actualRunTime_hours : 0.80;
-        }
+        let totalNetRunTime_hours = 0;
+        dailyData.forEach(p => {
+            const idealCycle_seconds = idealCycleTimes_seconds[p.Producto] || 6;
+            const processedCount = parseFloat(p['Cantidades Procesadas (en Unidades)']) || 100;
+            totalNetRunTime_hours += (idealCycle_seconds * processedCount) / 3600;
+        });
         
-        performance = Math.min(1, Math.max(0, performance)); // Asegurar que el valor esté entre 0 y 1
+        let performance = (actualRunTime_hours > 0) ? totalNetRunTime_hours / actualRunTime_hours : 0.80;
+        performance = Math.min(1, Math.max(0, performance));
         
         results.datasets.availability.push(availability);
         results.datasets.performance.push(performance);
@@ -326,36 +325,35 @@ function calculateOEE(procesamientoData) {
 }
 
 // --- Renderizado de Gráficos ---
+async function renderAccessStats() {
+    const placeholder = document.getElementById('access-stats-placeholder');
+    if (!placeholder) return;
 
-/**
- * Renderiza las estadísticas de métodos de acceso en las tarjetas correspondientes.
- * @param {string} suffix - El sufijo para los IDs de los elementos HTML ('-indicators' o '-access').
- */
-async function renderAccessStats(suffix) {
-    const container = document.getElementById('access-charts-view');
-    if (!container) return;
-
-    // Crear el título y el divisor si no existen
-    if (!container.querySelector('.subsection-title')) {
-        const title = document.createElement('h2');
-        title.className = 'subsection-title';
-        title.textContent = t('access_method_title', 'Estadísticas por Método de Acceso');
-        
-        const divider = document.createElement('hr');
-        divider.className = 'section-divider';
-
-        const statsGrid = container.querySelector('.access-stats-grid');
-        container.insertBefore(title, statsGrid);
-        container.insertBefore(divider, statsGrid.nextSibling); // Poner el divisor después de la grilla
+    // Solo construir el HTML una vez
+    if (placeholder.innerHTML === '') {
+        placeholder.innerHTML = `
+            <h2 class="subsection-title" data-i18n="access_method_title">Estadísticas por Método de Acceso</h2>
+            <div class="access-stats-grid">
+                <div class="stat-card-access" id="access-stats-credentials-access">
+                    <div class="stat-icon"><i class='bx bx-id-card'></i></div>
+                    <div class="stat-content"><h3 class="stat-value">--</h3><p>por Credenciales</p></div>
+                </div>
+                <div class="stat-card-access" id="access-stats-facial-access">
+                    <div class="stat-icon"><i class='bx bx-face'></i></div>
+                    <div class="stat-content"><h3 class="stat-value">--</h3><p>por Reconocimiento Facial</p></div>
+                </div>
+                <div class="stat-card-access" id="access-stats-total-access">
+                    <div class="stat-icon"><i class='bx bx-bar-chart-alt'></i></div>
+                    <div class="stat-content"><h3 class="stat-value">--</h3><p>Total de Accesos</p></div>
+                </div>
+            </div>
+            <hr class="section-divider">
+        `;
     }
-
-    const credsEl = document.querySelector(`#access-stats-credentials${suffix} .stat-value`);
-    const facialEl = document.querySelector(`#access-stats-facial${suffix} .stat-value`);
-    const totalEl = document.querySelector(`#access-stats-total${suffix} .stat-value`);
-
-    if (!credsEl || !facialEl || !totalEl) {
-        return; // No hacer nada si los elementos no están en la vista actual
-    }
+    
+    const credsEl = document.querySelector("#access-stats-credentials-access .stat-value");
+    const facialEl = document.querySelector("#access-stats-facial-access .stat-value");
+    const totalEl = document.querySelector("#access-stats-total-access .stat-value");
 
     // Estado de carga
     credsEl.textContent = '--';
@@ -1049,7 +1047,8 @@ async function renderStage(stage) {
     try {
         if (stage === 'Accesos') {
             accessChartsView.style.display = 'block';
-            renderAccessStats('-access'); // Cargar estadísticas de acceso
+            renderAccessStats();
+            generateAccessInsights();
             const users = getUsers();
             const accessRecords = getAccessRecords();
 
@@ -1114,19 +1113,13 @@ async function renderStage(stage) {
             indicatorsView.style.display = 'block';
             
             try {
-                const [recepcionData, procesamientoData, despachoData, accessStats] = await Promise.all([
+                const [recepcionData, procesamientoData, despachoData] = await Promise.all([
                     fetchTableData('recepcion'),
                     fetchTableData('procesamiento'),
-                    fetchTableData('despacho'),
-                    fetchAccessStats()
+                    fetchTableData('despacho')
                 ]);
 
-                const allData = { 
-                    Recepcion: recepcionData, 
-                    Procesamiento: procesamientoData, 
-                    Despacho: despachoData,
-                    AccessStats: accessStats
-                };
+                const allData = { Recepcion: recepcionData, Procesamiento: procesamientoData, Despacho: despachoData };
                 const oeeResults = calculateOEE(allData.Procesamiento);
                 const { insights, alerts } = generateInsights(allData, oeeResults);
 
@@ -1273,6 +1266,7 @@ function initializeStatistics(allowedZones) {
     // Event listeners para los umbrales
     const rejectionThreshold = document.getElementById('rejection-threshold');
     const wasteThreshold = document.getElementById('waste-threshold');
+    const facialThreshold = document.getElementById('facial-recognition-threshold');
     
     if (rejectionThreshold) {
         rejectionThreshold.addEventListener('change', () => {
@@ -1286,6 +1280,14 @@ function initializeStatistics(allowedZones) {
         wasteThreshold.addEventListener('change', () => {
             if (document.querySelector('.stage-btn.active')?.dataset.stage === 'Indicadores') {
                 renderStage('Indicadores');
+            }
+        });
+    }
+
+    if (facialThreshold) {
+        facialThreshold.addEventListener('change', () => {
+            if (document.querySelector('.stage-btn.active')?.dataset.stage === 'Accesos') {
+                renderStage('Accesos');
             }
         });
     }

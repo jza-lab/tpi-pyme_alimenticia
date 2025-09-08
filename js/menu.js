@@ -181,6 +181,7 @@ function showSection(sectionId, isMainSection = true) {
     if (sectionElement) {
         sectionElement.classList.add('active');
     }
+    updateUI();
 
     currentSection = sectionId;
 

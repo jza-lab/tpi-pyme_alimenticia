@@ -170,13 +170,16 @@
                 <div class="result-icon">
                     <i class='bx bx-time-five'></i>
                 </div>
-                <h2 data-i18n="access_granted_pending_title">Ingreso Registrado</h2>
-                <p data-i18n="access_granted_pending_message">Su ingreso ha sido registrado, pero está fuera de su turno
-                    y será revisado por un supervisor.</p>
+                <h2 data-i18n="access_provisional_title">Acceso Provisional Concedido</h2>
+                <p data-i18n="access_provisional_message">Su acceso ha sido registrado. Será revisado por un supervisor ya que está fuera de su turno.</p>
 
                 <div class="result-actions">
-                    <button id="back-after-pending-review" class="btn btn-primary"
-                        data-i18n="understood">Entendido</button>
+                    <button id="continue-to-menu-from-pending" class="btn btn-primary">
+                        <i class='bx bx-log-in-circle'></i>
+                        <span data-i18n="continue_to_menu">Continuar al Menú</span>
+                    </button>
+                    <button id="back-after-pending-review" class="btn btn-secondary"
+                        data-i18n="understood">Volver al Inicio</button>
                 </div>
             </div>
         </div>
