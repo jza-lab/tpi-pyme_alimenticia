@@ -404,6 +404,7 @@ body {
     box-shadow: var(--shadow-medium);
     border: 1px solid var(--border-color);
     margin-bottom: 30px;
+    margin-top: 30px;
     position: relative;
     overflow: hidden;
 }
@@ -1185,7 +1186,7 @@ body.sidebar-open .mobile-sidebar-overlay {
     .form-card,
     .capture-card {
         padding: 20px;
-        margin: 0 0 20px;
+        margin: 0 0 20px 30px;
     }
     
     .authorization-card,
@@ -1629,6 +1630,7 @@ canvas {
 #manual-submit-btn {
     width: 100%;
     padding: 18px 24px;
+    margin-top: 30px;
     border: none;
     border-radius: var(--radius-medium);
     background: var(--button-primary-bg, var(--gradient-primary));
