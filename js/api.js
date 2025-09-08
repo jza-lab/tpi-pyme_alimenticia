@@ -132,6 +132,7 @@ export async function registerAccess(employeeCode, type, details, metodo_autenti
     }
 
     // El nombre de la Edge Function es 'access'
+    console.log("DEBUG: Enviando a access:", body);
     const { data, error } = await supabase.functions.invoke('access', {
         body: body
     });

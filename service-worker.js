@@ -5,10 +5,8 @@ const urlsToCache = [
   '/',
   'index.html',
   'menu.html',
-  'manual-entry.html',
   'index.css',
   'menu.css',
-  'manual-entry.css',
   'js/main.js',
   'js/ui.js',
   'js/auth.js',
@@ -20,7 +18,6 @@ const urlsToCache = [
   'js/i18n.js',
   'js/i18n-logic.js',
   'js/statistics.js',
-  'js/manual-entry.js',
   'icono.png',
   'manifest.json'
 ];
