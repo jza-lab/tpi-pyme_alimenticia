@@ -1,6 +1,6 @@
 import { getUsers, getAccessRecords } from './state.js';
 import { t } from './i18n-logic.js';
-import { fetchTableData } from './api.js';
+import { fetchTableData, fetchAccessStats } from './api.js';
 
 let userAllowedZones = null;
 
@@ -138,9 +138,13 @@ function calculateYield(procesamientoData) {
 }
 
 function calculateDocumentationCompliance(despachoData) {
-    if (!despachoData || despachoData.length === 0) return 0.95; // Retornar un valor por defecto
+    if (!despachoData || despachoData.length === 0) return 0; // Devolver 0 si no hay datos.
     const totalDespachos = despachoData.length;
-    const completos = despachoData.filter(item => item['Documentación completa'] === 'Si').length;
+    // Se hace la comparación insensible a mayúsculas/minúsculas y se eliminan espacios en blanco.
+    const completos = despachoData.filter(item => {
+        const docStatus = item['Documentación completa'];
+        return docStatus && docStatus.trim().toUpperCase() === 'SI';
+    }).length;
     return totalDespachos > 0 ? completos / totalDespachos : 0;
 }
 
@@ -263,15 +267,30 @@ function calculateOEE(procesamientoData) {
         let quality = (totalCount > 0) ? totalGoodCount / totalCount : 0.95;
         quality = Math.min(1, Math.max(0, quality));
 
-        let totalNetRunTime_hours = 0;
-        dailyData.forEach(p => {
-            const idealCycle_seconds = idealCycleTimes_seconds[p.Producto] || 6;
-            const processedCount = parseFloat(p['Cantidades Procesadas (en Unidades)']) || 100;
-            totalNetRunTime_hours += (idealCycle_seconds * processedCount) / 3600;
-        });
+        // --- Cálculo de Rendimiento (Performance) ---
+        // Se prioriza usar el dato pre-calculado 'Rendimiento (en %)' si existe,
+        // ya que es más fiable que el cálculo manual.
+        const performanceValues = dailyData
+            .map(p => parseFloat(p['Rendimiento (en %)']))
+            .filter(v => !isNaN(v));
+
+        let performance;
+        if (performanceValues.length > 0) {
+            // Calcular el promedio del día y convertir de % a decimal
+            const sum = performanceValues.reduce((a, b) => a + b, 0);
+            performance = (sum / performanceValues.length) / 100;
+        } else {
+            // Fallback al cálculo manual si la columna no está disponible
+            let totalNetRunTime_hours = 0;
+            dailyData.forEach(p => {
+                const idealCycle_seconds = idealCycleTimes_seconds[p.Producto] || 6;
+                const processedCount = parseFloat(p['Cantidades Procesadas (en Unidades)']) || 100;
+                totalNetRunTime_hours += (idealCycle_seconds * processedCount) / 3600;
+            });
+            performance = (actualRunTime_hours > 0) ? totalNetRunTime_hours / actualRunTime_hours : 0.80;
+        }
         
-        let performance = (actualRunTime_hours > 0) ? totalNetRunTime_hours / actualRunTime_hours : 0.80;
-        performance = Math.min(1, Math.max(0, performance));
+        performance = Math.min(1, Math.max(0, performance)); // Asegurar que el valor esté entre 0 y 1
         
         results.datasets.availability.push(availability);
         results.datasets.performance.push(performance);
@@ -284,6 +303,40 @@ function calculateOEE(procesamientoData) {
 }
 
 // --- Renderizado de Gráficos ---
+
+/**
+ * Renderiza las estadísticas de métodos de acceso en las tarjetas correspondientes.
+ * @param {string} suffix - El sufijo para los IDs de los elementos HTML ('-indicators' o '-access').
+ */
+async function renderAccessStats(suffix) {
+    const credsEl = document.querySelector(`#access-stats-credentials${suffix} .stat-value`);
+    const facialEl = document.querySelector(`#access-stats-facial${suffix} .stat-value`);
+    const totalEl = document.querySelector(`#access-stats-total${suffix} .stat-value`);
+
+    if (!credsEl || !facialEl || !totalEl) {
+        return; // No hacer nada si los elementos no están en la vista actual
+    }
+
+    // Estado de carga
+    credsEl.textContent = '--';
+    facialEl.textContent = '--';
+    totalEl.textContent = '--';
+
+    try {
+        const stats = await fetchAccessStats();
+        const total = (stats.credenciales || 0) + (stats.reconocimiento_facial || 0);
+
+        credsEl.textContent = stats.credenciales || 0;
+        facialEl.textContent = stats.reconocimiento_facial || 0;
+        totalEl.textContent = total;
+    } catch (error) {
+        console.error('Error al renderizar estadísticas de acceso:', error);
+        credsEl.textContent = '⚠️';
+        facialEl.textContent = '⚠️';
+        totalEl.textContent = '⚠️';
+    }
+}
+
 let chartInstances = {};
 
 function destroyCharts() {
@@ -956,6 +1009,7 @@ async function renderStage(stage) {
     try {
         if (stage === 'Accesos') {
             accessChartsView.style.display = 'block';
+            renderAccessStats('-access'); // Cargar estadísticas de acceso
             const users = getUsers();
             const accessRecords = getAccessRecords();
 
@@ -1018,6 +1072,7 @@ async function renderStage(stage) {
 
         } else if (stage === 'Indicadores') {
             indicatorsView.style.display = 'block';
+            renderAccessStats('-indicators'); // Cargar estadísticas de acceso
             
             try {
                 const [recepcionData, procesamientoData, despachoData] = await Promise.all([

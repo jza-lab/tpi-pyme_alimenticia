@@ -69,6 +69,22 @@ export async function fetchUsers() {
 }
 
 /**
+ * Obtiene las estadísticas de métodos de acceso desde la Edge Function.
+ * @returns {Promise<{credenciales: number, reconocimiento_facial: number}>}
+ */
+export async function fetchAccessStats() {
+    const { data, error } = await supabase.functions.invoke('get-access-stats');
+
+    if (error) {
+        console.error('Error al obtener estadísticas de acceso:', error);
+        // Devolver un objeto por defecto en caso de error para no romper la UI
+        return { credenciales: 0, reconocimiento_facial: 0 };
+    }
+
+    return data;
+}
+
+/**
  * Obtiene todos los registros de acceso de la base de datos.
  * @returns {Promise<Array>} Una lista de registros de acceso.
  */
