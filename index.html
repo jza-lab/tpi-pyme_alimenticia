@@ -2,104 +2,211 @@
 <html lang="es">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control de Acceso por Reconocimiento Facial</title>
-
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap" rel="stylesheet">
-
-  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-
-  <script type="module" src="js/app.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Acceso por Reconocimiento Facial</title>
+    <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
+    <link rel="stylesheet" href="index.css">
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
 </head>
 
 <body>
-  <div class="main-wrapper">
-    <div class="container">
-      <div class="content">
-
-        <!-- HOME -->
-        <section id="home-screen" class="screen active">
-          <h1 class="titulo">Bienvenido</h1>
-          <p class="intro">Sistema de reconocimiento facial para registro y autenticación de usuarios</p>
-
-          <!-- LOGO: centered, controlled size -->
-          <div class="logo">
-            <img src="icono.png" alt="Logo de la empresa">
-          </div>
-
-          <p class="subtitle">Seleccione una opción para continuar:</p>
-
-          <div class="action-buttons">
-            <button id="ingreso-btn" class="btn btn-success"><span>Registrar Ingreso</span></button>
-            <button id="egreso-btn" class="btn btn-secondary"><span>Registrar Egreso</span></button>
-          </div>
-        </section>
-
-        <!-- LOGIN (ingreso / egreso) -->
-        <section id="login-screen" class="screen">
-          <h2 id="login-title">Registro de Ingreso/Egreso</h2>
-          <p id="login-description">Por favor, colóquese frente a la cámara.</p>
-
-          <div class="video-container">
-            <video id="login-video" autoplay muted playsinline></video>
-            <canvas id="login-overlay"></canvas>
-          </div>
-
-          <div id="countdown" class="countdown">5</div>
-          <div id="login-status" class="status info">Buscando coincidencias...</div>
-
-          <div class="action-buttons">
-            <button id="back-to-home-from-denied" class="btn btn-secondary">Volver al Inicio</button>
-          </div>
-
-          <div id="manual-login" class="manual-login" style="display:none;">
-            <h3>Inicio de Sesión Manual</h3>
-            <div class="form-group">
-              <label for="manual-operator-code">Código:</label>
-              <input type="text" id="manual-operator-code">
+    <!-- Pantalla Principal -->
+    <div class="screen active" id="home-screen">
+        <div class="container">
+            <div class="main-header">
+                <h1 data-i18n="app_title">Control de Acceso por Reconocimiento Facial</h1>
+                <p class="subtitle" data-i18n="intro">Sistema de reconocimiento facial para registro y autenticación de
+                    usuarios</p>
             </div>
-            <div class="form-group">
-              <label for="manual-operator-dni">DNI:</label>
-              <input type="text" id="manual-operator-dni">
+
+            <div class="welcome-card">
+                <div class="card-header">
+                    <h2 data-i18n="welcome">Bienvenido</h2>
+                    <p data-i18n="select_option">Seleccione una opción para continuar:</p>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="action-btn ingreso-btn" id="ingreso-btn">
+                        <div class="btn-icon">
+                            <i class='bx bx-log-in'></i>
+                        </div>
+                        <div class="btn-content">
+                            <span class="btn-title" data-i18n="register_income">Registrar Ingreso</span>
+                            <span class="btn-subtitle" data-i18n="access_establishment">Acceso al establecimiento</span>
+                        </div>
+                    </button>
+
+                    <button class="action-btn egreso-btn" id="egreso-btn">
+                        <div class="btn-icon">
+                            <i class='bx bx-log-out'></i>
+                        </div>
+                        <div class="btn-content">
+                            <span class="btn-title" data-i18n="register_exit">Registrar Egreso</span>
+                            <span class="btn-subtitle" data-i18n="exit_establishment">Salida del establecimiento</span>
+                        </div>
+                    </button>
+                </div>
             </div>
-            <button id="manual-login-btn" class="btn">Iniciar Sesión</button>
-            <button id="retry-facial-login-btn" class="btn btn-secondary">Reintentar</button>
-          </div>
-        </section>
 
-        <!-- ACCESS GRANTED -->
-        <section id="access-granted-screen" class="screen">
-          <div class="status success">
-            <h2>¡Registro Exitoso!</h2>
-            <p id="welcome-message"></p>
-          </div>
-          <div class="action-buttons-small">
-            <button id="back-after-access" class="btn">Volver al Inicio</button>
-            <button id="supervisor-menu-btn" class="btn btn-info" style="display:none;">Menú Supervisor</button>
-          </div>
-        </section>
-
-        <!-- ACCESS DENIED -->
-        <section id="access-denied-screen" class="screen">
-          <div class="status error">
-            <h2>Acceso Denegado</h2>
-            <p id="denial-reason"></p>
-          </div>
-          <div class="action-buttons-small">
-            <button id="try-again-btn" class="btn">Intentar Nuevamente</button>
-            <button id="back-to-home-from-denied-2" class="btn btn-secondary">Volver al Inicio</button>
-          </div>
-          <button id="supervisor-menu-btn-denied" class="btn btn-info" style="display:none;">Menú Supervisor</button>
-        </section>
-
-      </div>
+            <div class="language-toggle">
+                <label class="toggle-container">
+                    <span class="toggle-label"><span class="fi fi-es"></span> ESP</span>
+                    <input type="checkbox" id="language-toggle">
+                    <span class="slider"></span>
+                    <span class="toggle-label">ENG <span class="fi fi-us"></span></span>
+                </label>
+            </div>
+        </div>
     </div>
-  </div>
+
+
+    <!-- Pantalla de Login/Reconocimiento -->
+    <div class="screen" id="login-screen">
+        <div class="container">
+            <div class="login-header">
+                <h2 id="login-title" data-i18n="login_title">Registro de Ingreso/Egreso</h2>
+                <p id="login-description" data-i18n="login_description">Por favor, colóquese frente a la cámara.</p>
+            </div>
+
+            <div class="video-container">
+                <video id="login-video" autoplay muted></video>
+                <canvas id="login-overlay"></canvas>
+                <div class="video-frame"></div>
+            </div>
+
+            <div class="status-container">
+                <p id="login-status" class="status info" data-i18n="searching_for_match">Buscando coincidencias...</p>
+            </div>
+
+            <div id="manual-login" class="manual-login">
+                <h3 data-i18n="manual_login">Inicio de Sesión Manual</h3>
+
+                <div id="credentials-form" class="credentials-form">
+                    <div class="input-group">
+                        <label for="manual-operator-code" data-i18n="operator_code_label">Legajo:</label>
+                        <input type="text" id="manual-operator-code" placeholder="Ingrese su legajo" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="manual-operator-dni" data-i18n="operator_dni_label">DNI:</label>
+                        <input type="text" id="manual-operator-dni" placeholder="Ingrese su DNI" required>
+                    </div>
+                    <button id="manual-login-btn" class="btn btn-primary" data-i18n="manual_login_button">Iniciar
+                        Sesión</button>
+                </div>
+
+                <div id="token-form" class="token-form">
+                    <div class="input-group">
+                        <label for="manual-token">Token de Verificación:</label>
+                        <input type="text" id="manual-token" placeholder="Ingrese el token recibido" required>
+                    </div>
+                    <div class="timer-container">
+                        <span>Tiempo restante: </span>
+                        <span id="token-timer" class="timer">15:00</span>
+                    </div>
+                    <button id="verify-token-btn" class="btn btn-primary">Verificar Token</button>
+                </div>
+
+                <button id="retry-facial-login-btn" class="btn btn-secondary"
+                    data-i18n="retry_facial_login">Reintentar</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Pantalla de Acceso Concedido -->
+    <div class="screen" id="access-granted-screen">
+        <div class="container">
+            <div class="result-card success">
+                <div class="result-icon">
+                    <i class='bx bx-check-circle'></i>
+                </div>
+                <h2 data-i18n="access_granted_title">¡Registro Exitoso!</h2>
+                <p id="welcome-message" class="result-message">Su acceso ha sido registrado correctamente.</p>
+
+                <div class="result-actions">
+                    <button id="supervisor-menu-btn" class="btn btn-primary supervisor-btn">
+                        <i class='bx bx-user-pin'></i>
+                        <span data-i18n="supervisor_menu">Menú Supervisor</span>
+                    </button>
+                    <button id="back-after-access" class="btn btn-secondary" data-i18n="back_to_home">Volver al
+                        Inicio</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de Acceso Denegado -->
+    <div class="screen" id="access-denied-screen">
+        <div class="container">
+            <div class="result-card error">
+                <div class="result-icon">
+                    <i class='bx bx-x-circle'></i>
+                </div>
+                <h2 id="denial-title" data-i18n="access_denied_title">Acceso Denegado</h2>
+                <p id="denial-reason" class="result-message">No se pudo procesar su solicitud de acceso.</p>
+
+                <div class="result-actions">
+                    <button id="supervisor-menu-btn-denied" class="btn btn-primary supervisor-btn">
+                        <i class='bx bx-user-pin'></i>
+                        <span data-i18n="supervisor_menu">Menú Supervisor</span>
+                    </button>
+                    <button id="try-again-btn" class="btn btn-primary" data-i18n="try_again">Intentar
+                        Nuevamente</button>
+                    <button id="back-to-home-from-denied" class="btn btn-secondary" data-i18n="back_to_home">Volver al
+                        Inicio</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de Acceso Pendiente de Revisión -->
+    <div class="screen" id="access-pending-review-screen">
+        <div class="container">
+            <div class="result-card warning">
+                <div class="result-icon">
+                    <i class='bx bx-time-five'></i>
+                </div>
+                <h2 data-i18n="access_provisional_title">Acceso Provisional Concedido</h2>
+                <p data-i18n="access_provisional_message">Su acceso ha sido registrado. Será revisado por un supervisor ya que está fuera de su turno.</p>
+
+                <div class="result-actions">
+                    <button id="continue-to-menu-from-pending" class="btn btn-primary">
+                        <i class='bx bx-log-in-circle'></i>
+                        <span data-i18n="continue_to_menu">Continuar al Menú</span>
+                    </button>
+                    <button id="back-after-pending-review" class="btn btn-secondary"
+                        data-i18n="understood">Volver al Inicio</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla de Autorización Pendiente -->
+    <div class="screen" id="pending-authorization-screen">
+        <div class="container">
+            <div class="result-card info">
+                <div class="result-icon">
+                    <i class='bx bx-hourglass'></i>
+                </div>
+                <h2 data-i18n="pending_authorization_title">Solicitud Enviada</h2>
+                <p id="pending-auth-message" data-i18n="pending_authorization_message">Su solicitud de acceso ha sido
+                    enviada a un supervisor para su aprobación.</p>
+
+                <div class="result-actions">
+                    <button id="back-to-home-from-pending" class="btn btn-primary"
+                        data-i18n="understood">Entendido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </body>
 
 </html>

@@ -1,0 +1,21 @@
+{
+  "name": "Control de Acceso Facial",
+  "short_name": "Acceso Facial",
+  "description": "Sistema de control de acceso por reconocimiento facial.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#063b24",
+  "icons": [
+    {
+      "src": "icono.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icono.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

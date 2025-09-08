@@ -17,13 +17,13 @@ La implementación de este sistema en su empresa se traduce en ventajas competit
 ## ✨ Funcionalidades Principales
 
 -   **Reconocimiento Facial Preciso:** Utiliza tecnología de IA para una identificación rápida y confiable.
--   **Modalidad Dual:** Ofrece un método de acceso manual (código + DNI) como respaldo, garantizando la continuidad operativa.
+-   **Modalidad Dual:** Ofrece un método de acceso manual (legajo + DNI) como respaldo, garantizando la continuidad operativa.
 -   **Gestión por Roles:** Asigne diferentes niveles de acceso (Empleado, Supervisor) para proteger áreas restringidas.
 -   **Panel de Supervisión Centralizado:**
     -   Administración de empleados (altas, bajas y modificaciones).
     -   Visualización del historial de accesos en tiempo real.
     -   Estadísticas de personal y ocupación de áreas.
--   **Seguridad Reforzada:** El acceso al menú de supervisor requiere una doble verificación (autenticación facial/manual + código de operario).
+-   **Seguridad Reforzada:** El acceso al menú de supervisor requiere una doble verificación (autenticación facial/manual + legajo de operario).
 
 ## 🚀 Guía de Uso Rápido
 
@@ -32,14 +32,14 @@ El sistema está diseñado para ser intuitivo y fácil de usar.
 ### Control de Acceso Diario
 
 1.  **Mirar a la Cámara:** El empleado se posiciona frente al dispositivo. El sistema lo reconoce y registra su ingreso o egreso automáticamente.
-2.  **Acceso Manual (si es necesario):** Si el reconocimiento facial falla, el empleado puede ingresar su código de operario y DNI para registrarse.
+2.  **Acceso Manual (si es necesario):** Si el reconocimiento facial falla, el empleado puede ingresar su legajo de operario y DNI para registrarse.
 3.  **Confirmación Instantánea:** El sistema muestra un mensaje de bienvenida y confirma que el registro fue exitoso.
 
 ### Tareas del Supervisor
 
 1.  **Acceder al Menú de Supervisor:**
     -   Tras un inicio de sesión exitoso, el supervisor verá el botón "Menú Supervisor".
-    -   Al hacer clic, el sistema solicitará un **código de operario** como medida de seguridad adicional.
+    -   Al hacer clic, el sistema solicitará un **legajo de operario** como medida de seguridad adicional.
 2.  **Gestionar Empleados:**
     -   Navegue a "Gestión de Empleados" para registrar a un nuevo miembro del equipo.
     -   Complete el formulario con sus datos y capture su rostro con la cámara.
