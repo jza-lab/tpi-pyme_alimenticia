@@ -6,45 +6,54 @@ const state = {
     accessRecords: [],
     pendingAuthorizations: [],
     faceMatcher: null,
-    isInitialized: false,
+    initializationPromise: null, // Usaremos una promesa para manejar el estado de inicialización
 };
 
-export async function initState() {
-    if (state.isInitialized) return;
+export function initState() {
+    // Si la promesa de inicialización no existe, la creamos.
+    // Esto asegura que el proceso de carga de datos solo se inicie una vez.
+    if (!state.initializationPromise) {
+        console.log('Creando promesa de inicialización del estado...');
+        state.initializationPromise = (async () => {
+            try {
+                const [users, records, authorizations] = await Promise.all([
+                    fetchUsers(),
+                    fetchAccessRecords(),
+                    fetchPendingAuthorizations()
+                ]);
 
-    console.log('Inicializando estado de la aplicación (solo datos)...');
-    try {
-        const [users, records, authorizations] = await Promise.all([
-            fetchUsers(),
-            fetchAccessRecords(),
-            fetchPendingAuthorizations()
-        ]);
+                state.users = users;
+                state.accessRecords = records;
+                state.pendingAuthorizations = authorizations;
 
-        state.users = users;
-        state.accessRecords = records;
-        state.pendingAuthorizations = authorizations;
-        state.isInitialized = true;
-
-        console.log('Estado inicializado:', {
-            users: state.users.length,
-            records: state.accessRecords.length,
-            authorizations: state.pendingAuthorizations.length
-        });
-    } catch (error) {
-        console.error("Falló la inicialización del estado:", error);
-        throw error;
+                console.log('Estado inicializado:', {
+                    users: state.users.length,
+                    records: state.accessRecords.length,
+                    authorizations: state.pendingAuthorizations.length
+                });
+            } catch (error) {
+                console.error("Falló la inicialización del estado:", error);
+                // Reiniciar la promesa para permitir un reintento
+                state.initializationPromise = null; 
+                throw error;
+            }
+        })();
     }
+    // Devolvemos la promesa existente (o la recién creada).
+    // Cualquier llamada subsiguiente a initState simplemente esperará a que esta promesa se resuelva.
+    return state.initializationPromise;
 }
+
 
 /**
  * Inicializa el FaceMatcher. Debe llamarse después de initState y en páginas que lo necesiten.
  */
-export function initFaceMatcher() {
+export async function initFaceMatcher() {
     if (state.faceMatcher) return; // Evitar reinicialización
-    if (!state.isInitialized) {
-        console.error("El estado debe ser inicializado antes de crear el FaceMatcher.");
-        return;
-    }
+
+    // Esperar a que el estado esté completamente inicializado
+    await initState();
+    
     console.log("Creando FaceMatcher...");
     state.faceMatcher = createFaceMatcher(state.users);
     console.log("FaceMatcher creado.", !!state.faceMatcher);
@@ -61,25 +70,9 @@ export function addUser(newUser) {
     console.log(`Usuario ${newUser.codigo_empleado} agregado al estado local.`);
 }
 
-/**
- * Refresca todos los datos del estado volviendo a llamar a la API.
- */
-export async function refreshState() {
-    // Forzar la reinicialización
-    state.isInitialized = false;
-    await initState();
-    // Si el face matcher existía, lo reseteamos y reconstruimos para que
-    // use la nueva lista de usuarios que se acaba de cargar.
-    if (state.faceMatcher) {
-        state.faceMatcher = null; // Resetear
-        initFaceMatcher();      // Reconstruir
-    }
-}
-
 // "Getters" para acceder al estado de forma segura y controlada desde otros módulos.
 // Se devuelven copias de los arrays para promover la inmutabilidad y evitar efectos secundarios.
 export const getUsers = () => [...state.users];
 export const getAccessRecords = () => [...state.accessRecords];
 export const getPendingAuthorizations = () => [...state.pendingAuthorizations];
 export const getFaceMatcher = () => state.faceMatcher;
-export const isInitialized = () => state.isInitialized;

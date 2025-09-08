@@ -68,7 +68,15 @@ function stopFacialRecognition() {
 }
 
 async function startFacialLogin(type) {
-    await state.refreshState();
+    // Asegurarse de que el estado esté inicializado antes de continuar.
+    // Gracias a la nueva lógica en `state.js`, esto no causará cargas múltiples.
+    try {
+        await state.initState();
+    } catch (error) {
+        ui.updateStatus(t('loading_error', { error: error.message }), 'error');
+        return;
+    }
+
     appState.currentLoginType = type;
 
     const { loginOverlay, loginVideo } = ui.dom;
@@ -180,7 +188,7 @@ async function main() {
     ui.showScreen('home-screen');
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('service-worker.js')
             .then(registration => {
                 console.log('ServiceWorker registration successful');
                 registration.update();
@@ -199,11 +207,17 @@ async function main() {
     }
 
     try {
+        // Cargar los modelos de FaceAPI y el estado de la aplicación en paralelo.
+        // initState ahora devuelve una promesa que se resuelve cuando los datos están listos.
         await Promise.all([
             face.loadModels(),
             state.initState()
         ]);
-        state.initFaceMatcher();
+
+        // Una vez que los modelos y los datos están listos, inicializamos el FaceMatcher.
+        // initFaceMatcher ahora es asíncrono y espera internamente a initState si es necesario.
+        await state.initFaceMatcher();
+        
         console.log('Aplicación principal inicializada.');
     } catch (error) {
         console.error('Error crítico durante la inicialización:', error);
