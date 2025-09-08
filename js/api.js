@@ -134,8 +134,12 @@ export async function registerUser(userData) {
  * @param {'ingreso' | 'egreso'} type - El tipo de evento de acceso.
  * @returns {Promise<object>} El resultado de la función del servidor.
  */
-export async function registerAccess(employeeCode, type, fecha_hora = null) {
-    const body = { codigo_empleado: employeeCode, tipo: type };
+export async function registerAccess(employeeCode, type, metodo_autenticacion, fecha_hora = null) {
+    const body = {
+        codigo_empleado: employeeCode,
+        tipo: type,
+        metodo_autenticacion: metodo_autenticacion
+    };
     if (fecha_hora) {
         body.fecha_hora = fecha_hora;
     }

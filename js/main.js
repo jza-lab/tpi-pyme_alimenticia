@@ -117,7 +117,8 @@ function runFacialRecognition() {
                     if (user) {
                         stopFacialRecognition();
                         ui.updateStatus(t('user_recognized', { name: user.nombre }), 'success');
-                        auth.grantAccess(user, appState);
+                        // Se pasa 'reconocimiento_facial' como método de autenticación
+                        auth.grantAccess(user, appState, 'reconocimiento_facial');
                     }
                 }
             }

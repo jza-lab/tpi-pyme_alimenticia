@@ -13,7 +13,7 @@ function getCurrentShift() {
     return getShiftForHour(new Date().getHours());
 }
 
-async function handleAccessRequest(user, loginType, isOutOfShift) {
+async function handleAccessRequest(user, loginType, authMethod, isOutOfShift) {
     if (isOutOfShift) {
         const details = {
             turno_correspondiente: user.turno,
@@ -22,11 +22,11 @@ async function handleAccessRequest(user, loginType, isOutOfShift) {
         };
         return api.requestImmediateAccess(user.codigo_empleado, loginType, details);
     } else {
-        return api.registerAccess(user.codigo_empleado, loginType);
+        return api.registerAccess(user.codigo_empleado, loginType, authMethod);
     }
 }
 
-export async function grantAccess(user, appState) {
+export async function grantAccess(user, appState, authMethod) {
     if (appState.isProcessingAccess) return;
     appState.isProcessingAccess = true;
 
@@ -34,7 +34,7 @@ export async function grantAccess(user, appState) {
         const currentShift = getCurrentShift();
         const isOutOfShift = (appState.currentLoginType === 'ingreso' && user.turno && user.turno !== currentShift);
 
-        await handleAccessRequest(user, appState.currentLoginType, isOutOfShift);
+        await handleAccessRequest(user, appState.currentLoginType, authMethod, isOutOfShift);
         await state.refreshState();
 
         ui.displayAccessGranted(user, appState.currentLoginType, isOutOfShift);
@@ -65,14 +65,14 @@ export async function attemptManualLogin(appState) {
     const dni = ui.dom.manualLogin.dni.value;
     if (!code || !dni) return alert(t('fill_both_fields'));
 
-    ui.updateStatus(t('Enviando token'), 'info');
+    ui.updateStatus(t('sending_token'), 'info');
     ui.dom.manualLogin.loginBtn.disabled = true;
 
     try {
         await api.sendTokenViaFrontendEmail(code, dni);
         ui.showTokenForm(appState);
     } catch (error) {
-        denyAccess(error.message || t('Credenciales inválidas'), null, appState.currentLoginType);
+        denyAccess(error.message || t('invalid_credentials'), null, appState.currentLoginType);
     } finally {
         ui.dom.manualLogin.loginBtn.disabled = false;
     }
@@ -83,14 +83,15 @@ export async function verifyToken(appState) {
     const code = ui.dom.manualLogin.code.value;
     const dni = ui.dom.manualLogin.dni.value;
 
-    if (!token) return alert(t('Ingrese el token'));
+    if (!token) return alert(t('enter_received_token'));
 
     try {
         const { user } = await api.verifyLoginToken(token, code, dni);
         if (appState.tokenTimerInterval) clearInterval(appState.tokenTimerInterval);
-        grantAccess(user, appState);
+        // Se pasa 'credenciales' como método de autenticación
+        grantAccess(user, appState, 'credenciales');
     } catch (error) {
-        denyAccess(error.message || t('Token inválido o expirado'), null, appState.currentLoginType);
+        denyAccess(error.message || t('invalid_or_expired_token'), null, appState.currentLoginType);
     }
 }
 
