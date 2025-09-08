@@ -147,6 +147,10 @@ function calculateDocumentationCompliance(despachoData) {
 
 // Genera alertas y observaciones basadas en los datos
 function generateInsights(allData, oeeResults) {
+    const insightsContainer = document.getElementById('indicator-insights-container');
+    const insightsList = document.getElementById('indicator-insights-list');
+    if (!insightsContainer || !insightsList) return { insights: [], alerts: {} };
+
     const insights = [];
     const alerts = {
         rejectionRate: false,
@@ -205,8 +209,8 @@ function generateInsights(allData, oeeResults) {
 }
 
 async function generateAccessInsights() {
-    const insightsContainer = document.getElementById('insights-container');
-    const insightsList = document.getElementById('insights-list');
+    const insightsContainer = document.getElementById('access-insights-container');
+    const insightsList = document.getElementById('access-insights-list');
 
     try {
         // Asegurarse de que el contenedor de insights esté visible en la pestaña de Accesos
@@ -1020,25 +1024,25 @@ function renderRecepcionCharts(stageData) {
 async function renderStage(stage) {
     destroyCharts();
 
-    const alertsConfigContainer = document.getElementById('alerts-config-container');
-    if (alertsConfigContainer) {
-        alertsConfigContainer.style.display = stage === 'Indicadores' ? 'block' : 'none';
-    }
+    const indicatorAlertsConfig = document.getElementById('indicator-alerts-config-container');
+    const indicatorInsights = document.getElementById('indicator-insights-container');
+    const accessInsights = document.getElementById('access-insights-container');
 
-    const insightsContainer = document.getElementById('insights-container');
-    const insightsList = document.getElementById('insights-list');
+    // Ocultar todos los contenedores de alertas y configuración específicos de la pestaña
+    if (indicatorAlertsConfig) indicatorAlertsConfig.style.display = 'none';
+    if (indicatorInsights) indicatorInsights.style.display = 'none';
+    if (accessInsights) accessInsights.style.display = 'none';
+
     const indicatorsView = document.getElementById('indicators-view');
     const stagesView = document.getElementById('stages-view');
     const accessChartsView = document.getElementById('access-charts-view');
     const fallback = document.getElementById('statsFallback');
 
-    if (!insightsContainer || !insightsList || !indicatorsView || !stagesView || !fallback || !accessChartsView) {
-        console.error('Algunos elementos del DOM no se encontraron');
+    if (!indicatorsView || !stagesView || !fallback || !accessChartsView) {
+        console.error('Algunos elementos del DOM de las vistas de estadísticas no se encontraron');
         return;
     }
 
-    insightsContainer.style.display = 'none';
-    insightsList.innerHTML = '';
     fallback.style.display = 'none';
     indicatorsView.style.display = 'none';
     stagesView.style.display = 'none';
@@ -1047,6 +1051,7 @@ async function renderStage(stage) {
     try {
         if (stage === 'Accesos') {
             accessChartsView.style.display = 'block';
+            if (accessInsights) accessInsights.style.display = 'block';
             renderAccessStats();
             generateAccessInsights();
             const users = getUsers();
@@ -1111,6 +1116,8 @@ async function renderStage(stage) {
 
         } else if (stage === 'Indicadores') {
             indicatorsView.style.display = 'block';
+            if (indicatorAlertsConfig) indicatorAlertsConfig.style.display = 'block';
+            if (indicatorInsights) indicatorInsights.style.display = 'block';
             
             try {
                 const [recepcionData, procesamientoData, despachoData] = await Promise.all([
@@ -1123,14 +1130,14 @@ async function renderStage(stage) {
                 const oeeResults = calculateOEE(allData.Procesamiento);
                 const { insights, alerts } = generateInsights(allData, oeeResults);
 
-                if (insights.length > 0) {
+                const insightsList = document.getElementById('indicator-insights-list');
+                if (insights.length > 0 && insightsList) {
                     insightsList.innerHTML = insights.map(insight => 
                         `<div class="employee-card" style="border-left-color: ${
                             insight.level === 'alert' ? '#e74c3c' : 
                             insight.level === 'warning' ? '#f39c12' : '#27ae60'
                         }"><p>${insight.text}</p></div>`
                     ).join('');
-                    insightsContainer.style.display = 'block';
                 }
 
                 const lastIndex = oeeResults.labels.length - 1;

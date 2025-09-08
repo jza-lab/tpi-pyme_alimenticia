@@ -39,16 +39,23 @@ export async function grantAccess(user, appState, metodo_autenticacion) {
         const isOutOfShift = (appState.currentLoginType === 'ingreso' && user.turno && user.turno !== currentShift);
 
         await handleAccessRequest(user, appState.currentLoginType, isOutOfShift, metodo_autenticacion);
-        await state.refreshState();
+        
+        // Guardar en sessionStorage si el acceso es provisional o si es un supervisor/gerente
+        if (isOutOfShift || user.nivel_acceso >= 3) {
+            sessionStorage.setItem('supervisorCode', user.codigo_empleado);
+        }
 
+        await state.refreshState();
         ui.displayAccessGranted(user, appState.currentLoginType, isOutOfShift);
 
     } catch (error) {
         // Primero, verificar si es un error de tipo 409 (Conflicto)
         if (error.context && error.context.status === 409) {
             console.warn('Se detectó un conflicto (409). El usuario ya tiene una solicitud pendiente.');
+            // Guardar el código en la sesión para permitir el acceso al menú
+            sessionStorage.setItem('supervisorCode', user.codigo_empleado);
             // Mostrar la pantalla de acceso provisional, ya que la solicitud original sigue siendo válida.
-            ui.showScreen('pending-review-screen');
+            ui.showScreen('access-pending-review-screen');
         } else {
             // Si es cualquier otro tipo de error, usar la lógica existente.
             console.error(t('grant_access_error'), error);
